@@ -1,6 +1,6 @@
 from collections import deque
-from logging import getLogger, Logger
-from typing import TYPE_CHECKING, AbstractSet, Any, Generator, Type
+from logging import Logger, getLogger
+from typing import TYPE_CHECKING, AbstractSet, Any, Generator, Protocol, Type, runtime_checkable
 
 import discord
 from pydantic import BaseSettings
@@ -11,7 +11,7 @@ __all__: tuple[str, ...] = ("Config",)
 
 log: Logger = getLogger(__name__)
 
-GeneratorType: Type[Generator[int, None, None]] = type(i for i in [1])
+GeneratorType: Type[Generator[int, None, None]] = type(1 for _ in range(1))
 
 
 class Config(BaseSettings):
@@ -30,12 +30,12 @@ class Config(BaseSettings):
 
     log_level: str = "INFO"
     color: int = 0x00FF00
-    user: int = 1059817715583430667
+    discord_client_user: int = 1054123882384212078
 
     @property
     def psql(self) -> str:
         return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-    
+
     @property
     def redis(self) -> str:
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
@@ -43,7 +43,7 @@ class Config(BaseSettings):
     @property
     def invite(self) -> str:
         return discord.utils.oauth_url(
-            client_id=self.user,
+            client_id=self.discord_client_user,
             permissions=discord.Permissions(permissions=0x60E55FEE0),
             # View Channels
             # Manage Emojis and Stickers
@@ -74,7 +74,7 @@ class Config(BaseSettings):
         def prepare_field(cls, field: ModelField) -> None:
             if TYPE_CHECKING:
                 env_names: list[str] | AbstractSet[str]
-                
+
             field_info_from_config: dict[str, Any] = cls.get_field_info(field.name)
             env: Any | None = field_info_from_config.get("env") or field.field_info.extra.get("env")
             if env is None:

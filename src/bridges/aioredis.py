@@ -1,11 +1,9 @@
 import asyncio
 import uuid
-
 from logging import Logger, getLogger
 from typing import Any, Optional
 
-from redis.asyncio import Redis, ConnectionPool, RedisError
-
+from redis.asyncio import ConnectionPool, Redis, RedisError
 
 __all__: tuple[str, ...] = ("RedisBridge",)
 
@@ -18,6 +16,7 @@ def check_running(func: Any) -> Any:
         if not self._is_stopping:
             return False
         return await func(self, *args, **kwargs)
+
     return wrapper
 
 
@@ -51,20 +50,20 @@ class RedisBridge:
     @property
     def client(self) -> Redis:
         return self._redis
-    
+
     @property
     def connection(self) -> ConnectionPool:
         return self._pool
-    
+
     @property
     def is_stopping(self) -> bool:
         return self._is_stopping
-    
+
     async def connect(self) -> None:
         if self._is_connected:
             log.warning("Redis connection already established, skipping...")
             return
-        
+
         while not self._is_connected:
             try:
                 self._redis = await self._redis.initialize()
@@ -81,7 +80,7 @@ class RedisBridge:
 
     def lock(self, key: str) -> None:
         return self._need_execution.add(key)
-    
+
     def unlock(self, key: str) -> None:
         try:
             self._need_execution.discard(key)
@@ -96,11 +95,11 @@ class RedisBridge:
             data = str(data)
 
         return data
-        
+
     def to_original(self, data: Optional[bytes]) -> Optional[Any]:
         if not data:
             return None
-        
+
         parsed: str = data.decode("utf-8")
 
         try:
@@ -112,9 +111,9 @@ class RedisBridge:
             return int(parsed, 10)
         if parsed.startswith("b2dntcode_"):
             return parsed[10:].encode("utf-8")
-        
+
         return parsed
-    
+
     async def close(self) -> None:
         _log: Logger = self.log.getChild("close")
         _log.info("Closing connection, waiting for %s tasks...", len(self._need_execution))
@@ -142,14 +141,14 @@ class RedisBridge:
         self.lock(f"{name}_" + uniq_id)
 
         return uniq_id
-    
+
     def release_lock(self, name: str, uniq_id: str) -> None:
         self.unlock(f"{name}_" + uniq_id)
-    
+
     async def get(self, key: str, fallback: Any = None) -> Any:
         if self._is_stopping:
             return None
-        
+
         uniq_id: str = self.acquire_lock("get")
 
         try:
@@ -158,14 +157,14 @@ class RedisBridge:
 
             if res is None:
                 res = fallback
-                
+
         except RedisError:
             res = fallback
 
         self.release_lock("get", uniq_id)
 
         return res
-    
+
     @check_running
     async def set(self, key: str, data: Any) -> Optional[bool]:
         uniq_id: str = self.acquire_lock("set")
@@ -178,7 +177,7 @@ class RedisBridge:
         self.release_lock("set", uniq_id)
 
         return res
-    
+
     @check_running
     async def setex(self, key: str, data: Any, expires: int) -> bool:
         uniq_id: str = self.acquire_lock("setex")
@@ -204,7 +203,7 @@ class RedisBridge:
         self.release_lock("exists", uniq_id)
 
         return bool(res)
-    
+
     @check_running
     async def rm(self, key: str) -> bool:
         uniq_id: str = self.acquire_lock("rm")

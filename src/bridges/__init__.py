@@ -1,2 +1,2 @@
-from aiopsql import *
-from aioredis import *
+from .aiopsql import *
+from .aioredis import *

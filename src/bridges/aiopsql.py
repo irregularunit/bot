@@ -1,10 +1,10 @@
-from contextlib import asynccontextmanager
-from multiprocessing.managers import BaseManager
+from __future__ import annotations
 
-from types import TracebackType
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from contextlib import asynccontextmanager
 from logging import Logger, getLogger
+from types import TracebackType
 from typing import Any, AsyncGenerator, Optional, Sequence, Type
 
 from asyncpg import Pool, Record
@@ -17,83 +17,75 @@ __all__: tuple[str, ...] = ("PostgresBridge",)
 log: Logger = getLogger(__name__)
 
 
-class ConnectionStragety(ABC):
+class ConnectionStrategy(ABC):
     @abstractmethod
-    async def acquire(self) -> ...:
-        ...
+    async def acquire_connection(self) -> PoolConnectionProxy[Record]:
+        pass
 
     @abstractmethod
-    async def release(self) -> ...:
-        ...
+    async def release_connection(self) -> None:
+        pass
 
 
-class DefaultConnectionStragety(ConnectionStragety):
-    __slots__: tuple[str, ...] = (
-        "pool",
-        "timeout",
-        "_connection",
-        "_transaction",
-    )
+class DefaultConnectionStrategy(ConnectionStrategy):
+    __slots__: tuple[str, ...] = ("pool", "timeout", "_connection", "_transaction")
 
-    def __init__(self, pool: Pool, *, timeout: float = 10.0) -> None:
-        self.pool: Pool = pool
+    def __init__(self, pool: Pool, timeout: float = 10.0) -> None:
+        self.pool: Pool[Any] = pool
         self.timeout: float = timeout
 
-        self._connection: Optional[PoolConnectionProxy] = None
-        self._transaction: Optional[Transaction] = None
+        self._connection: PoolConnectionProxy[Record]
+        self._transaction: Transaction
 
-    async def acquire(self) -> PoolConnectionProxy[Record]:
+    async def acquire_connection(self) -> PoolConnectionProxy[Record]:
         return await self.__aenter__()
-    
-    async def release(self) -> None:
+
+    async def release_connection(self) -> None:
         await self.__aexit__(None, None, None)
 
     async def __aenter__(self) -> PoolConnectionProxy[Record]:
         self._connection = await self.pool.acquire(timeout=self.timeout)
         self._transaction = self._connection.transaction()
         await self._transaction.start()
-
         return self._connection
-    
+
     async def __aexit__(
         self,
         exc_type: Optional[Type[BaseException]],
         exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType]
+        exc_tb: Optional[TracebackType],
     ) -> None:
         if exc_val and self._transaction is not None:
-            log.warning("Rolling back transaction due to exception", exc_info=True)
+            _log = log.getChild("rollback")
+            _log.warning("Rolling back transaction due to exception", exc_info=True)
             await self._transaction.rollback()
 
         if self._transaction is not None and not exc_val:
             await self._transaction.commit()
 
         if self._connection is not None:
-            # Safe to release the connection 
             await self.pool.release(self._connection)
 
 
-class PostgresManager:
-    __slots__: tuple[str, ...] = ("stragety", "logger")
+class BaseManager:
+    __slots__: tuple[str, ...] = ("strategy", "logger")
 
-    def __init__(self, stragety: ConnectionStragety) -> None:
-        self.stragety: ConnectionStragety = stragety
-        self.logger: Logger = log.getChild("postgres")
+    def __init__(self, strategy: ConnectionStrategy) -> None:
+        self.strategy: ConnectionStrategy = strategy
 
     @asynccontextmanager
     async def acquire_connection(self) -> AsyncGenerator[PoolConnectionProxy[Record], None]:
-        connection: PoolConnectionProxy[Record] = await self.stragety.acquire()
+        connection: PoolConnectionProxy[Record] = await self.strategy.acquire_connection()
         try:
             yield connection
         finally:
-            await self.stragety.release()
-
+            await self.strategy.release_connection()
 
     async def execute(
         self,
         query: str,
         *args: Any,
-        timeout: float = 10.0,
+        timeout: Optional[float] = 10.0,
         **kwargs: Any,
     ) -> None:
         async with self.acquire_connection() as connection:
@@ -103,19 +95,19 @@ class PostgresManager:
         self,
         query: str,
         *args: Any,
-        timeout: float = 10.0,
+        timeout: Optional[float] = 10.0,
         **kwargs: Any,
-    ) -> Record | list[Record]:
+    ) -> list[Record]:
         async with self.acquire_connection() as connection:
             return await connection.fetch(query, *args, timeout=timeout, **kwargs)
-        
+
     async def fetchone(
         self,
         query: str,
         *args: Any,
-        timeout: float = 10.0,
+        timeout: Optional[float] = 10.0,
         **kwargs: Any,
-    ) -> Record | None:
+    ) -> Optional[Record]:
         async with self.acquire_connection() as connection:
             return await connection.fetchrow(query, *args, timeout=timeout, **kwargs)
 
@@ -123,13 +115,13 @@ class PostgresManager:
         self,
         query: str,
         args: Sequence[Any],
-        timeout: float = 10.0,
+        timeout: Optional[float] = 10.0,
         **kwargs: Any,
     ) -> None:
         async with self.acquire_connection() as connection:
-            return await connection.executemany(query, args, timeout=timeout, **kwargs)
-        
-    async def tablesummary(self, table: str) -> dict[str, dict[str, str]]:
+            await connection.executemany(query, args, timeout=timeout, **kwargs)
+
+    async def reaveal_table(self, table: str) -> dict[str, dict[str, str]]:
         tables: dict[str, dict[str, str]] = defaultdict(dict)
 
         async with self.acquire_connection() as connection:
@@ -143,7 +135,7 @@ class PostgresManager:
                 table_catalog,
                 table_schema,
                 table_name,
-                ordinal_position
+                ordinal_position;
                 """,
                 table,
             ):
@@ -152,11 +144,17 @@ class PostgresManager:
                     " NOT NULL" if record["is_nullable"] == "NO" else ""
                 )
 
-        return tables
-
+            return tables
+        
 
 class PostgresBridge(BaseManager):
-    __slots__: tuple[str, ...] = ("pool", "timeout",)
+    __slots__: tuple[str, ...] = ("pool", "timeout")
 
-    def __init__(self, pool: Pool, *, timeout: float = 10.0) -> None:
-        super().__init__(DefaultConnectionStragety(pool, timeout=timeout))
+    def __init__(
+        self,
+        pool: Pool,
+        timeout: float = 10.0,
+    ) -> None:
+        super().__init__(
+            DefaultConnectionStrategy(pool, timeout=timeout),
+        )

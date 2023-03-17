@@ -1,0 +1,254 @@
+from __future__ import annotations
+
+import asyncio
+import itertools
+import os
+import pathlib
+import re
+from collections import defaultdict
+from logging import Logger, getLogger
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterable,
+    Iterator,
+    Mapping,
+    Optional,
+    ParamSpec,
+    Self,
+    Type,
+    TypeVar,
+)
+
+import asyncpg
+import discord
+from aiohttp import ClientError
+from discord.ext import commands
+
+from bridges import PostgresBridge, RedisBridge
+from gateway import Gateway
+from settings import Config
+from utils import Context, ContextT
+
+if TYPE_CHECKING:
+    from datetime import datetime
+
+    from aiohttp import ClientSession
+    from asyncpg import Connection, Pool, Record
+
+
+BotT = TypeVar("BotT", bound="Bot")
+P = ParamSpec("P")
+T = TypeVar("T")
+
+
+class Bot(commands.Bot):
+    if TYPE_CHECKING:
+        user: discord.ClientUser
+        cogs: Mapping[str, commands.Cog]
+        start_time: datetime
+
+    def __init__(
+        self,
+        *,
+        loop: asyncio.AbstractEventLoop,
+        session: ClientSession,
+        pool: Pool,
+        redis: RedisBridge,
+    ) -> None:
+        intents: discord.Intents = discord.Intents(
+            guilds=True,
+            members=True,
+            messages=True,
+            message_content=True,
+            presences=True,
+        )
+        super().__init__(
+            command_prefix="idk ",
+            case_insensitive=True,
+            chunk_guilds_at_startup=False,
+            intents=intents,
+            max_messages=2000,
+            owner_ids=[380067729400528896],
+            help_command=commands.MinimalHelpCommand(),
+        )
+        self.loop: asyncio.AbstractEventLoop = loop
+        self.session: ClientSession = session
+        self.pool: Pool = pool
+        self.redis: RedisBridge = redis
+
+        self.config: Config = Config()  # type: ignore
+        self.logger: Logger = getLogger(__name__)
+        self.safe_connection: PostgresBridge = PostgresBridge(self.pool)
+
+    @staticmethod
+    @discord.utils.copy_doc(asyncio.to_thread)
+    async def to_thread(func: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs) -> T:
+        return await asyncio.to_thread(func, *args, **kwargs)
+
+    async def get_context(self, message: discord.Message, *, cls: Type[ContextT] = Context) -> Context:
+        return await super().get_context(message, cls=cls or commands.Context["Bot"])
+
+    async def process_commands(self, message: discord.Message, /) -> None:
+        try:
+            await asyncio.wait_for(self.wait_until_ready(), timeout=5.0)
+        except asyncio.TimeoutError:
+            return
+
+        ctx: Context = await self.get_context(message, cls=Context)
+        if ctx.command is None:
+            # I guess it's just a regular message, nothing
+            # we have to take care of.
+            return
+
+        if ctx.guild:
+            if TYPE_CHECKING:
+                assert isinstance(ctx.channel, (discord.TextChannel, discord.Thread))
+                assert isinstance(ctx.me, discord.Member), "Cannot process commands in DMs"
+
+            if not ctx.channel.permissions_for(ctx.me).send_messages:
+                if await self.is_owner(ctx.author):
+                    await ctx.send(f"I cannot send messages in {ctx.channel.name}.")
+
+                return
+
+        await self.invoke(ctx)
+
+    @classmethod
+    @discord.utils.copy_doc(asyncpg.create_pool)
+    async def create_pool(cls: Type[BotT], *, dsn: str, **kwargs: Any) -> Optional[Pool[Record]]:
+        def serializer(obj: Any) -> str:
+            return discord.utils._to_json(obj)
+
+        def deserializer(data: str) -> Any:
+            return discord.utils._from_json(data)
+
+        prep_init: Any | None = kwargs.pop("init", None)
+
+        async def init(connection: Connection[Any]) -> None:
+            await connection.set_type_codec(
+                "json",
+                encoder=serializer,
+                decoder=deserializer,
+                schema="pg_catalog",
+                format="text",
+            )
+            if prep_init:
+                await prep_init(connection)
+
+        return await asyncpg.create_pool(dsn=dsn, init=init, **kwargs)
+
+    async def connect(self, *, reconnect: bool = True) -> None:
+        backoff = discord.client.ExponentialBackoff()  # type: ignore
+        ws_params: dict[str, Any] = {"initial": True, "shard_id": self.shard_id}
+        while not self.is_closed():
+            try:
+                coro: Any = Gateway.from_client(self, **ws_params)
+                self.ws = await asyncio.wait_for(coro, timeout=60.0)
+                ws_params["initial"] = False
+                while True:
+                    await self.ws.poll_event()
+            except discord.client.ReconnectWebSocket as e:
+                self.logger.info("Got a request to %s the websocket.", e.op)
+                self.dispatch("disconnect")
+                ws_params.update(
+                    sequence=self.ws.sequence,
+                    resume=e.resume,
+                    session=self.ws.session_id,
+                )
+                continue
+            except (
+                OSError,
+                discord.HTTPException,
+                discord.GatewayNotFound,
+                discord.ConnectionClosed,
+                ClientError,
+                asyncio.TimeoutError,
+            ) as exc:
+                self.dispatch("disconnect")
+                if not reconnect:
+                    await self.close()
+                    if isinstance(exc, discord.ConnectionClosed) and exc.code == 1000:
+                        # clean close, don't re-raise this
+                        return
+                    raise
+
+                if self.is_closed():
+                    return
+
+                # If we get connection reset by peer then try to RESUME
+                if isinstance(exc, OSError) and exc.errno in (54, 10054):
+                    ws_params.update(
+                        sequence=self.ws.sequence,
+                        initial=False,
+                        resume=True,
+                        session=self.ws.session_id,
+                    )
+                    continue
+
+                # We should only get this when an unhandled close code happens,
+                # such as a clean disconnect (1000) or a bad state (bad token, no sharding, etc)
+                # sometimes, discord sends us 1000 for unknown reasons so we should reconnect
+                # regardless and rely on is_closed instead
+                if isinstance(exc, discord.ConnectionClosed):
+                    if exc.code == 4014:
+                        raise discord.PrivilegedIntentsRequired(exc.shard_id) from None
+                    if exc.code != 1000:
+                        await self.close()
+                        raise
+
+                retry: float = backoff.delay()
+                self.logger.exception("Attempting a reconnect in %.2fs.", retry)
+                await asyncio.sleep(retry)
+                # Always try to RESUME the connection
+                # If the connection is not RESUME-able then the gateway will invalidate the session.
+                # This is apparently what the official Discord client does.
+                ws_params.update(sequence=self.ws.sequence, resume=True, session=self.ws.session_id)
+
+    async def start(self, *args: Any, **kwargs: Any) -> None:
+        await super().start(token=self.config.token, *args, **kwargs)
+
+    def iter_extensions(self) -> Iterator[str]:
+        extension: list[str] = [file for file in os.listdir("src/modules") if not file.startswith("_")]
+        for file in extension:
+            yield f"src.modules.{file[:-3] if file.endswith('.py') else file}"
+
+    def iter_schemas(self) -> Iterator[pathlib.Path]:
+        root: pathlib.Path = pathlib.Path("src/schemas")
+        for schema in root.glob("*.sql"):
+            if schema.name.startswith("_"):
+                continue
+
+            yield schema
+
+    async def setup_hook(self) -> None:
+        _log: Logger = self.logger.getChild("setup_hook")
+        for item in list(self.iter_extensions()) + list(self.iter_schemas()):
+            marked_as: str = "extension" if isinstance(item, str) else "schema"
+            try:
+                if isinstance(item, str):
+                    await self.load_extension(item)
+                elif isinstance(item, pathlib.Path):
+                    await self.pool.execute(item.read_text())
+                else:
+                    _log.exception(f"Expected {item!r} to be a string or a Path, got {type(item)!r}")
+                    continue
+
+                _log.info(f"Loaded {marked_as} {item!r}")
+            except Exception as exc:
+                _log.exception(f"Failed to load {marked_as} {item!r}", exc_info=exc)
+
+        await self.redis.connect()
+        await self.load_extension("jishaku")
+
+    async def on_ready(self) -> None:
+        if not getattr(self, "start_time", None):
+            self.start_time = discord.utils.utcnow()
+
+        self.logger.getChild("on_ready").info("Connected to Discord.")
+
+    async def close(self) -> None:
+        to_close: list[Any] = [self.pool, self.session, self.redis]
+        await asyncio.gather(*[c.close() for c in to_close if c is not None])
+        await super().close()
