@@ -1,0 +1,24 @@
+# Discord Related
+aiohttp[speedup]>=3.7.4,<4
+discord.py==2.2.0
+git+https://github.com/gorialis/jishaku
+
+# Enhancments and Utilities
+bson==0.5.10
+orjson==3.6.4
+
+# Useful and Cosmetic
+aiofiles==0.7.0
+emoji==1.7.0
+coloredlogs==15.0.1
+python-magic==0.4.24
+python-magic-bin==0.4.14; os_name == "nt"
+Pillow==9.4.0
+
+# Database Related
+asyncpg>=0.27.0
+redis>=4.2.0rc1
+git+https://github.com/bryanforbes/asyncpg-stubs
+
+# Base Requirements
+pydantic[dotenv]>=1.10.4

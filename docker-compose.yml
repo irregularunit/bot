@@ -1,0 +1,32 @@
+version: '3.9'
+
+services:
+  postgresql:
+    image: postgres
+    restart: always
+    volumes:
+      - postgresql:/var/lib/postgresql/data
+    env_file:
+      - .env
+    ports:
+      - "6000:5432"
+    networks:
+      - liabot
+
+  redis:
+    image: redis:alpine
+    restart: always
+    volumes:
+      - redis:/data
+    networks:
+      - liabot
+    ports:
+      - "6001:6379"
+
+networks:
+  liabot:
+    driver: bridge
+
+volumes:
+  postgresql:
+  redis:
