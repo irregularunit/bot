@@ -79,8 +79,7 @@ BEGIN
         SELECT NEW.gid, prefix
         FROM (
             SELECT 'pls' AS prefix
-            UNION ALL SELECT 'pwease'
-            UNION ALL SELECT 'owo'
+            UNION ALL SELECT 'pls '
         ) AS default_prefixes;
     END IF;
     RETURN NEW;

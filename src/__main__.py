@@ -26,7 +26,7 @@ os.environ["JISHAKU_RETAIN"] = "true"
 
 async def setup() -> tuple[Bot, Pool[Record], ClientSession]:
     setup_logging("INFO")
-    prep_conf = Config()  # type: ignore
+    prep_conf: Config = Config()  # type: ignore (my IDE doesn't get it)
 
     loop: AbstractEventLoop = get_event_loop()
     session: ClientSession = ClientSession()
