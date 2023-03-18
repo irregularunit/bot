@@ -230,7 +230,7 @@ class DiscordEventListener(commands.Cog):
         await self.bot.redis.setex(f"{word}:{uid}", 60, time)
 
         _log: Logger = log.getChild("insert_counting")
-        _log.info("Inserting %s for %s at %s", word, uid, message.created_at.timestamp())
+        _log.debug("Inserting %s for %s at %s", word, uid, message.created_at.timestamp())
 
         await self.bot.safe_connection.execute(
             "INSERT INTO owo_counting (uid, word, created_at) VALUES ($1, $2, $3)",
