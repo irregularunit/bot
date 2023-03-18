@@ -17,10 +17,22 @@ log: Logger = getLogger(__name__)
 
 
 @dataclass
-class User:
+class Model:
     id: int
-    timezone: str
     created_at: datetime
+
+    @classmethod
+    def from_record(cls: Type[Model], record: Record) -> ...:
+        raise NotImplementedError
+
+    @property
+    def mention(self) -> str:
+        return f"<@{self.id}>"
+
+
+@dataclass
+class User(Model):
+    timezone: str
 
     @classmethod
     def from_record(cls: Type[User], record: Record) -> User:
@@ -30,18 +42,12 @@ class User:
             created_at=record["created_at"],
         )
 
-    @property
-    def mention(self) -> str:
-        return f"<@{self.id}>"
-
 
 @dataclass
-class Guild:
-    id: int
+class Guild(Model):
     prefixes: list[str]
     owo_prefix: str
     owo_counting: bool
-    created_at: datetime
 
     @classmethod
     def from_record(cls: Type[Guild], record: Record) -> Guild:
@@ -52,10 +58,6 @@ class Guild:
             owo_counting=record["owo_counting"],
             created_at=record["created_at"],
         )
-
-    @property
-    def mention(self) -> str:
-        return f"<@{self.id}>"
 
 
 class ModelManager:
@@ -113,10 +115,7 @@ class ModelManager:
 
         instance: Guild = Guild(
             id=record["gid"],
-            prefixes=[
-                "pls",
-                "pls ",
-            ],
+            prefixes=["pls", "pls "],
             owo_prefix=record["owo_prefix"],
             owo_counting=record["owo_counting"],
             created_at=record["created_at"],

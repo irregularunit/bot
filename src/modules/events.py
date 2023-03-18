@@ -11,8 +11,8 @@ import discord
 from discord.ext import commands, tasks
 from PIL import Image, ImageSequence
 
-from models import Guild, User
-from utils import check_owo_command, type_of
+from models import Guild
+from utils import BaseExtension, check_owo_command, type_of
 
 if TYPE_CHECKING:
     from src.bot import Bot
@@ -61,7 +61,7 @@ def resize_to_limit(image: BytesIO, limit: int = 8_000_000) -> BytesIO:
     return image
 
 
-class DiscordEventListener(commands.Cog):
+class DiscordEventListener(BaseExtension):
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
 
@@ -112,8 +112,7 @@ class DiscordEventListener(commands.Cog):
         try:
             message: discord.Message = await self.cached_channel.send(
                 content=f"{item.name} ({item.user_id})",
-                file=discord.File(BytesIO(item.image),
-                filename=f"{uuid.uuid4()}.{type_of(item.image)}"),
+                file=discord.File(BytesIO(item.image), filename=f"{uuid.uuid4()}.{type_of(item.image)}"),
             )
         except Exception as exc:
             log.exception("Failed to send message to channel", exc_info=exc)

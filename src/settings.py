@@ -27,10 +27,12 @@ class Config(BaseSettings):
 
     token: str
     owner_ids: list[int]
-
     log_level: str = "INFO"
-    color: int = 0xF8B695  # stolen from https://imagecolorpicker.com/
     client_user: int = 1054123882384212078
+
+    # shamelessly stolen from
+    # https://htmlcolorcodes.com/colors/shades-of-blue/
+    color: int = 0x0096FF
 
     @property
     def psql(self) -> str:
