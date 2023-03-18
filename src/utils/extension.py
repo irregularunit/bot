@@ -20,7 +20,7 @@ class BaseExtension(commands.Cog):
         self.id: int = int(str(int(uuid.uuid4()))[:20])
 
         next_in_mro = next(iter(self.__class__.__mro__))
-        if hasattr(next_in_mro, "__is_jishaku__") or isinstance(next_in_mro, self.__class__):
+        if hasattr(next_in_mro, "__jsk_instance__") or isinstance(next_in_mro, self.__class__):
             kwargs["bot"] = bot
 
         super().__init__(*args, **kwargs)

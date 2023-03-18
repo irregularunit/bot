@@ -217,7 +217,7 @@ class DiscordEventListener(BaseExtension):
                 # Why? I don't know. But we don't want to insert the same data twice.
                 return
 
-            await self.bot.redis.setex(f"status:{after.id}", 60, 3)
+            await self.bot.redis.setex(f"status:{after.id}", 0, 3)
             query: str = "INSERT INTO presence_history (uid, status) VALUES ($1, $2)"
             await self.bot.safe_connection.execute(query, after.id, self._presence_map.get(after.status, "Offline"))
 

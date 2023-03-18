@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from bot import Bot
     from utils import Context
 
-__all__: tuple[str, ...] = ("DiscordErrorHandler",)
+__all__: tuple[str, ...] = ("DiscordErrorHandler", "Error")
 
 log: Logger = getLogger(__name__)
 
@@ -201,3 +201,7 @@ class DiscordErrorHandler(BaseExtension):
         embed.set_footer(text=f"Invoked by {ctx.author}", icon_url=ctx.author.display_avatar.url)
 
         return await ctx.maybe_reply(embed=embed)
+
+
+async def setup(bot: Bot) -> None:
+    await bot.add_cog(DiscordErrorHandler(bot))

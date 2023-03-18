@@ -3,7 +3,7 @@ from __future__ import annotations
 import contextlib
 import io
 import time
-from typing import TYPE_CHECKING, Annotated, Any, Optional, TypeVar
+from typing import TYPE_CHECKING, Annotated, Any, Optional, ClassVar
 
 import discord
 from jishaku.codeblocks import Codeblock, codeblock_converter
@@ -28,14 +28,12 @@ if TYPE_CHECKING:
     from bot import Bot
     from utils import Context
 
-T = TypeVar("T")
-
 
 class Jishaku(BaseExtension, *STANDARD_FEATURES, *OPTIONAL_FEATURES):
     if TYPE_CHECKING:
         bot: Bot
 
-    __is_jishaku__: bool = True
+    __jsk_instance__: ClassVar[bool] = True
 
     async def jsk_python_result_handling(
         self,
