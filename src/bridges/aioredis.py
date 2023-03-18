@@ -72,7 +72,7 @@ class RedisBridge:
                 break
             except RedisError:
                 log.warning("Redis connection failed, retrying in 5 seconds...")
-                await asyncio.sleep(1)
+                await asyncio.sleep(5.0)
 
     @classmethod
     def setup_redis(cls, uri: str) -> "RedisBridge":

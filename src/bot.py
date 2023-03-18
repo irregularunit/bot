@@ -1,22 +1,18 @@
 from __future__ import annotations
 
 import asyncio
-import itertools
 import os
 import pathlib
 import re
-from collections import defaultdict
 from logging import Logger, getLogger
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Iterable,
     Iterator,
     Mapping,
     Optional,
     ParamSpec,
-    Self,
     Type,
     TypeVar,
 )
@@ -28,6 +24,7 @@ from discord.ext import commands
 
 from bridges import PostgresBridge, RedisBridge
 from gateway import Gateway
+from models import Guild, ModelManager, User
 from settings import Config
 from utils import Context, ContextT
 
@@ -65,7 +62,7 @@ class Bot(commands.Bot):
             presences=True,
         )
         super().__init__(
-            command_prefix="idk ",
+            command_prefix=self.get_prefix,  # type: ignore
             case_insensitive=True,
             chunk_guilds_at_startup=False,
             intents=intents,
@@ -78,9 +75,14 @@ class Bot(commands.Bot):
         self.pool: Pool = pool
         self.redis: RedisBridge = redis
 
-        self.config: Config = Config()  # type: ignore
+        self.config: Config = Config()  # type: ignore (my IDE doesn't get it)
         self.logger: Logger = getLogger(__name__)
         self.safe_connection: PostgresBridge = PostgresBridge(self.pool)
+        self.manager: ModelManager = ModelManager(self.pool)
+
+        self.cached_users: dict[int, User] = {}
+        self.cached_guilds: dict[int, Guild] = {}
+        self.cached_prefixes: dict[int, re.Pattern] = {}
 
     @staticmethod
     @discord.utils.copy_doc(asyncio.to_thread)
@@ -97,9 +99,9 @@ class Bot(commands.Bot):
             return
 
         ctx: Context = await self.get_context(message, cls=Context)
+
+        # I guess it's just a regular message, nothing we have to take care of.
         if ctx.command is None:
-            # I guess it's just a regular message, nothing
-            # we have to take care of.
             return
 
         if ctx.guild:
@@ -114,6 +116,28 @@ class Bot(commands.Bot):
                 return
 
         await self.invoke(ctx)
+
+    async def get_prefix(self, message: discord.Message) -> str | list[str]:
+        prefixes: list[str] = [f"<@!{self.user.id}> ", f"<@{self.user.id}> ", "pls ", "pls"]
+        if message.guild is None:
+            # We're in a DM, which generally shouldn't happen. But
+            # the type checker doesn't get that, so we have to do this.
+            escaped_prefixes: list[str] = list(map(re.escape, prefixes))
+            if match := re.match(fr"^(?:{'|'.join(escaped_prefixes)})\s*", message.content):
+                return match.group()
+            return commands.when_mentioned_or(*prefixes)(self, message)
+
+        if message.guild.id not in self.cached_prefixes:
+            # We're caching the Pattern object because it's faster than
+            # fetching and recompiling the prefixes every time.
+            guild: Guild = await self.manager.get_or_create_guild(message.guild.id)
+            pattern: re.Pattern[str] = re.compile(fr"^(?:{'|'.join(map(re.escape, guild.prefixes))})\s*")
+            self.cached_prefixes[message.guild.id] = pattern
+
+        if match := self.cached_prefixes[message.guild.id].match(message.content):
+            return match.group()
+
+        return commands.when_mentioned_or(*prefixes)(self, message)
 
     @classmethod
     @discord.utils.copy_doc(asyncpg.create_pool)
@@ -212,21 +236,23 @@ class Bot(commands.Bot):
     def iter_extensions(self) -> Iterator[str]:
         extension: list[str] = [file for file in os.listdir("src/modules") if not file.startswith("_")]
         for file in extension:
-            yield f"src.modules.{file[:-3] if file.endswith('.py') else file}"
+            yield f"modules.{file[:-3] if file.endswith('.py') else file}"
 
     def iter_schemas(self) -> Iterator[pathlib.Path]:
         root: pathlib.Path = pathlib.Path("src/schemas")
         for schema in root.glob("*.sql"):
+            # Ignore nasty hidden files
             if schema.name.startswith("_"):
                 continue
 
-            yield schema
+            yield schema  # Returns the PosixPath object (assuming we don't use Windows)
 
     async def setup_hook(self) -> None:
         _log: Logger = self.logger.getChild("setup_hook")
         for item in list(self.iter_extensions()) + list(self.iter_schemas()):
             marked_as: str = "extension" if isinstance(item, str) else "schema"
             try:
+                # Honestly, Idk why I just made it like this
                 if isinstance(item, str):
                     await self.load_extension(item)
                 elif isinstance(item, pathlib.Path):
@@ -241,6 +267,9 @@ class Bot(commands.Bot):
 
         await self.redis.connect()
         await self.load_extension("jishaku")
+
+        self.cached_guilds = await self.manager.get_all_guilds()
+        self.cached_users = await self.manager.get_all_users()
 
     async def on_ready(self) -> None:
         if not getattr(self, "start_time", None):

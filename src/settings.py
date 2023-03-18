@@ -29,8 +29,8 @@ class Config(BaseSettings):
     owner_ids: list[int]
 
     log_level: str = "INFO"
-    color: int = 0x00FF00
-    discord_client_user: int = 1054123882384212078
+    color: int = 0xF8B695  # stolen from https://imagecolorpicker.com/
+    client_user: int = 1054123882384212078
 
     @property
     def psql(self) -> str:
@@ -43,7 +43,7 @@ class Config(BaseSettings):
     @property
     def invite(self) -> str:
         return discord.utils.oauth_url(
-            client_id=self.discord_client_user,
+            client_id=self.client_user,
             permissions=discord.Permissions(permissions=0x60E55FEE0),
             # View Channels
             # Manage Emojis and Stickers
