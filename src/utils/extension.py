@@ -12,8 +12,7 @@ __all__: tuple[str, ...] = ("BaseExtension",)
 
 
 class BaseExtension(commands.Cog):
-    if TYPE_CHECKING:
-        hidden: Optional[bool] = False
+    hidden: Optional[bool] = False
 
     def __init__(self, bot: Bot, *args: Any, **kwargs: Any) -> None:
         self.bot: Bot = bot

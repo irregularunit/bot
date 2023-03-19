@@ -35,7 +35,10 @@ class AvatarHistoryView(View):
             if isinstance(item, (discord.ui.Button, discord.ui.Select)):
                 # This check is purly done for type checking purposes
                 # and is not needed for the code to work.
-                item.disabled = True
+                if hasattr(item, "disabled"):
+                    # Same as: item.disabled = True
+                    # But this is the "proper" way to do it.
+                    setattr(item, "disabled", True)
 
     async def on_timeout(self) -> None:
         self.disable_view()
@@ -72,7 +75,7 @@ class AvatarHistoryView(View):
             embed.set_image(url=self.member.display_avatar.url if self.member else self.ctx.author.display_avatar.url)
             self.disable_view()
         else:
-            embed.description = "Click the buttons to navigate through the avatar history."
+            embed.description = "Click the buttons to navigate through your history."
             embed.set_image(url=self.cached_avatars[0])
 
         self.message = await self.ctx.send(embed=embed, view=self)
@@ -84,8 +87,7 @@ class PreviousAvatarButton(discord.ui.Button["AvatarHistoryView"]):
         self.disabled = False
 
     async def callback(self, interaction: discord.Interaction) -> None:
-        if TYPE_CHECKING:
-            assert self.view is not None
+        assert self.view is not None
 
         view: AvatarHistoryView = self.view
         previous_or_last = view.cached_avatars[-1]
@@ -104,8 +106,7 @@ class NextAvatarButton(discord.ui.Button["AvatarHistoryView"]):
         self.disabled = False
 
     async def callback(self, interaction: discord.Interaction) -> None:
-        if TYPE_CHECKING:
-            assert self.view is not None
+        assert self.view is not None
 
         view: AvatarHistoryView = self.view
         next_or_first = view.cached_avatars[0]
@@ -126,37 +127,54 @@ class CollageAvatarButton(discord.ui.Button["AvatarHistoryView"]):
     def compute_grid_size(self, amount: int) -> int:
         return int(amount**0.5) + 1 if amount**0.5 % 1 else int(amount**0.5)
 
-    def create_collage(self, images: list[Image.Image]) -> BytesIO:
+    def create_collage(self, images: list[Image.Image], old: bool = True) -> BytesIO:
         grid_size = self.compute_grid_size(len(images))
         rows: int = math.ceil(math.sqrt(len(images)))
 
         # Read the following code on your own risk.
         # I forgot why I did it this way. And I don't want to know.
         # Feel free to rewrite it if you want.
-        w = h = 256 * rows
-        with Image.new("RGBA", (w, h), (0, 0, 0, 0)) as collage:
-            times_x = times_y = final_x = final_y = 0
-            for avatar in images:
-                if times_x == grid_size:
-                    times_y += 1
-                    times_x = 0
+        width = height = 256 * rows
 
-                x, y = times_x * 256, times_y * 256
-                collage.paste(avatar, (x, y))
+        if old:
+            with Image.new("RGBA", (width, height), (0, 0, 0, 0)) as collage:
+                times_x = times_y = final_x = final_y = 0
+                for avatar in images:
+                    if times_x == grid_size:
+                        times_y += 1
+                        times_x = 0
 
-                final_x, final_y = max(x, final_x), max(y, final_y)
-                times_x += 1
+                    x, y = times_x * 256, times_y * 256
+                    collage.paste(avatar, (x, y))
 
-            collage: Image.Image = collage.crop((0, 0, final_x + 256, final_y + 256))
+                    final_x, final_y = max(x, final_x), max(y, final_y)
+                    times_x += 1
 
-            buffer: BytesIO = BytesIO()
-            collage.save(buffer, format="webp")
-            buffer.seek(0)
-            return buffer
+                collage: Image.Image = collage.crop((0, 0, final_x + 256, final_y + 256))
+
+                buffer: BytesIO = BytesIO()
+                collage.save(buffer, format="webp")
+                buffer.seek(0)
+                return buffer
+        else:
+            # Currently testing this new method. Might be adjusted in the future.
+            # For now it seems to work just fine.
+            with Image.new("RGBA", (width, height), (0, 0, 0, 0)) as collage:
+                for i, avatar in enumerate(images):
+                    x, y = (i % rows) * 256, (i // rows) * 256
+                    collage.paste(avatar, (x, y))
+
+                last_x, last_y = divmod(len(images) - 1, rows)
+                last_height, last_width = (last_x + 1) * 256, (last_y + 1) * 256
+                collage = collage.crop((0, 0, last_width, last_height))
+
+                buffer: BytesIO = BytesIO()
+                collage.save(buffer, format="webp")
+                buffer.seek(0)
+                return buffer
 
     async def get_member_collage(self, member: discord.Member) -> Optional[discord.File]:
-        if TYPE_CHECKING:
-            assert self.view is not None
+        assert self.view is not None
 
         results = await self.view.bot.pool.fetch(
             "SELECT * FROM avatar_history WHERE uid = $1 ORDER BY changed_at DESC", member.id
@@ -169,12 +187,11 @@ class CollageAvatarButton(discord.ui.Button["AvatarHistoryView"]):
             with Image.open(BytesIO(result["avatar"])) as avatar:
                 images.append(avatar.resize((256, 256)).convert("RGBA"))
 
-        buffer: BytesIO = await self.view.bot.to_thread(self.create_collage, images)
+        buffer: BytesIO = await self.view.bot.to_thread(self.create_collage, images, old=False)
         return discord.File(buffer, filename="collage.webp")
 
     async def callback(self, interaction: discord.Interaction) -> None:
-        if TYPE_CHECKING:
-            assert self.view is not None
+        assert self.view is not None
 
         view: AvatarHistoryView = self.view
         embed = EmbedBuilder.factory(view.ctx)

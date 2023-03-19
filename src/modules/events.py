@@ -104,9 +104,7 @@ class DiscordEventListener(BaseExtension):
             return
 
         self.cached_channel = self.cached_channel or await self.bot.fetch_channel(1086710517323804924)  # type: ignore
-        if TYPE_CHECKING:
-            # It's a lie but otherwise the linter would complain.
-            assert isinstance(self.cached_channel, discord.TextChannel)
+        assert isinstance(self.cached_channel, discord.TextChannel)
 
         self._is_running = True
         item: SendQueueItem = self._send_queue.pop(0)

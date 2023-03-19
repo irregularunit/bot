@@ -101,16 +101,13 @@ class Bot(commands.Bot):
 
         ctx: Context = await self.get_context(message, cls=Context)
 
-        # I guess it's just a regular message, nothing we have to take care of.
         if ctx.command is None:
             return
 
         if ctx.guild:
-            if TYPE_CHECKING:
-                assert isinstance(ctx.channel, (discord.TextChannel, discord.Thread))
-                assert isinstance(ctx.me, discord.Member), "Cannot process commands in DMs"
+            assert isinstance(ctx.channel, (discord.TextChannel, discord.Thread))
 
-            if not ctx.channel.permissions_for(ctx.me).send_messages:
+            if not ctx.channel.permissions_for(ctx.me).send_messages:  # type: ignore
                 if await self.is_owner(ctx.author):
                     await ctx.send(f"I cannot send messages in {ctx.channel.name}.")
 

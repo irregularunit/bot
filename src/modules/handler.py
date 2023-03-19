@@ -82,7 +82,7 @@ class DiscordErrorHandler(BaseExtension):
                 # The cog which the invoked command belongs to has a local error handler
                 return
 
-        # handle custom exceptions first
+        # We handle custom exceptions first
         if isinstance(error, UserFeedbackException):
             return await ctx.safe_send(content=error.to_string())
 
@@ -124,7 +124,7 @@ class DiscordErrorHandler(BaseExtension):
             return await ctx.safe_send(content=f"Could not find a user with the name `{error.argument}`.")
 
         if isinstance(error, commands.BadArgument):
-            return await ctx.send_help(ctx.command)
+            return await self.handle_bad_argument(ctx, error)
 
         if isinstance(error, commands.MissingPermissions):
             return await ctx.safe_send(content="You do not have the required permissions to use this command.")
@@ -145,8 +145,7 @@ class DiscordErrorHandler(BaseExtension):
     async def handle_missing_required_argument(
         self, ctx: Context, error: commands.MissingRequiredArgument
     ) -> Optional[discord.Message]:
-        if TYPE_CHECKING:
-            assert ctx.command is not None
+        assert ctx.command is not None
 
         command = ctx.command
         signature = command.signature
@@ -176,8 +175,7 @@ class DiscordErrorHandler(BaseExtension):
         )
 
     async def handle_bad_argument(self, ctx: Context, error: commands.BadArgument) -> Optional[discord.Message]:
-        if TYPE_CHECKING:
-            assert ctx.command is not None
+        assert ctx.command is not None
 
         error_lineno = ctx.command.callback.__code__.co_firstlineno
 
