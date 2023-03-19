@@ -143,19 +143,13 @@ class Bot(commands.Bot):
     @classmethod
     @discord.utils.copy_doc(asyncpg.create_pool)
     async def create_pool(cls: Type[BotT], *, dsn: str, **kwargs: Any) -> Optional[Pool[Record]]:
-        def serializer(obj: Any) -> str:
-            return discord.utils._to_json(obj)
-
-        def deserializer(data: str) -> Any:
-            return discord.utils._from_json(data)
-
         prep_init: Any | None = kwargs.pop("init", None)
 
         async def init(connection: Connection[Any]) -> None:
             await connection.set_type_codec(
-                "json",
-                encoder=serializer,
-                decoder=deserializer,
+                "jsonb",
+                encoder=lambda obj: discord.utils._to_json(obj),
+                decoder=lambda data: discord.utils._from_json(data),
                 schema="pg_catalog",
                 format="text",
             )
