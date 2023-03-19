@@ -86,7 +86,6 @@ class PreviousAvatarButton(discord.ui.Button["AvatarHistoryView"]):
     async def callback(self, interaction: discord.Interaction) -> None:
         if TYPE_CHECKING:
             assert self.view is not None
-            assert self.view.cached_avatars is not None
 
         view: AvatarHistoryView = self.view
         previous_or_last = view.cached_avatars[-1]
@@ -107,7 +106,6 @@ class NextAvatarButton(discord.ui.Button["AvatarHistoryView"]):
     async def callback(self, interaction: discord.Interaction) -> None:
         if TYPE_CHECKING:
             assert self.view is not None
-            assert self.view.cached_avatars is not None
 
         view: AvatarHistoryView = self.view
         next_or_first = view.cached_avatars[0]

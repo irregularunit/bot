@@ -33,6 +33,8 @@ __all__: tuple[str, ...] = (
     "count_source_lines",
     "type_of",
     "setup_logging",
+    "num_to_emote",
+    "emote_to_num",
 )
 
 
@@ -184,3 +186,13 @@ def setup_logging(level: int | str) -> None:
             "critical": {"color": "red"},
         },
     )
+
+
+def num_to_emote(num: int) -> str:
+    """Converts a number to an emoji. range is 0-9."""
+    return chr(48 + num) + chr(65039) + chr(8419)
+
+
+def emote_to_num(emote: str) -> int:
+    """Converts an emoji to a number. range is 0-9."""
+    return ord(emote[0]) - 48
