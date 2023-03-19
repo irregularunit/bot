@@ -45,6 +45,7 @@ class Error:
 
 class DiscordErrorHandler(BaseExtension):
     def __init__(self, bot: Bot) -> None:
+        super().__init__(bot)
         self.bot: Bot = bot
         self.flyweight: Dict[str, Error] = {}
 
@@ -124,10 +125,10 @@ class DiscordErrorHandler(BaseExtension):
 
         if isinstance(error, commands.BadArgument):
             return await ctx.send_help(ctx.command)
-        
+
         if isinstance(error, commands.MissingPermissions):
             return await ctx.safe_send(content="You do not have the required permissions to use this command.")
-        
+
         if isinstance(error, commands.BotMissingPermissions):
             # I don't care about this error tbh, config error on
             # the user's side, :shrug:
@@ -193,10 +194,7 @@ class DiscordErrorHandler(BaseExtension):
         error_message += f"{designer} => pls help {ctx.command.name}```"
 
         embed = EmbedBuilder.factory(
-            ctx,
-            title="Oh no! You've encountered an error!",
-            description=error_message,
-            timestamp=ctx.message.created_at
+            ctx, title="Oh no! You've encountered an error!", description=error_message, timestamp=ctx.message.created_at
         )
         embed.set_footer(text=f"Invoked by {ctx.author}", icon_url=ctx.author.display_avatar.url)
 

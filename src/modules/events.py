@@ -63,6 +63,7 @@ def resize_to_limit(image: BytesIO, limit: int = 8_000_000) -> BytesIO:
 
 class DiscordEventListener(BaseExtension):
     def __init__(self, bot: Bot) -> None:
+        super().__init__(bot)
         self.bot: Bot = bot
 
         self._is_running: bool = False
