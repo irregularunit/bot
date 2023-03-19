@@ -11,8 +11,8 @@ import discord
 from discord.ext import commands, tasks
 from PIL import Image, ImageSequence
 
-from models import Guild, User
-from utils import check_owo_command, type_of
+from models import Guild
+from utils import BaseExtension, check_owo_command, type_of
 
 if TYPE_CHECKING:
     from src.bot import Bot
@@ -61,8 +61,9 @@ def resize_to_limit(image: BytesIO, limit: int = 8_000_000) -> BytesIO:
     return image
 
 
-class DiscordEventListener(commands.Cog):
+class DiscordEventListener(BaseExtension):
     def __init__(self, bot: Bot) -> None:
+        super().__init__(bot)
         self.bot: Bot = bot
 
         self._is_running: bool = False
@@ -112,8 +113,7 @@ class DiscordEventListener(commands.Cog):
         try:
             message: discord.Message = await self.cached_channel.send(
                 content=f"{item.name} ({item.user_id})",
-                file=discord.File(BytesIO(item.image),
-                filename=f"{uuid.uuid4()}.{type_of(item.image)}"),
+                file=discord.File(BytesIO(item.image), filename=f"{uuid.uuid4()}.{type_of(item.image)}"),
             )
         except Exception as exc:
             log.exception("Failed to send message to channel", exc_info=exc)
@@ -218,7 +218,7 @@ class DiscordEventListener(commands.Cog):
                 # Why? I don't know. But we don't want to insert the same data twice.
                 return
 
-            await self.bot.redis.setex(f"status:{after.id}", 60, 3)
+            await self.bot.redis.setex(f"status:{after.id}", 0, 3)
             query: str = "INSERT INTO presence_history (uid, status) VALUES ($1, $2)"
             await self.bot.safe_connection.execute(query, after.id, self._presence_map.get(after.status, "Offline"))
 
@@ -230,7 +230,7 @@ class DiscordEventListener(commands.Cog):
         await self.bot.redis.setex(f"{word}:{uid}", 60, time)
 
         _log: Logger = log.getChild("insert_counting")
-        _log.info("Inserting %s for %s at %s", word, uid, message.created_at.timestamp())
+        _log.debug("Inserting %s for %s at %s", word, uid, message.created_at.timestamp())
 
         await self.bot.safe_connection.execute(
             "INSERT INTO owo_counting (uid, word, created_at) VALUES ($1, $2, $3)",

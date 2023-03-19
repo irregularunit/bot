@@ -9,6 +9,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    Generator,
     Iterator,
     Mapping,
     Optional,
@@ -142,19 +143,13 @@ class Bot(commands.Bot):
     @classmethod
     @discord.utils.copy_doc(asyncpg.create_pool)
     async def create_pool(cls: Type[BotT], *, dsn: str, **kwargs: Any) -> Optional[Pool[Record]]:
-        def serializer(obj: Any) -> str:
-            return discord.utils._to_json(obj)
-
-        def deserializer(data: str) -> Any:
-            return discord.utils._from_json(data)
-
         prep_init: Any | None = kwargs.pop("init", None)
 
         async def init(connection: Connection[Any]) -> None:
             await connection.set_type_codec(
-                "json",
-                encoder=serializer,
-                decoder=deserializer,
+                "jsonb",
+                encoder=lambda obj: discord.utils._to_json(obj),
+                decoder=lambda data: discord.utils._from_json(data),
                 schema="pg_catalog",
                 format="text",
             )
@@ -168,6 +163,8 @@ class Bot(commands.Bot):
         ws_params: dict[str, Any] = {"initial": True, "shard_id": self.shard_id}
         while not self.is_closed():
             try:
+                # Here we are trying to patch the gateway connection to
+                # use our own implementation using a mobile user-agent.
                 coro: Any = Gateway.from_client(self, **ws_params)
                 self.ws = await asyncio.wait_for(coro, timeout=60.0)
                 ws_params["initial"] = False
@@ -233,6 +230,11 @@ class Bot(commands.Bot):
     async def start(self, *args: Any, **kwargs: Any) -> None:
         await super().start(token=self.config.token, *args, **kwargs)
 
+    @staticmethod
+    def chunker(item: str, *, size: int = 2000) -> Generator[str, None, None]:
+        for i in range(0, len(item), size):
+            yield item[i : i + size]
+
     def iter_extensions(self) -> Iterator[str]:
         extension: list[str] = [file for file in os.listdir("src/modules") if not file.startswith("_")]
         for file in extension:
@@ -266,7 +268,6 @@ class Bot(commands.Bot):
                 _log.exception(f"Failed to load {marked_as} {item!r}", exc_info=exc)
 
         await self.redis.connect()
-        await self.load_extension("jishaku")
 
         self.cached_guilds = await self.manager.get_all_guilds()
         self.cached_users = await self.manager.get_all_users()
