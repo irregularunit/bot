@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS presence_history (
     id BIGSERIAL PRIMARY KEY NOT NULL,
     uid BIGINT NOT NULL,
     status TEXT NOT NULL,
+    status_before TEXT NOT NULL,
     changed_at TIMESTAMP WITH TIME ZONE DEFAULT (now() AT TIME ZONE 'UTC') NOT NULL
 );
 

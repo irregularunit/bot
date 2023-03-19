@@ -104,9 +104,7 @@ class DiscordEventListener(BaseExtension):
             return
 
         self.cached_channel = self.cached_channel or await self.bot.fetch_channel(1086710517323804924)  # type: ignore
-        if TYPE_CHECKING:
-            # It's a lie but otherwise the linter would complain.
-            assert isinstance(self.cached_channel, discord.TextChannel)
+        assert isinstance(self.cached_channel, discord.TextChannel)
 
         self._is_running = True
         item: SendQueueItem = self._send_queue.pop(0)
@@ -219,8 +217,10 @@ class DiscordEventListener(BaseExtension):
                 return
 
             await self.bot.redis.setex(f"status:{after.id}", 0, 3)
-            query: str = "INSERT INTO presence_history (uid, status) VALUES ($1, $2)"
-            await self.bot.safe_connection.execute(query, after.id, self._presence_map.get(after.status, "Offline"))
+            query: str = "INSERT INTO presence_history (uid, status, status_before) VALUES ($1, $2, $3)"
+            await self.bot.safe_connection.execute(
+                query, after.id, self._presence_map.get(after.status, "Offline"), self._presence_map.get(before.status, "Offline")
+            )
 
     async def insert_counting(self, uid: int, message: discord.Message, word: str, time: int) -> None:
         if await self.bot.redis.get(f"{word}:{uid}"):

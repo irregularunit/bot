@@ -72,9 +72,13 @@ class ModelManager:
         RETURNING *
         """
         record: Record | None = await self.pool.fetchrow(query, user_id)
-        if TYPE_CHECKING:
-            assert record is not None, "Failed to create user"
-
+        
+        if not record:
+            maybe_user: User | None = await self.get_user(user_id)
+            if not maybe_user:
+                raise UserFeedbackExceptionFactory.create("Failed to create user", ExceptionLevel.ERROR)
+            return maybe_user
+        
         return User.from_record(record)
 
     async def get_user(self, user_id: int) -> Optional[User]:
@@ -110,9 +114,12 @@ class ModelManager:
         """
         record: Record | None = await self.pool.fetchrow(query, guild_id)
 
-        if TYPE_CHECKING:
-            assert record is not None, "Failed to create guild"
-
+        if not record:
+            maybe_guild: Guild | None =  await self.get_guild(guild_id)
+            if not maybe_guild:
+                raise UserFeedbackExceptionFactory.create("Failed to create guild", ExceptionLevel.ERROR)
+            return maybe_guild
+        
         instance: Guild = Guild(
             id=record["gid"],
             prefixes=["pls", "pls "],

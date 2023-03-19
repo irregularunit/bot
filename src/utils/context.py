@@ -32,9 +32,8 @@ class Context(commands.Context["Bot"]):
     def clean_prefix(self) -> str:
         repl: str = f"@{self.me.display_name}".replace("\\", r"\\")
         pattern: re.Pattern[str] = re.compile(rf" < @!?{self.me.id}>")
-        if TYPE_CHECKING:
-            assert self.prefix is not None, "typechecking grrr"
 
+        assert self.prefix is not None
         return pattern.sub(repl, self.prefix)
 
     @property
@@ -75,7 +74,7 @@ class Context(commands.Context["Bot"]):
                 self.message.reference and self.message.reference.resolved
             )
             if isinstance(resolved_message, discord.DeletedReferencedMessage):
-                # Just to make the linter happy *pat pat*
+                # *pat pat*
                 resolved_message = None
 
             return await (resolved_message.reply if resolved_message else self.send)(
