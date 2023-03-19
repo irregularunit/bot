@@ -219,8 +219,10 @@ class DiscordEventListener(BaseExtension):
                 return
 
             await self.bot.redis.setex(f"status:{after.id}", 0, 3)
-            query: str = "INSERT INTO presence_history (uid, status) VALUES ($1, $2)"
-            await self.bot.safe_connection.execute(query, after.id, self._presence_map.get(after.status, "Offline"))
+            query: str = "INSERT INTO presence_history (uid, status, status_before) VALUES ($1, $2, $3)"
+            await self.bot.safe_connection.execute(
+                query, after.id, self._presence_map.get(after.status, "Offline"), self._presence_map.get(before.status, "Offline")
+            )
 
     async def insert_counting(self, uid: int, message: discord.Message, word: str, time: int) -> None:
         if await self.bot.redis.get(f"{word}:{uid}"):
