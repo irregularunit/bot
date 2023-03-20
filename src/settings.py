@@ -1,6 +1,6 @@
 from collections import deque
 from logging import Logger, getLogger
-from typing import TYPE_CHECKING, AbstractSet, Any, Generator, Protocol, Type, runtime_checkable
+from typing import AbstractSet, Any, Generator, Type
 
 import discord
 from pydantic import BaseSettings
@@ -27,10 +27,12 @@ class Config(BaseSettings):
 
     token: str
     owner_ids: list[int]
-
     log_level: str = "INFO"
-    color: int = 0xF8B695  # stolen from https://imagecolorpicker.com/
     client_user: int = 1054123882384212078
+
+    # shamelessly stolen from
+    # https://htmlcolorcodes.com/colors/shades-of-blue/
+    color: int = 0x0096FF
 
     @property
     def psql(self) -> str:
@@ -72,8 +74,7 @@ class Config(BaseSettings):
 
         @classmethod
         def prepare_field(cls, field: ModelField) -> None:
-            if TYPE_CHECKING:
-                env_names: list[str] | AbstractSet[str]
+            env_names: list[str] | AbstractSet[str]
 
             field_info_from_config: dict[str, Any] = cls.get_field_info(field.name)
             env: Any | None = field_info_from_config.get("env") or field.field_info.extra.get("env")

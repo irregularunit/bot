@@ -17,10 +17,22 @@ log: Logger = getLogger(__name__)
 
 
 @dataclass
-class User:
+class Model:
     id: int
-    timezone: str
     created_at: datetime
+
+    @classmethod
+    def from_record(cls: Type[Model], record: Record) -> ...:
+        raise NotImplementedError
+
+    @property
+    def mention(self) -> str:
+        return f"<@{self.id}>"
+
+
+@dataclass
+class User(Model):
+    timezone: str
 
     @classmethod
     def from_record(cls: Type[User], record: Record) -> User:
@@ -30,18 +42,12 @@ class User:
             created_at=record["created_at"],
         )
 
-    @property
-    def mention(self) -> str:
-        return f"<@{self.id}>"
-
 
 @dataclass
-class Guild:
-    id: int
+class Guild(Model):
     prefixes: list[str]
     owo_prefix: str
     owo_counting: bool
-    created_at: datetime
 
     @classmethod
     def from_record(cls: Type[Guild], record: Record) -> Guild:
@@ -52,10 +58,6 @@ class Guild:
             owo_counting=record["owo_counting"],
             created_at=record["created_at"],
         )
-
-    @property
-    def mention(self) -> str:
-        return f"<@{self.id}>"
 
 
 class ModelManager:
@@ -70,9 +72,13 @@ class ModelManager:
         RETURNING *
         """
         record: Record | None = await self.pool.fetchrow(query, user_id)
-        if TYPE_CHECKING:
-            assert record is not None, "Failed to create user"
-
+        
+        if not record:
+            maybe_user: User | None = await self.get_user(user_id)
+            if not maybe_user:
+                raise UserFeedbackExceptionFactory.create("Failed to create user", ExceptionLevel.ERROR)
+            return maybe_user
+        
         return User.from_record(record)
 
     async def get_user(self, user_id: int) -> Optional[User]:
@@ -108,15 +114,15 @@ class ModelManager:
         """
         record: Record | None = await self.pool.fetchrow(query, guild_id)
 
-        if TYPE_CHECKING:
-            assert record is not None, "Failed to create guild"
-
+        if not record:
+            maybe_guild: Guild | None =  await self.get_guild(guild_id)
+            if not maybe_guild:
+                raise UserFeedbackExceptionFactory.create("Failed to create guild", ExceptionLevel.ERROR)
+            return maybe_guild
+        
         instance: Guild = Guild(
             id=record["gid"],
-            prefixes=[
-                "pls",
-                "pls ",
-            ],
+            prefixes=["pls", "pls "],
             owo_prefix=record["owo_prefix"],
             owo_counting=record["owo_counting"],
             created_at=record["created_at"],

@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS presence_history (
     id BIGSERIAL PRIMARY KEY NOT NULL,
     uid BIGINT NOT NULL,
     status TEXT NOT NULL,
+    status_before TEXT NOT NULL,
     changed_at TIMESTAMP WITH TIME ZONE DEFAULT (now() AT TIME ZONE 'UTC') NOT NULL
 );
 
@@ -45,6 +46,32 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION limit_avatar_history()
+RETURNS TRIGGER AS $$
+BEGIN
+    DELETE FROM avatar_history
+    WHERE uid = NEW.uid
+    AND changed_at < (
+        SELECT changed_at FROM avatar_history
+        WHERE uid = NEW.uid
+        ORDER BY changed_at DESC
+        OFFSET 24
+        LIMIT 1
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'limit_avatar_history') THEN
+        CREATE TRIGGER limit_avatar_history
+        AFTER INSERT ON avatar_history
+        FOR EACH ROW EXECUTE PROCEDURE limit_avatar_history();
+    END IF;
+END;
+$$;
 
 CREATE TABLE IF NOT EXISTS guilds (
     gid BIGINT PRIMARY KEY NOT NULL,

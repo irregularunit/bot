@@ -6,7 +6,7 @@ from typing import Callable
 
 from discord.ext.commands import CommandError
 
-__all__: tuple[str, ...] = ("ExceptionLevel", "UserFeedbackExceptionFactory")
+__all__: tuple[str, ...] = ("ExceptionLevel", "UserFeedbackExceptionFactory", "UserFeedbackException")
 
 
 class ExceptionLevel(Enum):
@@ -38,7 +38,7 @@ class UserFeedbackException(CommandError):
         self.formatters: tuple[Callable[[str], str], ...] = formatters
         super().__init__(message)
 
-    def __str__(self) -> str:
+    def to_string(self) -> str:
         formatted_message: str = self.message
         for formatter in self.formatters:
             formatted_message = formatter(formatted_message)

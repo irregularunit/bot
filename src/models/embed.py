@@ -4,19 +4,22 @@ from typing import TYPE_CHECKING, Any, Iterable, Optional, Self, Type
 
 from discord import Colour, Embed, Member, Message, User
 
+from settings import Config
+
 if TYPE_CHECKING:
     from datetime import datetime
 
     from src.utils import Context
 
 __all__: tuple[str, ...] = ("EmbedBuilder",)
+config: Config = Config()  # type: ignore
 
 
 class EmbedBuilder(Embed):
     def __init__(
         self,
         *,
-        colour: Optional[Colour | int] = 0xF8B695,
+        colour: Optional[Colour | int] = config.color,
         timestamp: Optional[datetime] = None,
         fields: Iterable[tuple[str, str, bool]] = (),
         **kwargs: Any,
@@ -31,7 +34,7 @@ class EmbedBuilder(Embed):
         for key, value in embed.to_dict().items():
             setattr(instance, key, value)
 
-        instance._colour = kwargs.get("colour", 0xF8B695)
+        instance._colour = kwargs.get("colour", config.color)
 
         return instance
 
@@ -39,8 +42,6 @@ class EmbedBuilder(Embed):
     def from_message(
         cls: Type[Self],
         message: Message,
-        *,
-        fields: Iterable[tuple[str, str, bool]] = (),
         **kwargs: Any,
     ) -> Self:
         if embeds := message.embeds:
@@ -48,7 +49,7 @@ class EmbedBuilder(Embed):
             return cls.to_factory(embeds[0], **kwargs)
 
         author: User | Member = message.author
-        instance = cls(**kwargs, fields=fields)
+        instance = cls(**kwargs)
 
         instance.description = message.content
         instance.set_author(name=author.display_name, icon_url=author.display_avatar)
