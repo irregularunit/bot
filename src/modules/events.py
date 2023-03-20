@@ -257,9 +257,9 @@ class DiscordEventListener(BaseExtension):
         content: str = message.content.lower()
 
         if content.startswith(current_guild.owo_prefix):
-            maybe_safe: str = content[len(current_guild.owo_prefix) :].strip().split(" ")[0]
+            maybe_safe: str = content[len(current_guild.owo_prefix) :].strip().split(" ")[0].lower()
         elif content in self.__owo_std_commands:
-            maybe_safe = content[3:].strip().split(" ")[0]
+            maybe_safe = content[3:].strip().split(" ")[0].lower()
         else:
             # The message doesn't start with the prefix, so we don't care.
             return
