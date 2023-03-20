@@ -1,12 +1,7 @@
 #!/bin/bash
 
-if [ ! -x "$0" ]; then
-  echo "Error: Script does not have execution permission. Please run 'chmod +x $0' to grant execution permission."
-  exit 1
-fi
-
 if [ ! -d "./.venv" ]; then
-  echo "Error: Virtual environment not found. Please create a virtual environment in the .venv directory."
+  echo "Error: Virtual environment not found. Please create a virtual environment."
   exit 1
 fi
 
