@@ -146,6 +146,10 @@ class BaseManager:
 
             return tables
         
+    async def fetchval(self, query: str, *args: Any, timeout: Optional[float] = 10.0, **kwargs: Any) -> Any:
+        async with self.acquire_connection() as connection:
+            return await connection.fetchval(query, *args, timeout=timeout, **kwargs)
+
 
 class PostgresBridge(BaseManager):
     __slots__: tuple[str, ...] = ("pool", "timeout")

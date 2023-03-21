@@ -1,4 +1,5 @@
 import logging
+from io import BytesIO
 from contextlib import AbstractContextManager
 from datetime import timedelta
 from inspect import isawaitable
@@ -21,6 +22,7 @@ from typing import (
 
 import coloredlogs
 import magic
+from PIL import Image, ImageSequence
 
 T = TypeVar("T")
 
@@ -35,6 +37,7 @@ __all__: tuple[str, ...] = (
     "setup_logging",
     "num_to_emote",
     "emote_to_num",
+    "resize_to_limit",
 )
 
 
@@ -196,3 +199,36 @@ def num_to_emote(num: int) -> str:
 def emote_to_num(emote: str) -> int:
     """Converts an emoji to a number. range is 0-9."""
     return ord(emote[0]) - 48
+
+
+def resize_to_limit(image: BytesIO, limit: int = 8_000_000) -> BytesIO:
+    current_size: int = image.getbuffer().nbytes
+
+    while current_size > limit:
+        with Image.open(image) as canvas:
+            image = BytesIO()
+            if canvas.format in ("PNG", "JPEG", "JPG", "WEBP"):
+                canvas = canvas.resize([i // 2 for i in canvas.size], resample=Image.BICUBIC)  # type: ignore
+                canvas.save(image, format=canvas.format)
+            elif canvas.format == "GIF":
+                durations, frames = [], []
+                for frame in ImageSequence.Iterator(canvas):
+                    durations.append(frame.info.get("duration", 0))
+                    frames.append(frame.resize([i // 2 for i in frame.size], resample=Image.BICUBIC))
+
+                frames[0].save(
+                    image,
+                    save_all=True,
+                    append_images=frames[1:],
+                    format="gif",
+                    version=canvas.info.get("version", "GIF89a"),
+                    duration=durations,
+                    loop=0,
+                    background=canvas.info.get("background", 0),
+                    palette=canvas.getpalette(),
+                )
+
+            image.seek(0)
+            current_size = image.getbuffer().nbytes
+
+    return image
