@@ -17,4 +17,4 @@ Please note that this license does not provide any warranties or guarantees and 
 
 # Disclaimer
 
-Please note that while Irregular Unit has made every effort to ensure the accuracy and reliability of Bot, they cannot be held responsible for any errors, omissions, or damages that may result from the use of this bot. By using Bot, you agree to indemnify and hold Irregular Unit harmless from any and all claims, damages, losses, or expenses that may arise from your use of this bot.
+Please note that while "Irregular Unit" has made every effort to ensure the accuracy and reliability of "Bot", they cannot be held responsible for any errors, omissions, or damages that may result from the use of this bot. By using "Bot", you agree to indemnify and hold "Irregular Unit" harmless from any and all claims, damages, losses, or expenses that may arise from your use of this bot.
