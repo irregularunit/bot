@@ -24,6 +24,8 @@ from jishaku.paginators import PaginatorInterface, WrappedPaginator, use_file_ch
 from jishaku.repl import AsyncCodeExecutor
 from jishaku.repl.repl_builtins import get_var_dict_from_ctx
 
+from modules import EmbedBuilder
+
 try:
     import psutil  # type: ignore
 except ImportError:
@@ -53,13 +55,15 @@ class Jishaku(BaseExtension, *STANDARD_FEATURES, *OPTIONAL_FEATURES):
         if isinstance(result, discord.Message):
             return await ctx.send(f"<Message <{result.jump_url}>>")
 
-        elif isinstance(result, discord.File):
-            return await ctx.send(file=result)
+        elif isinstance(result, discord.File) or isinstance(result, io.BytesIO):
+            return await ctx.send(
+                file=result if isinstance(result, discord.File) else discord.File(result, filename="output.png")
+            )
 
         elif isinstance(result, PaginatorInterface):
             return await result.send_to(ctx)
 
-        elif isinstance(result, discord.Embed):
+        elif isinstance(result, discord.Embed) or isinstance(result, EmbedBuilder):
             return await ctx.send(embed=result)
 
         if not isinstance(result, str):
