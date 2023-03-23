@@ -1,3 +1,10 @@
+"""
+ * Bot for Discord
+ * Copyright (C) 2023 Irregular Unit
+ * This software is licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+ * For more information, see README.md and LICENSE
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -9,10 +16,9 @@ from typing import TYPE_CHECKING, NamedTuple, Optional, Sequence
 
 import discord
 from discord.ext import commands, tasks
-from PIL import Image, ImageSequence
 
 from models import Guild
-from utils import BaseExtension, check_owo_command, type_of
+from utils import BaseExtension, check_owo_command, type_of, resize_to_limit
 
 if TYPE_CHECKING:
     from src.bot import Bot
@@ -26,39 +32,6 @@ class SendQueueItem(NamedTuple):
     user_id: int
     name: str | None
     image: bytes
-
-
-def resize_to_limit(image: BytesIO, limit: int = 8_000_000) -> BytesIO:
-    current_size: int = image.getbuffer().nbytes
-
-    while current_size > limit:
-        with Image.open(image) as canvas:
-            image = BytesIO()
-            if canvas.format in ("PNG", "JPEG", "JPG", "WEBP"):
-                canvas = canvas.resize([i // 2 for i in canvas.size], resample=Image.BICUBIC)  # type: ignore
-                canvas.save(image, format=canvas.format)
-            elif canvas.format == "GIF":
-                durations, frames = [], []
-                for frame in ImageSequence.Iterator(canvas):
-                    durations.append(frame.info.get("duration", 0))
-                    frames.append(frame.resize([i // 2 for i in frame.size], resample=Image.BICUBIC))
-
-                frames[0].save(
-                    image,
-                    save_all=True,
-                    append_images=frames[1:],
-                    format="gif",
-                    version=canvas.info.get("version", "GIF89a"),
-                    duration=durations,
-                    loop=0,
-                    background=canvas.info.get("background", 0),
-                    palette=canvas.getpalette(),
-                )
-
-            image.seek(0)
-            current_size = image.getbuffer().nbytes
-
-    return image
 
 
 class DiscordEventListener(BaseExtension):

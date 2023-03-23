@@ -5,5 +5,6 @@
  * For more information, see README.md and LICENSE
 """
 
-from .aiopsql import *
-from .aioredis import *
+from .collage import CollageAvatarButton
+
+__all__: tuple[str, ...] = ("CollageAvatarButton",)

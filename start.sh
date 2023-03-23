@@ -1,12 +1,11 @@
 #!/bin/bash
-
-if [ ! -x "$0" ]; then
-  echo "Error: Script does not have execution permission. Please run 'chmod +x $0' to grant execution permission."
-  exit 1
-fi
+# * Bot for Discord
+# * Copyright (C) 2023 Irregular Unit
+# * This software is licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+# * For more information, see README.md and LICENSE
 
 if [ ! -d "./.venv" ]; then
-  echo "Error: Virtual environment not found. Please create a virtual environment in the .venv directory."
+  echo "Error: Virtual environment not found. Please create a virtual environment."
   exit 1
 fi
 

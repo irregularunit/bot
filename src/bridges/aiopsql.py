@@ -1,3 +1,10 @@
+"""
+ * Bot for Discord
+ * Copyright (C) 2023 Irregular Unit
+ * This software is licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+ * For more information, see README.md and LICENSE
+"""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -146,6 +153,10 @@ class BaseManager:
 
             return tables
         
+    async def fetchval(self, query: str, *args: Any, timeout: Optional[float] = 10.0, **kwargs: Any) -> Any:
+        async with self.acquire_connection() as connection:
+            return await connection.fetchval(query, *args, timeout=timeout, **kwargs)
+
 
 class PostgresBridge(BaseManager):
     __slots__: tuple[str, ...] = ("pool", "timeout")
