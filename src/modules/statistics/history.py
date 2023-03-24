@@ -57,12 +57,22 @@ class DiscordUserHistory(BaseExtension):
 
         embed: EmbedBuilder = (
             EmbedBuilder(
-                description=self.bot.description,
+                description=(
+                    """
+                    Our bot comes equipped with a variety of features to make 
+                    your server experience even better. With this valuable 
+                    information at your fingertips, you'll never miss a beat when 
+                    it comes to staying up-to-date with your community.
+
+                    Whether you're a seasoned Discord user or just starting out, 
+                    our bot is the perfect addition to any server.
+                    """
+                ),
                 fields=fields,
-                timestamp=self.bot.start_time,
             )
-            .set_author(name="About Storybook", icon_url=self.bot.user.display_avatar)
-            .set_footer(text="Made with ❤️ by irregularunit.")
+            .set_thumbnail(url=self.bot.user.display_avatar)
+            .set_author(name="🔍 Servant Informationcenter")
+            .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
         )
 
         await ctx.maybe_reply(embed=embed)
