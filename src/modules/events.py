@@ -36,7 +36,6 @@ class SendQueueItem(NamedTuple):
 
 class DiscordEventListener(BaseExtension):
     def __init__(self, bot: Bot) -> None:
-        super().__init__(bot)
         self.bot: Bot = bot
 
         self._is_running: bool = False

@@ -24,7 +24,6 @@ features = (DiscordUserHistory,)
 
 class Statistics(*features):
     def __init__(self, bot: Bot) -> None:
-        super().__init__(bot)
         self.bot: Bot = bot
 
     def __repr__(self) -> str:

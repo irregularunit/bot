@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 import os
-from asyncio import AbstractEventLoop, CancelledError, get_event_loop, run
+import asyncio
 from logging import Logger, getLogger
 from typing import TYPE_CHECKING
 
@@ -35,7 +35,7 @@ async def setup() -> tuple[Bot, Pool[Record], ClientSession]:
     setup_logging("INFO")
     prep_conf: Config = Config()  # type: ignore (my IDE doesn't get it)
 
-    loop: AbstractEventLoop = get_event_loop()
+    loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
     session: ClientSession = ClientSession()
 
     try:
@@ -66,5 +66,6 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    with suppress(KeyboardInterrupt, CancelledError, capture=False):
-        run(main())
+    with suppress(KeyboardInterrupt, asyncio.CancelledError, capture=False):
+        with asyncio.Runner() as runner:
+            runner.run(main())

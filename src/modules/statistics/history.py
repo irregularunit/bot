@@ -26,7 +26,6 @@ __all__: tuple[str, ...] = ("DiscordUserHistory",)
 
 class DiscordUserHistory(BaseExtension):
     def __init__(self, bot: Bot) -> None:
-        super().__init__(bot)
         self.bot: Bot = bot
 
     @commands.command(name="avatar", aliases=("av",))
