@@ -112,8 +112,8 @@ BEGIN
         INSERT INTO guild_prefixes (gid, prefix)
         SELECT NEW.gid, prefix
         FROM (
-            SELECT 'pls' AS prefix
-            UNION ALL SELECT 'pls '
+            SELECT 'uwu' AS prefix
+            UNION ALL SELECT 'uwu '
         ) AS default_prefixes;
     END IF;
     RETURN NEW;
