@@ -50,8 +50,8 @@ class DiscordUserHistory(BaseExtension):
         fields = (
             ("Python", python_version, True),
             ("discord.py", discord_version, True),
-            ("PostgreSQL", psql_version, True),
-            ("Lines of code", lines_of_code, True),
+            ("PostgreSQL", str(psql_version), True),
+            ("Lines of code", str(lines_of_code), True),
             ("Uptime", discord.utils.format_dt(self.bot.start_time, "R"), True),
             ("Latency", f"{self.bot.latency * 1000:.2f}ms", True),
         )
@@ -59,7 +59,7 @@ class DiscordUserHistory(BaseExtension):
         embed: EmbedBuilder = (
             EmbedBuilder(
                 description=self.bot.description,
-                fields=fields,  # type: ignore
+                fields=fields,
                 timestamp=self.bot.start_time,
             )
             .set_author(name="About Storybook", icon_url=self.bot.user.display_avatar)
