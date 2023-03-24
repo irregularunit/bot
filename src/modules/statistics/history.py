@@ -14,8 +14,8 @@ import discord
 from discord.ext import commands
 
 from models import EmbedBuilder
-from views import AvatarHistoryView
 from utils import BaseExtension, MemberConverter, count_source_lines
+from views import AvatarHistoryView
 
 if TYPE_CHECKING:
     from bot import Bot
@@ -54,7 +54,7 @@ class DiscordUserHistory(BaseExtension):
             ("Uptime", discord.utils.format_dt(self.bot.start_time, "R"), True),
             ("Latency", f"{self.bot.latency * 1000:.2f}ms", True),
         )
-        
+
         embed: EmbedBuilder = (
             EmbedBuilder(
                 description=self.bot.description,

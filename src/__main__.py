@@ -7,8 +7,8 @@
 
 from __future__ import annotations
 
-import os
 import asyncio
+import os
 from logging import Logger, getLogger
 from typing import TYPE_CHECKING
 

@@ -18,7 +18,7 @@ import discord
 from discord.ext import commands, tasks
 
 from models import Guild
-from utils import BaseExtension, check_owo_command, type_of, resize_to_limit
+from utils import BaseExtension, check_owo_command, resize_to_limit, type_of
 
 if TYPE_CHECKING:
     from src.bot import Bot
@@ -191,7 +191,10 @@ class DiscordEventListener(BaseExtension):
             await self.bot.redis.setex(f"status:{after.id}", 0, 3)
             query: str = "INSERT INTO presence_history (uid, status, status_before) VALUES ($1, $2, $3)"
             await self.bot.safe_connection.execute(
-                query, after.id, self._presence_map.get(after.status, "Offline"), self._presence_map.get(before.status, "Offline")
+                query,
+                after.id,
+                self._presence_map.get(after.status, "Offline"),
+                self._presence_map.get(before.status, "Offline"),
             )
 
     async def insert_counting(self, uid: int, message: discord.Message, word: str, time: int) -> None:
