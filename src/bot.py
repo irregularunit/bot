@@ -258,7 +258,7 @@ class Bot(commands.Bot):
         for item in list(self.iter_extensions()) + list(self.iter_schemas()):
             marked_as: str = "extension" if isinstance(item, str) else "schema"
             try:
-                # Honestly, Idk why I just made it like this
+                # Honestly, Idk why I made it like this
                 if isinstance(item, str):
                     await self.load_extension(item)
                 elif isinstance(item, pathlib.Path):

@@ -25,8 +25,8 @@ class BaseExtension(commands.Cog):
         self.bot: Bot = bot
         self.id: int = int(str(int(uuid.uuid4()))[:20])
 
-        next_in_mro = next(iter(self.__class__.__mro__))
-        if hasattr(next_in_mro, "__jsk_instance__") or isinstance(next_in_mro, self.__class__):
+        pop_mro = next(iter(self.__class__.__mro__))
+        if issubclass(pop_mro, self.__class__) or hasattr(pop_mro, "__jsk_instance__"):
             kwargs["bot"] = bot
 
         super().__init__(*args, **kwargs)
