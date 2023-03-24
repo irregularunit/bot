@@ -64,6 +64,16 @@ class AvatarHistoryView(View):
     
     def setup_by_index(self, index: int) -> EmbedBuilder:
         length_hint: int = len(self.cached_avatars)
+
+        # The modulo operator (%) is being used to ensure that the 
+        # index variable stays within the bounds of the self.cached_avatars list.
+        
+        # Why is this useful? Consider the case where self.index is 
+        # larger than length_hint. Without the modulo operation, we would end up 
+        # with an index that's out of range and would raise an IndexError. However, 
+        # by using the modulo operation, we effectively "wrap around" to the 
+        # beginning of the list and start again from the beginning. This ensures 
+        # that we always have a valid index within the bounds of the list.
         index = self.index % length_hint
 
         self.previous_avatar.disabled = bool(index == 0)
