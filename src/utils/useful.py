@@ -96,6 +96,12 @@ def humanize_timedelta(delta: timedelta) -> str:
 
 class suppress(AbstractContextManager[None]):
     """
+    Don't use this unless you know what you're doing. !!!
+    It's super slow just as contextlib.suppress is. And should
+    not be used in contexts where user response is expected.
+
+    Its about 3x slower than just using a try except block.
+
     Note:
     -----
     This should NOT use `return` within the context of `suppress`.

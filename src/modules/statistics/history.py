@@ -112,12 +112,13 @@ class DiscordUserHistory(BaseExtension):
         *,
         member: discord.Member = commands.param(default=None, converter=MemberConverter(), displayed_default="You"),
     ) -> Optional[discord.Message]:
-        user = member or ctx.author
+        user: discord.Member = member or ctx.author
+        
         cal = CountingCalender(user.id)
-        query = cal.struct_query()
+        query: str = cal.struct_query()
 
         counting_history = await self.bot.safe_connection.fetch(query)
-        embed = (
+        embed: EmbedBuilder = (
             EmbedBuilder(
                 description=f"Total score: `{self.format_count(counting_history[8]['count'])}`",
             )
