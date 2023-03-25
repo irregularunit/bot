@@ -52,7 +52,6 @@ class Error:
 
 class DiscordErrorHandler(BaseExtension):
     def __init__(self, bot: Bot) -> None:
-        super().__init__(bot)
         self.bot: Bot = bot
         self.flyweight: Dict[str, Error] = {}
 

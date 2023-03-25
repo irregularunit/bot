@@ -24,7 +24,7 @@ from jishaku.paginators import PaginatorInterface, WrappedPaginator, use_file_ch
 from jishaku.repl import AsyncCodeExecutor
 from jishaku.repl.repl_builtins import get_var_dict_from_ctx
 
-from modules import EmbedBuilder
+from models import EmbedBuilder
 
 try:
     import psutil  # type: ignore

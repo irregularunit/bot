@@ -6,10 +6,10 @@
 """
 
 import logging
-from io import BytesIO
 from contextlib import AbstractContextManager
 from datetime import timedelta
 from inspect import isawaitable
+from io import BytesIO
 from pathlib import Path
 from types import TracebackType
 from typing import (
