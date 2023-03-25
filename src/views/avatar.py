@@ -13,6 +13,7 @@ import discord
 from discord.ui import View
 
 from models import EmbedBuilder
+
 from .buttons import CollageAvatarButton
 
 if TYPE_CHECKING:
@@ -61,9 +62,19 @@ class AvatarHistoryView(View):
 
         self.cached_avatars = ret
         return ret
-    
+
     def setup_by_index(self, index: int) -> EmbedBuilder:
         length_hint: int = len(self.cached_avatars)
+
+        # The modulo operator (%) is being used to ensure that the
+        # index variable stays within the bounds of the self.cached_avatars list.
+
+        # Why is this useful? Consider the case where self.index is
+        # larger than length_hint. Without the modulo operation, we would end up
+        # with an index that's out of range and would raise an IndexError. However,
+        # by using the modulo operation, we effectively "wrap around" to the
+        # beginning of the list and start again from the beginning. This ensures
+        # that we always have a valid index within the bounds of the list.
         index = self.index % length_hint
 
         self.previous_avatar.disabled = bool(index == 0)
@@ -71,14 +82,12 @@ class AvatarHistoryView(View):
 
         embed: EmbedBuilder = (
             EmbedBuilder.factory(self.ctx)
-            .set_author(
-                name=f"{self.member or self.ctx.author}'s avatar history",
-                icon_url=self.ctx.me.display_avatar)
+            .set_author(name=f"{self.member or self.ctx.author}'s avatar history", icon_url=self.ctx.me.display_avatar)
             .set_image(url=self.cached_avatars[index])
             .set_footer(text=f"Avatar {index + 1} of {length_hint}")
         )
         return embed
-    
+
     async def edit_to_current_index(self, interaction: discord.Interaction) -> None:
         element: EmbedBuilder = self.setup_by_index(self.index)
 
@@ -86,7 +95,7 @@ class AvatarHistoryView(View):
             self.message = await interaction.response.edit_message(embed=element, view=self)
         else:
             raise TypeError(f"Expected EmbedBuilder, got {type(element)!r}")
-    
+
     @discord.ui.button(label="Previous", style=discord.ButtonStyle.secondary)
     async def previous_avatar(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         self.index -= 1
@@ -104,10 +113,10 @@ class AvatarHistoryView(View):
         if not self.cached_avatars:
             return await self.ctx.send(
                 embed=EmbedBuilder.factory(
-                self.ctx,
-                title=f"{self.member or self.ctx.author}'s has no avatar histor",
-            ).set_image(url=self.member.display_avatar)
-        )
+                    self.ctx,
+                    title=f"{self.member or self.ctx.author}'s has no avatar histor",
+                ).set_image(url=self.member.display_avatar)
+            )
 
         embed: EmbedBuilder = self.setup_by_index(self.index)
         self.message = await self.ctx.send(embed=embed, view=self)

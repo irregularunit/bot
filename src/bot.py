@@ -46,6 +46,7 @@ if TYPE_CHECKING:
 BotT = TypeVar("BotT", bound="Bot")
 P = ParamSpec("P")
 T = TypeVar("T")
+API_VERSION: int = 10
 
 
 class Bot(commands.Bot):
@@ -123,7 +124,7 @@ class Bot(commands.Bot):
         await self.invoke(ctx)
 
     async def get_prefix(self, message: discord.Message) -> str | list[str]:
-        prefixes: list[str] = [f"<@!{self.user.id}> ", f"<@{self.user.id}> ", "pls ", "pls"]
+        prefixes: list[str] = [f"<@!{self.user.id}> ", f"<@{self.user.id}> ", "uwu ", "uwu"]
         if message.guild is None:
             # We're in a DM, which generally shouldn't happen. But
             # the type checker doesn't get that, so we have to do this.
@@ -258,7 +259,7 @@ class Bot(commands.Bot):
         for item in list(self.iter_extensions()) + list(self.iter_schemas()):
             marked_as: str = "extension" if isinstance(item, str) else "schema"
             try:
-                # Honestly, Idk why I just made it like this
+                # Honestly, Idk why I made it like this
                 if isinstance(item, str):
                     await self.load_extension(item)
                 elif isinstance(item, pathlib.Path):

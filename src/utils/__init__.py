@@ -5,6 +5,7 @@
  * For more information, see README.md and LICENSE
 """
 
+from .async_utils import *
 from .context import *
 from .converter import *
 from .extension import *
