@@ -7,14 +7,15 @@
 
 from __future__ import annotations
 
+import math
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import discord
 from discord.ext import commands
 
 from models import EmbedBuilder
-from utils import BaseExtension, MemberConverter, count_source_lines
+from utils import BaseExtension, CountingCalender, MemberConverter, count_source_lines
 from views import AvatarHistoryView
 
 if TYPE_CHECKING:
@@ -27,6 +28,10 @@ __all__: tuple[str, ...] = ("DiscordUserHistory",)
 class DiscordUserHistory(BaseExtension):
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
+
+    @staticmethod
+    def format_count(count: int) -> str:
+        return str(math.floor(count / 3))
 
     @commands.command(name="avatar", aliases=("av",))
     async def avatar_command(
@@ -96,6 +101,52 @@ class DiscordUserHistory(BaseExtension):
             .set_thumbnail(url=self.bot.user.display_avatar)
             .set_author(name="🔍 Servant Source Code")
             .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
+        )
+
+        await ctx.safe_send(embed=embed)
+
+    @commands.command(name="score", aliases=("sc",))
+    async def score_command(
+        self,
+        ctx: Context,
+        *,
+        member: discord.Member = commands.param(default=None, converter=MemberConverter(), displayed_default="You"),
+    ) -> Optional[discord.Message]:
+        user = member or ctx.author
+        cal = CountingCalender(user.id)
+        query = cal.struct_query()
+
+        counting_history = await self.bot.safe_connection.fetch(query)
+        embed = (
+            EmbedBuilder(
+                description=f"Total score: `{self.format_count(counting_history[8]['count'])}`",
+            )
+            .add_field(
+                name="__**Present Stats**__",
+                value=(
+                    f"""
+                    >>> Today: `{self.format_count(counting_history[0]["count"])}`
+                    This Week: `{self.format_count(counting_history[2]["count"])}`
+                    This Month: `{self.format_count(counting_history[4]["count"])}`
+                    This Year: `{self.format_count(counting_history[6]["count"])}`
+                    """
+                ),
+                inline=False,
+            )
+            .add_field(
+                name="__**Past Stats**__",
+                value=(
+                    f"""
+                    >>> Yesterday: `{self.format_count(counting_history[1]["count"])}`
+                    Last Week: `{self.format_count(counting_history[3]["count"])}`
+                    Last Month: `{self.format_count(counting_history[5]["count"])}`
+                    Last Year: `{self.format_count(counting_history[7]["count"])}`
+                    """
+                ),
+                inline=False,
+            )
+            .set_author(name=f"{user.display_name}'s Score")
+            .set_thumbnail(url=user.display_avatar)
         )
 
         await ctx.safe_send(embed=embed)
