@@ -1,10 +1,17 @@
+"""
+ * Bot for Discord
+ * Copyright (C) 2023 Irregular Unit
+ * This software is licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+ * For more information, see README.md and LICENSE
+"""
+
 from __future__ import annotations
 
 import asyncio
 import logging
 from abc import ABCMeta
 from contextlib import suppress
-from typing import Any, Callable, Coroutine, Generator, MutableSet, Optional, overload, Self
+from typing import Any, Callable, Coroutine, Generator, MutableSet, Optional, Self, overload
 from weakref import WeakSet
 
 __all__: tuple[str, ...] = ("AsyncInstance",)
@@ -16,7 +23,7 @@ CloseableType = Callable[[], Any | Coroutine[Any, Any, Any]]
 
 class Task:
     """A custom task store for asyncio tasks and futures.
-    
+
     Parameters
     ----------
     loop: :class:`asyncio.AbstractEventLoop`
@@ -127,6 +134,7 @@ class AsyncABCMeta(ABCMeta):
     """
     This metaclass ensures that the ``__ainit__`` method is a coroutine.
     """
+
     def __new__(
         cls,
         clsname: str,
@@ -160,6 +168,7 @@ class AsyncInstanceType(metaclass=AsyncABCMeta):
     loop: :class:`asyncio.AbstractEventLoop`
         The event loop to use for creating tasks and futures.
     """
+
     __slots__: tuple[str, ...] = ("_args", "_kwargs")
     _args: tuple[Any, ...]
     _kwargs: dict[str, Any]
@@ -199,6 +208,7 @@ class AsyncInstance(AsyncInstanceType):
     async classes. It provides a ``__await__`` method which calls
     ``__ainit__`` and returns the instance.
     """
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.__closed = False
         self._async_class_task_store: Task
@@ -275,3 +285,33 @@ class AsyncInstance(AsyncInstanceType):
             raise TypeError(
                 f"{cls.__name__} cannot override __await__",
             )
+
+
+if __name__ == "__main__":
+
+    async def test_async_class():
+        class Test(AsyncInstance):
+            async def __ainit__(self, a: int, b: int) -> None:
+                self.a = a
+                self.b = b
+
+            async def __adel__(self) -> None:
+                print("closing")
+
+            async def add(self) -> int:
+                return self.a + self.b
+
+            async def sub(self) -> int:
+                return self.a - self.b
+
+            def __repr__(self) -> str:
+                return f"{self.__class__.__name__}({self._args}, {self._kwargs})"
+
+        fixture = await Test(1, 2)
+        print(fixture)
+        print(await fixture.add())
+        print(await fixture.sub())
+        await fixture.close()
+        print("closed")
+
+    asyncio.run(test_async_class())
