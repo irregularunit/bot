@@ -38,7 +38,7 @@ class DiscordUserHistory(BaseExtension):
         await AvatarHistoryView(ctx, member=member or ctx.author).start()
 
     @commands.command(name="info", aliases=("about",))
-    async def source_command(self, ctx: Context) -> None:
+    async def info_command(self, ctx: Context) -> None:
         python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
         discord_version = discord.__version__
         lines_of_code = count_source_lines()
@@ -75,4 +75,27 @@ class DiscordUserHistory(BaseExtension):
             .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
         )
 
-        await ctx.maybe_reply(embed=embed)
+        await ctx.safe_send(embed=embed)
+
+    @commands.command(name="source", aliases=("src",))
+    async def source_command(self, ctx: Context) -> None:
+        # The following embed pattern is a personal preference.
+        # You can use any embed pattern you want. I just really
+        # like this one. It feels more readable to me.
+        embed: EmbedBuilder = (
+            EmbedBuilder(
+                description=(
+                    """
+                    Servant is an open-source bot for Discord. 
+                    You can find the source code on [github](https://github.com/irregularunit/bot).
+
+                    > Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+                    """
+                )
+            )
+            .set_thumbnail(url=self.bot.user.display_avatar)
+            .set_author(name="🔍 Servant Source Code")
+            .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
+        )
+
+        await ctx.safe_send(embed=embed)
