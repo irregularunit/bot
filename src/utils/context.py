@@ -16,8 +16,6 @@ from typing import TYPE_CHECKING, Any, Literal, Optional, Self, TypeVar
 import discord
 from discord.ext import commands
 
-from .useful import suppress
-
 if TYPE_CHECKING:
     from aiohttp import ClientSession
 
@@ -76,17 +74,18 @@ class Context(commands.Context["Bot"]):
     async def maybe_reply(
         self, content: Optional[str] = None, mention_author: bool = False, **kwargs: Any
     ) -> Optional[discord.Message]:
-        with suppress(discord.HTTPException, capture=False):
-            resolved_message: discord.Message | discord.DeletedReferencedMessage | None = (
-                self.message.reference and self.message.reference.resolved
-            )
-            if isinstance(resolved_message, discord.DeletedReferencedMessage):
-                # *pat pat*
-                resolved_message = None
-
+        resolved_message: discord.Message | discord.DeletedReferencedMessage | None = (
+            self.message.reference and self.message.reference.resolved
+        )
+        if isinstance(resolved_message, discord.DeletedReferencedMessage):
+            # *pat pat* - :3
+            resolved_message = None
+        try:
             return await (resolved_message.reply if resolved_message else self.send)(
-                content=content, mention_author=mention_author, **kwargs
+                content=content or "", mention_author=mention_author, **kwargs
             )
+        except discord.HTTPException:
+            return None
 
     async def copy_with(self, *, author=None, channel=None, **kwargs) -> Self:
         msg: discord.Message = copy.copy(self.message)
