@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from discord.ext import commands
 
-from utils import async_all
+from utils import async_all, for_all_callbacks
 
 from .history import DiscordUserHistory
 
@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 features = (DiscordUserHistory,)
 
 
+@for_all_callbacks(commands.cooldown(1, 3, commands.BucketType.user))
 class Statistics(*features):
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot

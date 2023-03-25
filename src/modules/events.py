@@ -121,7 +121,7 @@ class DiscordEventListener(BaseExtension):
                 avatar: bytes = await member.display_avatar.read()
             except discord.HTTPException as exc:
                 if exc.status in (403, 404):
-                    # Discord has forsaken us :( most likely due to a invalid avatar
+                    # Discord has forsaken us, most likely due to a invalid avatar
                     continue
                 elif exc.status >= 500:
                     # We pass on this error, it's cause by discord
@@ -231,6 +231,8 @@ class DiscordEventListener(BaseExtension):
 
         content: str = message.content.lower()
 
+        # I know we "should" use casefold, but it's not needed in
+        # this case, since we're only a subset of ASCII characters.
         if content.startswith(current_guild.owo_prefix):
             maybe_safe: str = content[len(current_guild.owo_prefix) :].strip().split(" ")[0].lower()
         elif content in self.__owo_std_commands:

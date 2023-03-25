@@ -298,20 +298,21 @@ if __name__ == "__main__":
             async def __adel__(self) -> None:
                 print("closing")
 
-            async def add(self) -> int:
+            def add(self) -> int:
                 return self.a + self.b
 
-            async def sub(self) -> int:
+            def sub(self) -> int:
                 return self.a - self.b
 
             def __repr__(self) -> str:
                 return f"{self.__class__.__name__}({self._args}, {self._kwargs})"
 
-        fixture = await Test(1, 2)
-        print(fixture)
-        print(await fixture.add())
-        print(await fixture.sub())
-        await fixture.close()
+        inst = await Test(1, 2)
+        print(inst)
+        inst.add()
+        inst.sub()
+        print(inst.__tasks__)
+        await inst.close()
         print("closed")
 
     asyncio.run(test_async_class())

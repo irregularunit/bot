@@ -41,6 +41,9 @@ class Config(BaseSettings):
     # https://htmlcolorcodes.com/colors/shades-of-blue/
     color: int = 0x0096FF
 
+    # emojis and other stuff
+    owo: str = "<:owo:1089249009073410099>"
+
     @property
     def psql(self) -> str:
         return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
