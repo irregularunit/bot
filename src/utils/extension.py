@@ -23,7 +23,6 @@ class BaseExtension(commands.Cog):
 
     def __init__(self, bot: Bot, *args: Any, **kwargs: Any) -> None:
         self.bot: Bot = bot
-        self.id: int = int(str(int(uuid.uuid4()))[:20])
 
         pop_mro = next(iter(self.__class__.__mro__))
         if issubclass(pop_mro, self.__class__) or hasattr(pop_mro, "__jsk_instance__"):

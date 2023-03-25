@@ -103,7 +103,7 @@ class DiscordUserHistory(BaseExtension):
             .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
         )
 
-        await ctx.safe_send(embed=embed)
+        await ctx.safe_send("A ⭐ is much appreciated!", embed=embed)
 
     @commands.command(name="score", aliases=("sc",))
     async def score_command(
@@ -113,7 +113,7 @@ class DiscordUserHistory(BaseExtension):
         member: discord.Member = commands.param(default=None, converter=MemberConverter(), displayed_default="You"),
     ) -> Optional[discord.Message]:
         user: discord.Member = member or ctx.author
-        
+
         cal = CountingCalender(user.id)
         query: str = cal.struct_query()
 

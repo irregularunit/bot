@@ -12,7 +12,7 @@ import zoneinfo
 
 import discord
 
-__all__: tuple[str, ...] = ("CountingCalender", "RANGES")
+__all__: tuple[str, ...] = ("CountingCalender",)
 
 
 RANGES = [
