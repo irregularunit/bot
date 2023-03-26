@@ -147,7 +147,7 @@ class DiscordUserHistory(BaseExtension):
     ) -> Optional[discord.Message]:
         user: discord.Member = member or ctx.author
 
-        cal = CountingCalender(user.id)
+        cal = CountingCalender(user.id, ctx.guild.id)
         query: str = cal.struct_query()
 
         counting_history = await self.bot.safe_connection.fetch(query)
@@ -192,9 +192,9 @@ class DiscordUserHistory(BaseExtension):
         Context,
         amount: int = 10,
         *,
-        time: str = commands.param(default="all", converter=TimeConverter(), displayed_default="all time")
+        time: str = commands.param(default="all time", converter=TimeConverter(), displayed_default="all time")
     ) -> Optional[discord.Message]:
-        cal = CountingCalender(ctx.author.id)
+        cal = CountingCalender(ctx.author.id, ctx.guild.id)
         query: str = cal.leaderboard_query(time, amount)
 
         leaderboard = await self.bot.safe_connection.fetch(query)

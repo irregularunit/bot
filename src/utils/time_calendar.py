@@ -59,8 +59,9 @@ class TimeConverter(commands.Converter[str]):
 
 
 class CountingCalender:
-    def __init__(self, user: int):
+    def __init__(self, user: int, guid: int):
         self.user: int = user
+        self.guid: int = guid
         self.time_mapping: dict[str, tuple[float, float]] = {}
         self.build_time_mapping()
 
@@ -110,12 +111,14 @@ class CountingCalender:
             if time == "all time":
                 inital_query.write(
                     f"SELECT COUNT(*) FROM owo_counting WHERE uid = {self.user} AND created_at <= to_timestamp({end})"
+                    f" AND gid = {self.guid}"
                 )
             else:
                 inital_query.write(
                     (
                         f"SELECT COUNT(*) FROM owo_counting WHERE uid = {self.user} AND "
                         f"created_at BETWEEN to_timestamp({start}) AND to_timestamp({end})"
+                        f" AND gid = {self.guid}"
                     )
                 )
             if time != "all time":
@@ -136,9 +139,6 @@ class CountingCalender:
         return (
             f"SELECT uid, COUNT(*) as count FROM owo_counting WHERE "
             f"created_at BETWEEN to_timestamp({start}) AND to_timestamp({end}) "
+            f"AND gid = {self.guid} "
             f"GROUP BY uid ORDER BY count DESC LIMIT {min(amount, 25)}"
         )
-    
-if __name__ == "__main__":
-    cal = CountingCalender(123456789)
-    print(cal.struct_query())
