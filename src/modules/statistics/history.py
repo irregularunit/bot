@@ -7,7 +7,9 @@
 
 from __future__ import annotations
 
+import inspect
 import math
+import os
 import sys
 from typing import TYPE_CHECKING, Optional
 
@@ -83,18 +85,19 @@ class DiscordUserHistory(BaseExtension):
         await ctx.safe_send(embed=embed)
 
     @commands.command(name="source", aliases=("src",))
-    async def source_command(self, ctx: Context) -> None:
-        # The following embed pattern is a personal preference.
-        # You can use any embed pattern you want. I just really
-        # like this one. It feels more readable to me.
+    async def source_command(self, ctx: Context, *, command: Optional[str] = None) -> Optional[discord.Message]:
+        URL = "https://github.com/irregularunit/bot"
+        LICENSE = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
+        BRANCH = "development"
+
         embed: EmbedBuilder = (
             EmbedBuilder(
                 description=(
-                    """
+                    F"""
                     Servant is an open-source bot for Discord. 
-                    You can find the source code on [github](https://github.com/irregularunit/bot).
+                    You can find the source code on [github]({URL}).
 
-                    > Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+                    > Licensed under [CC BY-NC-SA 4.0]({LICENSE}).
                     """
                 )
             )
@@ -103,7 +106,36 @@ class DiscordUserHistory(BaseExtension):
             .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
         )
 
-        await ctx.safe_send("A ⭐ is much appreciated!", embed=embed)
+        if command is None or command == "help":
+            return await ctx.safe_send("A ⭐ is much appreciated!", embed=embed)
+        else:
+            cmd = self.bot.get_command(command)
+            if cmd is None:
+                return await ctx.safe_send("🔍 The command you are looking for does not exist.", embed=embed)
+
+            src = getattr(cmd, "_original_callback", cmd.callback).__code__
+            filename = src.co_filename
+
+            if not filename:
+                return await ctx.safe_send("🔍 The command you are looking for cannot be found.", embed=embed)
+
+            (
+                lines,
+                start,
+            ) = inspect.getsourcelines(src)
+            end = start + len(lines) - 2
+            loc = os.path.realpath(filename).replace("\\", "/").split("/bot/")[1]
+
+            embed.add_field(
+                name=f"Source Code for {cmd.name}",
+                value=(
+                    f"""
+                    [View on Github]({URL}/blob/{BRANCH}/{loc}#L{start}-L{end})
+                    """
+                ),
+            )
+
+            return await ctx.safe_send(embed=embed)
 
     @commands.command(name="score", aliases=("sc",))
     async def score_command(

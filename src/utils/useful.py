@@ -5,7 +5,6 @@
  * For more information, see README.md and LICENSE
 """
 
-from ast import Call
 import logging
 from contextlib import AbstractContextManager
 from datetime import timedelta
@@ -30,10 +29,9 @@ from typing import (
 
 import coloredlogs
 import magic
-from PIL import Image, ImageSequence
 from discord.app_commands import Command as AppCommand
 from discord.ext.commands import Command as ExtCommand
-
+from PIL import Image, ImageSequence
 
 T = TypeVar("T")
 CommandType = ExtCommand | AppCommand
@@ -51,7 +49,7 @@ __all__: tuple[str, ...] = (
     "num_to_emote",
     "emote_to_num",
     "resize_to_limit",
-    "for_all_callbacks"
+    "for_all_callbacks",
 )
 
 
