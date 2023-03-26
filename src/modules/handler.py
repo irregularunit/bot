@@ -172,7 +172,7 @@ class DiscordErrorHandler(BaseExtension):
         {lineo}  | {command_usage}
              |
              |
-             | => For more information use help {command.qualified_name}
+             | => use help {command.qualified_name}
         ```"""
         embed_description = re.sub(r"^ {8}", "", embed_description, flags=re.MULTILINE)
 
@@ -195,7 +195,7 @@ class DiscordErrorHandler(BaseExtension):
         for part in error_message_parts:
             error_message += f"{designer}{part}\n"
         error_message += f"{designer}\n"
-        error_message += f"{designer} => pls help {ctx.command.name}```"
+        error_message += f"{designer} => use help {ctx.command.name}```"
 
         embed = EmbedBuilder.factory(
             ctx, title="Oh no! You've encountered an error!", description=error_message, timestamp=ctx.message.created_at

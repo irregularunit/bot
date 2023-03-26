@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS guilds (
 CREATE TABLE IF NOT EXISTS owo_counting (
   id BIGSERIAL PRIMARY KEY NOT NULL,
   uid BIGINT NOT NULL,
+  gid BIGINT NOT NULL,
   word TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL,
   CONSTRAINT owo_counting_word_check CHECK (word IN ('hunt', 'battle', 'owo')) 

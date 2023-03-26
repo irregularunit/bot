@@ -7,7 +7,10 @@
 
 from __future__ import annotations
 
+import inspect
 import math
+import os
+import io
 import sys
 from typing import TYPE_CHECKING, Optional
 
@@ -15,7 +18,7 @@ import discord
 from discord.ext import commands
 
 from models import EmbedBuilder
-from utils import BaseExtension, CountingCalender, MemberConverter, count_source_lines
+from utils import BaseExtension, CountingCalender, MemberConverter, TimeConverter, count_source_lines
 from views import AvatarHistoryView
 
 if TYPE_CHECKING:
@@ -64,13 +67,13 @@ class DiscordUserHistory(BaseExtension):
             EmbedBuilder(
                 description=(
                     """
-                    Our bot comes equipped with a variety of features to make 
+                    Servant comes equipped with a variety of features to make 
                     your server experience even better. With this valuable 
                     information at your fingertips, you'll never miss a beat when 
                     it comes to staying up-to-date with your community.
 
                     Whether you're a seasoned Discord user or just starting out, 
-                    our bot is the perfect addition to any server.
+                    Servant is the perfect addition to any server.
                     """
                 ),
                 fields=fields,
@@ -83,18 +86,19 @@ class DiscordUserHistory(BaseExtension):
         await ctx.safe_send(embed=embed)
 
     @commands.command(name="source", aliases=("src",))
-    async def source_command(self, ctx: Context) -> None:
-        # The following embed pattern is a personal preference.
-        # You can use any embed pattern you want. I just really
-        # like this one. It feels more readable to me.
+    async def source_command(self, ctx: Context, *, command: Optional[str] = None) -> Optional[discord.Message]:
+        URL = "https://github.com/irregularunit/bot"
+        LICENSE = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
+        BRANCH = "development"
+
         embed: EmbedBuilder = (
             EmbedBuilder(
                 description=(
-                    """
+                    F"""
                     Servant is an open-source bot for Discord. 
-                    You can find the source code on [github](https://github.com/irregularunit/bot).
+                    You can find the source code on [github]({URL}).
 
-                    > Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+                    > Licensed under [CC BY-NC-SA 4.0]({LICENSE}).
                     """
                 )
             )
@@ -103,7 +107,36 @@ class DiscordUserHistory(BaseExtension):
             .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
         )
 
-        await ctx.safe_send("A ⭐ is much appreciated!", embed=embed)
+        if command is None or command == "help":
+            return await ctx.safe_send("A ⭐ is much appreciated!", embed=embed)
+        else:
+            cmd = self.bot.get_command(command)
+            if cmd is None:
+                return await ctx.safe_send("🔍 The command you are looking for does not exist.", embed=embed)
+
+            src = getattr(cmd, "_original_callback", cmd.callback).__code__
+            filename = src.co_filename
+
+            if not filename:
+                return await ctx.safe_send("🔍 The command you are looking for cannot be found.", embed=embed)
+
+            (
+                lines,
+                start,
+            ) = inspect.getsourcelines(src)
+            end = start + len(lines) - 2
+            loc = os.path.realpath(filename).replace("\\", "/").split("/bot/")[1]
+
+            embed.add_field(
+                name=f"Source Code for {cmd.name}",
+                value=(
+                    f"""
+                    [View on Github]({URL}/blob/{BRANCH}/{loc}#L{start}-L{end})
+                    """
+                ),
+            )
+
+            return await ctx.safe_send(embed=embed)
 
     @commands.command(name="score", aliases=("sc",))
     async def score_command(
@@ -114,7 +147,7 @@ class DiscordUserHistory(BaseExtension):
     ) -> Optional[discord.Message]:
         user: discord.Member = member or ctx.author
 
-        cal = CountingCalender(user.id)
+        cal = CountingCalender(user.id, ctx.guild.id)
         query: str = cal.struct_query()
 
         counting_history = await self.bot.safe_connection.fetch(query)
@@ -147,7 +180,37 @@ class DiscordUserHistory(BaseExtension):
                 inline=False,
             )
             .set_author(name=f"{user.display_name}'s Score")
-            .set_thumbnail(url=user.display_avatar)
+            .set_thumbnail(url=self.bot.user.display_avatar)
         )
+
+        await ctx.safe_send(embed=embed)
+
+    @commands.command(name="leaderboard", aliases=("lb",))
+    async def leaderboard_command(
+        self,
+        ctx:
+        Context,
+        amount: int = 10,
+        *,
+        time: str = commands.param(default="all time", converter=TimeConverter(), displayed_default="all time")
+    ) -> Optional[discord.Message]:
+        cal = CountingCalender(ctx.author.id, ctx.guild.id)
+        query: str = cal.leaderboard_query(time, amount)
+
+        leaderboard = await self.bot.safe_connection.fetch(query)
+        embed: EmbedBuilder = (
+            EmbedBuilder()
+            .set_author(name=f"🏆 {time.title()} Leaderboard")
+            .set_thumbnail(url=self.bot.user.display_avatar)
+            .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
+        )
+
+        for i, row in enumerate(leaderboard, start=1):
+            user = self.bot.get_user(row["uid"]) or await self.bot.fetch_user(row["uid"])
+            embed.add_field(
+                name=f"#{i}. {user.display_name}",
+                value=f"Counting Score: `{math.floor(row['count'] / 3)}`",
+                inline=False,
+            )
 
         await ctx.safe_send(embed=embed)

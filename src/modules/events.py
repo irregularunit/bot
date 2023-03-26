@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+import re
 from datetime import datetime, timezone
 from io import BytesIO
 from logging import Logger, getLogger
@@ -202,14 +203,16 @@ class DiscordEventListener(BaseExtension):
             # The user is most likely spamming to increase their score.
             return
 
+        assert message.guild is not None
         await self.bot.redis.setex(f"{word}:{uid}", 60, time)
 
         _log: Logger = log.getChild("insert_counting")
         _log.debug("Inserting %s for %s at %s", word, uid, message.created_at.timestamp())
 
         await self.bot.safe_connection.execute(
-            "INSERT INTO owo_counting (uid, word, created_at) VALUES ($1, $2, $3)",
+            "INSERT INTO owo_counting (uid, gid, word, created_at) VALUES ($1, $2, $3, $4)",
             uid,
+            message.guild.id,
             word,
             self.message_timestamp_to_datetime_with_tz(message.created_at.timestamp()),
         )
@@ -248,9 +251,38 @@ class DiscordEventListener(BaseExtension):
         elif maybe_safe in self.__owo_battle_commands:
             await self.insert_counting(message.author.id, message, "battle", 15)
 
-        elif not check_owo_command(maybe_safe):
+        elif check_owo_command(maybe_safe) is False:
             # Returns True if the command exists in the hash map, False otherwise.
             await self.insert_counting(message.author.id, message, "owo", 10)
+
+    @commands.Cog.listener("on_message")
+    async def manage_prefix_change(self, message: discord.Message) -> None:
+        if message.author.id != self.bot.config.owo_bot_id:
+            return
+
+        if not message.guild or not message.content:
+            return
+
+        successfuly_responses: tuple[str, str] = (
+            "you successfully changed my server prefix to",
+            "the current prefix is set to",
+        )
+
+        if not any(response in message.content for response in successfuly_responses):
+            return
+        
+        if not (match := re.search(r"`(.*?)`", message.content)):
+            return
+
+        prefix = match.group(1)
+
+        if not (guild := self.bot.cached_guilds.get(message.guild.id)):
+            guild = await self.bot.manager.get_or_create_guild(message.guild.id)
+
+        new_guild: Guild = await self.bot.manager.set_guild_owo_prefix(guild, prefix)
+        self.bot.cached_guilds[message.guild.id] = new_guild
+            
+        await message.add_reaction(self.bot.config.owo_emote)
 
 
 async def setup(bot: Bot) -> None:

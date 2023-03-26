@@ -78,5 +78,5 @@ class EmbedBuilder(Embed):
     @classmethod
     def factory(cls: Type[Self], ctx: Context, **kwargs: Any) -> Self:
         instance = cls(**kwargs)
-        instance.set_footer(text=f"Requested by {ctx.author.display_name}", icon_url=ctx.author.display_avatar)
+        instance.set_footer(text=f"Made with ❤️ by irregularunit.", icon_url=ctx.bot.user.display_avatar)
         return instance

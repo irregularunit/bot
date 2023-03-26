@@ -192,7 +192,7 @@ class ModelManager:
         guild.prefixes.append(prefix)
         return guild
 
-    async def set_guild_owo_prefix(self, guild: Guild, prefix: str) -> Optional[Guild]:
+    async def set_guild_owo_prefix(self, guild: Guild, prefix: str) -> Guild:
         query: str = "UPDATE guilds SET owo_prefix = $1 WHERE gid = $2"
         await self.pool.execute(query, prefix, guild.id)
 
@@ -204,4 +204,4 @@ class ModelManager:
         await self.pool.execute(query, guild.id)
 
         guild.owo_counting = not guild.owo_counting
-        return
+        return guild
