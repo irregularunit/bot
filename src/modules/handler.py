@@ -106,7 +106,7 @@ class DiscordErrorHandler(BaseExtension):
         if isinstance(exc, commands.CommandOnCooldown):
             if await self.bot.redis.client.get(f"cooldown:{ctx.author.id}") is not None:
                 return
-            
+
             await self.bot.redis.client.setex(f"cooldown:{ctx.author.id}", 5, exc.retry_after)
 
             time_counter = self.to_discord_time_format(exc.retry_after)

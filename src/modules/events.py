@@ -249,7 +249,7 @@ class DiscordEventListener(BaseExtension):
         # this case, since we're only a subset of ASCII characters.
         if content.startswith(current_guild.owo_prefix):
             maybe_safe: str = content[len(current_guild.owo_prefix) :].strip().split(" ")[0].lower()
-            
+
             if not maybe_safe:
                 if not any(content.startswith(prefix) for prefix in self.__owo_std_commands):
                     # Prefix only message, we don't care.
@@ -257,7 +257,7 @@ class DiscordEventListener(BaseExtension):
 
         elif any(content.startswith(prefix) for prefix in self.__owo_std_commands):
             maybe_safe: str = content[3:].strip().split(" ")[0].lower()
-        
+
         # We handle hunt and battle first, so we can drop all the others later without
         # having to check for them in the validation function. Which makes it faster.
         if maybe_safe in self.__owo_hunt_commands:
