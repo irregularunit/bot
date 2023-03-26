@@ -78,7 +78,7 @@ class Context(commands.Context["Bot"]):
             self.message.reference and self.message.reference.resolved
         )
         if isinstance(resolved_message, discord.DeletedReferencedMessage):
-            # *pat pat* - :3
+            # *pat pat* :>
             resolved_message = None
         try:
             return await (resolved_message.reply if resolved_message else self.send)(

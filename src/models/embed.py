@@ -52,7 +52,7 @@ class EmbedBuilder(Embed):
         **kwargs: Any,
     ) -> Self:
         if embeds := message.embeds:
-            # Change the appearance to match our embeds
+            # Changes the appearance to match our embeds
             return cls.to_factory(embeds[0], **kwargs)
 
         author: User | Member = message.author

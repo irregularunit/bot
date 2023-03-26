@@ -10,15 +10,21 @@ from __future__ import annotations
 import inspect
 import math
 import os
-import io
 import sys
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import discord
 from discord.ext import commands
 
 from models import EmbedBuilder
-from utils import BaseExtension, CountingCalender, MemberConverter, TimeConverter, count_source_lines
+from utils import (
+    BaseExtension,
+    CountingCalender,
+    MemberConverter,
+    TimeConverter,
+    count_source_lines,
+    get_random_emoji,
+)
 from views import AvatarHistoryView
 
 if TYPE_CHECKING:
@@ -51,8 +57,9 @@ class DiscordUserHistory(BaseExtension):
         discord_version = discord.__version__
         lines_of_code = count_source_lines()
 
-        psql_version_query = await self.bot.safe_connection.fetchval("SELECT version()")
-        psql_version = psql_version_query.split(" ")[1]
+        async with self.bot.pool.acquire() as connection:
+            psql_version_query = await connection.fetchval("SELECT version()")
+            psql_version = psql_version_query.split(" ")[1]
 
         fields = (
             ("Python", python_version, True),
@@ -150,19 +157,27 @@ class DiscordUserHistory(BaseExtension):
         cal = CountingCalender(user.id, ctx.guild.id)
         query: str = cal.struct_query()
 
-        counting_history = await self.bot.safe_connection.fetch(query)
+        async with self.bot.pool.acquire() as connection:
+            counting_history = await connection.fetch(query)
+
+        def get_record_index(record: Any, idx: int) -> str:
+            return self.format_count(record[idx]["count"])
+
         embed: EmbedBuilder = (
             EmbedBuilder(
-                description=f"Total score: `{self.format_count(counting_history[8]['count'])}`",
+                description=(
+                    f"**{get_random_emoji()} {user.display_name}'s Score**\n\n"
+                    f"Total score: `{get_record_index(counting_history, 8)}`"
+                ),
             )
             .add_field(
                 name="__**Present Stats**__",
                 value=(
                     f"""
-                    >>> Today: `{self.format_count(counting_history[0]["count"])}`
-                    This Week: `{self.format_count(counting_history[2]["count"])}`
-                    This Month: `{self.format_count(counting_history[4]["count"])}`
-                    This Year: `{self.format_count(counting_history[6]["count"])}`
+                    >>> Today: `{get_record_index(counting_history, 0)}`
+                    This Week: `{get_record_index(counting_history, 2)}`
+                    This Month: `{get_record_index(counting_history, 4)}`
+                    This Year: `{get_record_index(counting_history, 6)}`
                     """
                 ),
                 inline=False,
@@ -171,16 +186,16 @@ class DiscordUserHistory(BaseExtension):
                 name="__**Past Stats**__",
                 value=(
                     f"""
-                    >>> Yesterday: `{self.format_count(counting_history[1]["count"])}`
-                    Last Week: `{self.format_count(counting_history[3]["count"])}`
-                    Last Month: `{self.format_count(counting_history[5]["count"])}`
-                    Last Year: `{self.format_count(counting_history[7]["count"])}`
+                    >>> Yesterday: `{get_record_index(counting_history, 1)}`
+                    Last Week: `{get_record_index(counting_history, 3)}`
+                    Last Month: `{get_record_index(counting_history, 5)}`
+                    Last Year: `{get_record_index(counting_history, 7)}`
                     """
                 ),
                 inline=False,
             )
-            .set_author(name=f"{user.display_name}'s Score")
             .set_thumbnail(url=self.bot.user.display_avatar)
+            .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
         )
 
         await ctx.safe_send(embed=embed)
@@ -188,16 +203,17 @@ class DiscordUserHistory(BaseExtension):
     @commands.command(name="leaderboard", aliases=("lb",))
     async def leaderboard_command(
         self,
-        ctx:
-        Context,
+        ctx: Context,
         amount: int = 10,
         *,
-        time: str = commands.param(default="all time", converter=TimeConverter(), displayed_default="all time")
+        time: str = commands.param(default="all time", converter=TimeConverter(), displayed_default="all time"),
     ) -> Optional[discord.Message]:
         cal = CountingCalender(ctx.author.id, ctx.guild.id)
         query: str = cal.leaderboard_query(time, amount)
 
-        leaderboard = await self.bot.safe_connection.fetch(query)
+        async with self.bot.pool.acquire() as connection:
+            leaderboard = await connection.fetch(query)
+
         embed: EmbedBuilder = (
             EmbedBuilder()
             .set_author(name=f"🏆 {time.title()} Leaderboard")
@@ -212,5 +228,8 @@ class DiscordUserHistory(BaseExtension):
                 value=f"Counting Score: `{math.floor(row['count'] / 3)}`",
                 inline=False,
             )
+
+        if not embed.fields:
+            embed.description = "> No one has counted yet."
 
         await ctx.safe_send(embed=embed)

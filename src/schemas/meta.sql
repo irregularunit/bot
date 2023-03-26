@@ -8,6 +8,7 @@
 CREATE TABLE IF NOT EXISTS users (
     uid BIGINT PRIMARY KEY NOT NULL,
     timezone TEXT NOT NULL DEFAULT 'UTC' CHECK (timezone <> ''),
+    emoji_server BIGINT NOT NULL DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT (now() AT TIME ZONE 'UTC') NOT NULL,
     CONSTRAINT users_uid_check CHECK (uid > 0)
 );

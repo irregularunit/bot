@@ -87,9 +87,6 @@ class Bot(commands.Bot):
         self.config: Config = Config()  # type: ignore (my IDE doesn't get it)
         self.logger: Logger = getLogger(__name__)
 
-        # This allows for two patterns to be used:
-        # 1. await self.safe_connection.fetch(...)
-        # 2. async with self.safe_connection.acquire_connection() as conn:
         # Note: connection and transactions are already handled by the bridge
         self.safe_connection: PostgresBridge = PostgresBridge(self.pool)
         self.manager: ModelManager = ModelManager(self.pool)

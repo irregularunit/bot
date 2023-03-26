@@ -39,12 +39,14 @@ class Model:
 
 @dataclass
 class User(Model):
+    emoji_server: int
     timezone: str
 
     @classmethod
     def from_record(cls: Type[User], record: Record) -> User:
         return cls(
             id=record["uid"],
+            emoji_server=record["emoji_server"],
             timezone=record["timezone"],
             created_at=record["created_at"],
         )

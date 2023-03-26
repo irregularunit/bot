@@ -8,6 +8,7 @@
 from .async_utils import *
 from .context import *
 from .converter import *
+from .emojis import *
 from .extension import *
 from .hashsets import *
 from .time_calendar import *

@@ -8,8 +8,8 @@
 from __future__ import annotations
 
 import asyncio
-import uuid
 import re
+import uuid
 from datetime import datetime, timezone
 from io import BytesIO
 from logging import Logger, getLogger
@@ -93,7 +93,9 @@ class DiscordEventListener(BaseExtension):
             return
 
         query: str = "INSERT INTO item_history (uid, item_type, item_value) VALUES ($1, $2, $3)"
-        await self.bot.pool.execute(query, item.user_id, "avatar", message.attachments[0].url)
+
+        async with self.bot.pool.acquire() as connection:
+            await connection.execute(query, item.user_id, "avatar", message.attachments[0].url)
 
         self._is_running = False
         log.info("Succesfully sent item %s to channel", message.content)
@@ -139,8 +141,9 @@ class DiscordEventListener(BaseExtension):
         member_query: str = "INSERT INTO users (uid, created_at) VALUES ($1, $2) ON CONFLICT DO NOTHING;"
         created_at: datetime = discord.utils.utcnow()
 
-        await self.bot.safe_connection.executemany(member_query, [(member.id, created_at) for member in members])
-        await self.bot.safe_connection.executemany(self._push_items, to_queue)
+        async with self.bot.pool.acquire() as connection:
+            await connection.executemany(member_query, [(member.id, created_at) for member in members])
+            await connection.executemany(self._push_items, to_queue)
 
     @commands.Cog.listener("on_member_join")
     async def manage_new_member(self, member: discord.Member) -> None:
@@ -158,7 +161,9 @@ class DiscordEventListener(BaseExtension):
         self.push_item(member.id, member.name, avatar)
 
         query: str = "INSERT INTO users (uid, created_at) VALUES ($1, $2) ON CONFLICT DO NOTHING;"
-        await self.bot.safe_connection.execute(query, member.id, discord.utils.utcnow())
+
+        async with self.bot.pool.acquire() as connection:
+            await connection.execute(query, member.id, discord.utils.utcnow())
 
     @commands.Cog.listener("on_member_update")
     async def manage_member_update(self, before: discord.Member, after: discord.Member) -> None:
@@ -176,7 +181,9 @@ class DiscordEventListener(BaseExtension):
     @commands.Cog.listener("on_guild_remove")
     async def manage_guild_leave(self, guild: discord.Guild) -> None:
         query: str = "DELETE FROM guilds WHERE uid = $1"
-        await self.bot.safe_connection.execute(query, guild.id)
+
+        async with self.bot.pool.acquire() as connection:
+            await connection.execute(query, guild.id)
 
     @commands.Cog.listener("on_presence_update")
     async def manage_presence_update(self, before: discord.Member, after: discord.Member) -> None:
@@ -184,45 +191,48 @@ class DiscordEventListener(BaseExtension):
             return
 
         if before.status != after.status:
-            if await self.bot.redis.get(f"status:{after.id}"):
+            if await self.bot.redis.client.get(f"status:{after.id}"):
                 # Discord dispatches this event for every guild the user is in.
                 # Why? I don't know. But we don't want to insert the same data twice.
                 return
 
-            await self.bot.redis.setex(f"status:{after.id}", 0, 3)
+            await self.bot.redis.client.setex(f"status:{after.id}", 0, 3)
             query: str = "INSERT INTO presence_history (uid, status, status_before) VALUES ($1, $2, $3)"
-            await self.bot.safe_connection.execute(
-                query,
-                after.id,
-                self._presence_map.get(after.status, "Offline"),
-                self._presence_map.get(before.status, "Offline"),
-            )
+
+            async with self.bot.pool.acquire() as connection:
+                await connection.execute(
+                    query,
+                    after.id,
+                    self._presence_map.get(after.status, "Offline"),
+                    self._presence_map.get(before.status, "Offline"),
+                )
 
     async def insert_counting(self, uid: int, message: discord.Message, word: str, time: int) -> None:
-        if await self.bot.redis.get(f"{word}:{uid}"):
+        if await self.bot.redis.client.get(f"{word}:{uid}"):
             # The user is most likely spamming to increase their score.
             return
 
         assert message.guild is not None
-        await self.bot.redis.setex(f"{word}:{uid}", 60, time)
+        await self.bot.redis.client.setex(f"{word}:{uid}", 60, time)
 
         _log: Logger = log.getChild("insert_counting")
         _log.debug("Inserting %s for %s at %s", word, uid, message.created_at.timestamp())
 
-        await self.bot.safe_connection.execute(
-            "INSERT INTO owo_counting (uid, gid, word, created_at) VALUES ($1, $2, $3, $4)",
-            uid,
-            message.guild.id,
-            word,
-            self.message_timestamp_to_datetime_with_tz(message.created_at.timestamp()),
-        )
+        async with self.bot.pool.acquire() as connection:
+            await connection.execute(
+                "INSERT INTO owo_counting (uid, gid, word, created_at) VALUES ($1, $2, $3, $4)",
+                uid,
+                message.guild.id,
+                word,
+                self.message_timestamp_to_datetime_with_tz(message.created_at.timestamp()),
+            )
 
     def message_timestamp_to_datetime_with_tz(self, timestamp: float) -> datetime:
         return datetime.fromtimestamp(timestamp, tz=timezone.utc)
 
     @commands.Cog.listener("on_message")
     async def manage_messages(self, message: discord.Message) -> None:
-        if not message.guild:
+        if not message.guild or message.author.bot:
             return
 
         if not message.guild.id in self.bot.cached_guilds:
@@ -233,21 +243,26 @@ class DiscordEventListener(BaseExtension):
             return
 
         content: str = message.content.lower()
+        maybe_safe: str = ""
 
         # I know we "should" use casefold, but it's not needed in
         # this case, since we're only a subset of ASCII characters.
         if content.startswith(current_guild.owo_prefix):
             maybe_safe: str = content[len(current_guild.owo_prefix) :].strip().split(" ")[0].lower()
-        elif content in self.__owo_std_commands:
-            maybe_safe = content[3:].strip().split(" ")[0].lower()
-        else:
-            # The message doesn't start with the prefix, so we don't care.
-            return
+            
+            if not maybe_safe:
+                if not any(content.startswith(prefix) for prefix in self.__owo_std_commands):
+                    # Prefix only message, we don't care.
+                    return
 
+        elif any(content.startswith(prefix) for prefix in self.__owo_std_commands):
+            maybe_safe: str = content[3:].strip().split(" ")[0].lower()
+        
         # We handle hunt and battle first, so we can drop all the others later without
         # having to check for them in the validation function. Which makes it faster.
         if maybe_safe in self.__owo_hunt_commands:
             await self.insert_counting(message.author.id, message, "hunt", 15)
+
         elif maybe_safe in self.__owo_battle_commands:
             await self.insert_counting(message.author.id, message, "battle", 15)
 
@@ -270,7 +285,7 @@ class DiscordEventListener(BaseExtension):
 
         if not any(response in message.content for response in successfuly_responses):
             return
-        
+
         if not (match := re.search(r"`(.*?)`", message.content)):
             return
 
@@ -281,7 +296,7 @@ class DiscordEventListener(BaseExtension):
 
         new_guild: Guild = await self.bot.manager.set_guild_owo_prefix(guild, prefix)
         self.bot.cached_guilds[message.guild.id] = new_guild
-            
+
         await message.add_reaction(self.bot.config.owo_emote)
 
 

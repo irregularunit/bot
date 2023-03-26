@@ -90,6 +90,7 @@ class DiscordErrorHandler(BaseExtension):
 
         # We handle custom exceptions first
         if isinstance(error, UserFeedbackException):
+            # I love this
             return await ctx.safe_send(content=error.to_string())
 
         # Gets the original exception
@@ -103,13 +104,10 @@ class DiscordErrorHandler(BaseExtension):
             return await ctx.safe_send(content="You are not the owner of this bot, so you cannot use this command.")
 
         if isinstance(exc, commands.CommandOnCooldown):
-            if await self.bot.redis.get(f"cooldown:{ctx.author.id}") is not None:
-                # The user is most likely spamming the bot,
-                # trying to ratelimit it I've decided to not
-                # send a message in that case to avoid further API calls
+            if await self.bot.redis.client.get(f"cooldown:{ctx.author.id}") is not None:
                 return
-
-            await self.bot.redis.setex(f"cooldown:{ctx.author.id}", 5, exc.retry_after)
+            
+            await self.bot.redis.client.setex(f"cooldown:{ctx.author.id}", 5, exc.retry_after)
 
             time_counter = self.to_discord_time_format(exc.retry_after)
             return await ctx.safe_send(

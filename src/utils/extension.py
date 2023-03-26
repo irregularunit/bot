@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-import uuid
 from typing import TYPE_CHECKING, Any, Optional
 
 from discord.ext import commands
@@ -29,3 +28,9 @@ class BaseExtension(commands.Cog):
             kwargs["bot"] = bot
 
         super().__init__(*args, **kwargs)
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} Extension at {hex(id(self))}>"
+
+    def __str__(self) -> str:
+        return self.__class__.__name__
