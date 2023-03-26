@@ -11,8 +11,11 @@ import io
 import zoneinfo
 
 import discord
+from discord.ext import commands
 
-__all__: tuple[str, ...] = ("CountingCalender",)
+from exceptions import UserFeedbackExceptionFactory, ExceptionLevel
+
+__all__: tuple[str, ...] = ("CountingCalender", "TimeConverter")
 
 
 RANGES = [
@@ -26,6 +29,33 @@ RANGES = [
     "last year",
     "all time",
 ]
+
+RANGES_SHORT = {
+    "today": ["t", "daily", "d"],
+    "yesterday": ["y"],
+    "this week": ["w", "weekly", "wk"],
+    "last week": ["lw"],
+    "this month": ["m", "monthly", "mo"],
+    "last month": ["lm"],
+    "this year": ["yearly", "yr"],
+    "last year": ["ly"],
+    "all time": ["all", "a", "total"],
+}
+
+
+class TimeConverter(commands.Converter[str]):
+    async def convert(self, ctx: commands.Context, argument: str) -> str:
+        if argument.lower() in RANGES_SHORT:
+            return argument.lower()
+
+        for time in RANGES_SHORT:
+            if argument.lower() in RANGES_SHORT[time]:
+                return time
+
+        raise UserFeedbackExceptionFactory.create(
+            f"Invalid time range: {argument}",
+            level=ExceptionLevel.ERROR
+        )
 
 
 class CountingCalender:
@@ -66,7 +96,7 @@ class CountingCalender:
             "all time": (now.replace(year=2018, month=1, day=1), now + datetime.timedelta(days=1)),
         }
 
-        if time not in ranges:
+        if time not in ranges and time not in RANGES_SHORT:
             raise ValueError(f"Invalid time range: {time}")
 
         start, end = ranges[time]
@@ -92,8 +122,23 @@ class CountingCalender:
                 inital_query.write(" UNION ALL ")
 
         return inital_query.getvalue()
+    
+    def leaderboard_query(self, time: str, amount: int = 10) -> str:
+        maybe_date = time.lower()
+        if maybe_date not in self.time_mapping:
+            raise UserFeedbackExceptionFactory.create(
+                f"Invalid time range: {time}",
+                level=ExceptionLevel.ERROR
+            )
+    
+        start, end = self.time_mapping[maybe_date]
 
-
+        return (
+            f"SELECT uid, COUNT(*) as count FROM owo_counting WHERE "
+            f"created_at BETWEEN to_timestamp({start}) AND to_timestamp({end}) "
+            f"GROUP BY uid ORDER BY count DESC LIMIT {min(amount, 25)}"
+        )
+    
 if __name__ == "__main__":
     cal = CountingCalender(123456789)
     print(cal.struct_query())

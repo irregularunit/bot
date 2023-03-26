@@ -204,4 +204,4 @@ class ModelManager:
         await self.pool.execute(query, guild.id)
 
         guild.owo_counting = not guild.owo_counting
-        return
+        return guild

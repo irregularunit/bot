@@ -10,6 +10,7 @@ from __future__ import annotations
 import inspect
 import math
 import os
+import io
 import sys
 from typing import TYPE_CHECKING, Optional
 
@@ -17,7 +18,7 @@ import discord
 from discord.ext import commands
 
 from models import EmbedBuilder
-from utils import BaseExtension, CountingCalender, MemberConverter, count_source_lines
+from utils import BaseExtension, CountingCalender, MemberConverter, TimeConverter, count_source_lines
 from views import AvatarHistoryView
 
 if TYPE_CHECKING:
@@ -66,13 +67,13 @@ class DiscordUserHistory(BaseExtension):
             EmbedBuilder(
                 description=(
                     """
-                    Our bot comes equipped with a variety of features to make 
+                    Servant comes equipped with a variety of features to make 
                     your server experience even better. With this valuable 
                     information at your fingertips, you'll never miss a beat when 
                     it comes to staying up-to-date with your community.
 
                     Whether you're a seasoned Discord user or just starting out, 
-                    our bot is the perfect addition to any server.
+                    Servant is the perfect addition to any server.
                     """
                 ),
                 fields=fields,
@@ -181,5 +182,35 @@ class DiscordUserHistory(BaseExtension):
             .set_author(name=f"{user.display_name}'s Score")
             .set_thumbnail(url=user.display_avatar)
         )
+
+        await ctx.safe_send(embed=embed)
+
+    @commands.command(name="leaderboard", aliases=("lb",))
+    async def leaderboard_command(
+        self,
+        ctx:
+        Context,
+        amount: int = 10,
+        *,
+        time: str = commands.param(default="all", converter=TimeConverter(), displayed_default="all time")
+    ) -> Optional[discord.Message]:
+        cal = CountingCalender(ctx.author.id)
+        query: str = cal.leaderboard_query(time, amount)
+
+        leaderboard = await self.bot.safe_connection.fetch(query)
+        embed: EmbedBuilder = (
+            EmbedBuilder()
+            .set_author(name=f"🏆 {time.title()} Leaderboard")
+            .set_thumbnail(url=self.bot.user.display_avatar)
+            .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
+        )
+
+        for i, row in enumerate(leaderboard, start=1):
+            user = self.bot.get_user(row["uid"]) or await self.bot.fetch_user(row["uid"])
+            embed.add_field(
+                name=f"#{i}. {user.display_name}",
+                value=f"Score: `{math.floor(row['count'])}`",
+                inline=False,
+            )
 
         await ctx.safe_send(embed=embed)
