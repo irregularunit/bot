@@ -2,6 +2,8 @@
 
 Ignore this file, it's just a readme.
 
+If you need to contact me do that at discord: irregularunit#4564
+
 # License
 
 | :bangbang: | THIS IS NOT LEGAL ADVICE |
