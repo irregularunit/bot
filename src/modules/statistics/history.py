@@ -180,7 +180,7 @@ class DiscordUserHistory(BaseExtension):
                 inline=False,
             )
             .set_author(name=f"{user.display_name}'s Score")
-            .set_thumbnail(url=user.display_avatar)
+            .set_thumbnail(url=self.bot.user.display_avatar)
         )
 
         await ctx.safe_send(embed=embed)
@@ -209,7 +209,7 @@ class DiscordUserHistory(BaseExtension):
             user = self.bot.get_user(row["uid"]) or await self.bot.fetch_user(row["uid"])
             embed.add_field(
                 name=f"#{i}. {user.display_name}",
-                value=f"Score: `{math.floor(row['count'])}`",
+                value=f"Counting Score: `{math.floor(row['count'] / 3)}`",
                 inline=False,
             )
 
