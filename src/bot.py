@@ -86,6 +86,8 @@ class Bot(commands.Bot):
 
         self.config: Config = Config()  # type: ignore (my IDE doesn't get it)
         self.logger: Logger = getLogger(__name__)
+
+        # Note: connection and transactions are already handled by the bridge
         self.safe_connection: PostgresBridge = PostgresBridge(self.pool)
         self.manager: ModelManager = ModelManager(self.pool)
 

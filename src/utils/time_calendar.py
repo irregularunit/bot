@@ -13,22 +13,10 @@ import zoneinfo
 import discord
 from discord.ext import commands
 
-from exceptions import UserFeedbackExceptionFactory, ExceptionLevel
+from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
 
 __all__: tuple[str, ...] = ("CountingCalender", "TimeConverter")
 
-
-RANGES = [
-    "today",
-    "yesterday",
-    "this week",
-    "last week",
-    "this month",
-    "last month",
-    "this year",
-    "last year",
-    "all time",
-]
 
 RANGES_SHORT = {
     "today": ["t", "daily", "d"],
@@ -45,17 +33,14 @@ RANGES_SHORT = {
 
 class TimeConverter(commands.Converter[str]):
     async def convert(self, ctx: commands.Context, argument: str) -> str:
-        if argument.lower() in RANGES_SHORT:
-            return argument.lower()
-
         for time in RANGES_SHORT:
+            if argument.lower() == time:
+                return time
+
             if argument.lower() in RANGES_SHORT[time]:
                 return time
 
-        raise UserFeedbackExceptionFactory.create(
-            f"Invalid time range: {argument}",
-            level=ExceptionLevel.ERROR
-        )
+        raise UserFeedbackExceptionFactory.create(f"Invalid time range: {argument}", level=ExceptionLevel.ERROR)
 
 
 class CountingCalender:
@@ -68,7 +53,7 @@ class CountingCalender:
     def build_time_mapping(self) -> None:
         start_date = discord.utils.utcnow().timestamp()
 
-        for time in RANGES:
+        for time in RANGES_SHORT:
             start_date, end_date = self.get_end_date(time)
             self.time_mapping[time] = start_date, end_date
 
@@ -125,15 +110,12 @@ class CountingCalender:
                 inital_query.write(" UNION ALL ")
 
         return inital_query.getvalue()
-    
+
     def leaderboard_query(self, time: str, amount: int = 10) -> str:
         maybe_date = time.lower()
         if maybe_date not in self.time_mapping:
-            raise UserFeedbackExceptionFactory.create(
-                f"Invalid time range: {time}",
-                level=ExceptionLevel.ERROR
-            )
-    
+            raise UserFeedbackExceptionFactory.create(f"Invalid time range: {time}", level=ExceptionLevel.ERROR)
+
         start, end = self.time_mapping[maybe_date]
 
         return (

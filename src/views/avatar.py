@@ -57,8 +57,10 @@ class AvatarHistoryView(View):
 
     async def fetch_avatar_history_items(self) -> list[str]:
         query = "SELECT item_value FROM item_history WHERE uid = $1 AND item_type = $2"
-        res = await self.bot.pool.fetch(query, self.member.id, "avatar")
-        ret = [row["item_value"] for row in res]
+
+        async with self.bot.pool.acquire() as connection:
+            res = await connection.fetch(query, self.member.id, "avatar")
+            ret = [row["item_value"] for row in res]
 
         self.cached_avatars = ret
         return ret
