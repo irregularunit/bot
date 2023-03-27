@@ -131,7 +131,7 @@ class DiscordUserHistory(BaseExtension):
                 lines,
                 start,
             ) = inspect.getsourcelines(src)
-            end = start + len(lines) - 2
+            end = start + len(lines) - 1
             loc = os.path.realpath(filename).replace("\\", "/").split("/bot/")[1]
 
             embed.add_field(
