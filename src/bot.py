@@ -15,6 +15,7 @@ from logging import Logger, getLogger
 from typing import (
     TYPE_CHECKING,
     Any,
+    AsyncGenerator,
     Callable,
     Generator,
     Iterator,
@@ -88,7 +89,7 @@ class Bot(commands.Bot):
         self.logger: Logger = getLogger(__name__)
 
         # Note: connection and transactions are already handled by the bridge
-        self.safe_connection: PostgresBridge = PostgresBridge(self.pool)
+        #self.safe_connection: PostgresBridge = PostgresBridge(self.pool)
         self.manager: ModelManager = ModelManager(self.pool)
 
         self.cached_users: dict[int, User] = {}
@@ -102,6 +103,9 @@ class Bot(commands.Bot):
 
     async def get_context(self, message: discord.Message, *, cls: Type[ContextT] = Context) -> Context:
         return await super().get_context(message, cls=cls or commands.Context["Bot"])
+
+    async def safe_connection(self, /, *args: Any, **kwargs: Any) -> AsyncGenerator[Connection[Any], None]:
+        yield PostgresBridge(self.pool).acquire_connection(*args, **kwargs)
 
     async def process_commands(self, message: discord.Message, /) -> None:
         try:
