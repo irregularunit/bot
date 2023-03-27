@@ -11,11 +11,11 @@ import asyncio
 import os
 import pathlib
 import re
+from contextlib import asynccontextmanager
 from logging import Logger, getLogger
 from typing import (
     TYPE_CHECKING,
     Any,
-    AsyncGenerator,
     Callable,
     Generator,
     Iterator,
@@ -31,7 +31,7 @@ import discord
 from aiohttp import ClientError
 from discord.ext import commands
 
-from bridges import PostgresBridge, RedisBridge
+from bridges import RedisBridge
 from gateway import Gateway
 from models import Guild, ModelManager, User
 from settings import Config
@@ -87,9 +87,6 @@ class Bot(commands.Bot):
 
         self.config: Config = Config()  # type: ignore (my IDE doesn't get it)
         self.logger: Logger = getLogger(__name__)
-
-        # Note: connection and transactions are already handled by the bridge
-        #self.safe_connection: PostgresBridge = PostgresBridge(self.pool)
         self.manager: ModelManager = ModelManager(self.pool)
 
         self.cached_users: dict[int, User] = {}
@@ -103,9 +100,6 @@ class Bot(commands.Bot):
 
     async def get_context(self, message: discord.Message, *, cls: Type[ContextT] = Context) -> Context:
         return await super().get_context(message, cls=cls or commands.Context["Bot"])
-
-    async def safe_connection(self, /, *args: Any, **kwargs: Any) -> AsyncGenerator[Connection[Any], None]:
-        yield PostgresBridge(self.pool).acquire_connection(*args, **kwargs)
 
     async def process_commands(self, message: discord.Message, /) -> None:
         try:
@@ -202,7 +196,7 @@ class Bot(commands.Bot):
                 if not reconnect:
                     await self.close()
                     if isinstance(exc, discord.ConnectionClosed) and exc.code == 1000:
-                        # clean close, don't re-raise this
+                        # Clean close, don't re-raise this
                         return
                     raise
 
@@ -291,5 +285,12 @@ class Bot(commands.Bot):
 
     async def close(self) -> None:
         to_close: list[Any] = [self.pool, self.session, self.redis]
-        await asyncio.gather(*[c.close() for c in to_close if c is not None])
+
+        async with asyncio.TaskGroup() as group:
+            for c in to_close:
+                if c is None:
+                    continue
+
+                await group.create_task(c.close)
+
         await super().close()
