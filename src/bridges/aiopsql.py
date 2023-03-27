@@ -45,13 +45,23 @@ class DefaultConnectionStrategy(ConnectionStrategy):
         self._transaction: Transaction
 
     async def acquire_connection(self) -> PoolConnectionProxy[Record]:
-        async with self.pool.acquire() as connection:
-            self._connection = connection
-            self._transaction = connection.transaction()
-            async with connection.transaction():
-                return connection
-    
-    async def release_connection(self, exc_val: Optional[BaseException] = None) -> None:
+        return await self.__aenter__()
+
+    async def release_connection(self) -> None:
+        await self.__aexit__(None, None, None)
+
+    async def __aenter__(self) -> PoolConnectionProxy[Record]:
+        self._connection = await self.pool.acquire(timeout=self.timeout)
+        self._transaction = self._connection.transaction()
+        await self._transaction.start()
+        return self._connection
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
         if exc_val and self._transaction is not None:
             _log = log.getChild("rollback")
             _log.warning("Rolling back transaction due to exception", exc_info=True)
