@@ -66,7 +66,7 @@ class DiscordUserHistory(BaseExtension):
             ("discord.py", discord_version, True),
             ("PostgreSQL", str(psql_version), True),
             ("Lines of code", str(lines_of_code), True),
-            ("Uptime", discord.utils.format_dt(self.bot.start_time, "R"), True),
+            ("Uptime", discord.utils.format_dt(self.bot.start_time, "f"), True),
             ("Latency", f"{self.bot.latency * 1000:.2f}ms", True),
         )
 
