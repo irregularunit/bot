@@ -293,6 +293,6 @@ class Bot(commands.Bot):
                 if c is None:
                     continue
 
-                await group.create_task(c.close)
+                await group.create_task(c.close())
 
         await super().close()
