@@ -11,7 +11,6 @@ import asyncio
 import os
 import pathlib
 import re
-from contextlib import asynccontextmanager
 from logging import Logger, getLogger
 from typing import (
     TYPE_CHECKING,
@@ -272,6 +271,9 @@ class Bot(commands.Bot):
             except Exception as exc:
                 _log.exception(f"Failed to load {marked_as} {item!r}", exc_info=exc)
 
+        # We still need to start redis ourselves
+        # since I haven't got around to making a
+        # custom connection for it.
         await self.redis.connect()
 
         self.cached_guilds = await self.manager.get_all_guilds()
@@ -291,6 +293,6 @@ class Bot(commands.Bot):
                 if c is None:
                     continue
 
-                await group.create_task(c.close)
+                await group.create_task(c.close())
 
         await super().close()

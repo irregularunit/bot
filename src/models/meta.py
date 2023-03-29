@@ -23,10 +23,12 @@ __all__: tuple[str, ...] = ("User", "Guild", "ModelManager")
 log: Logger = getLogger(__name__)
 
 
-@dataclass
 class Model:
-    id: int
-    created_at: datetime
+    __slots__: tuple[str, ...] = ("id", "created_at")
+
+    def __init__(self, *, id: int, created_at: datetime) -> None:
+        self.id: int = id
+        self.created_at: datetime = created_at
 
     @classmethod
     def from_record(cls: Type[Model], record: Record) -> ...:
@@ -37,10 +39,13 @@ class Model:
         return f"<@{self.id}>"
 
 
-@dataclass
 class User(Model):
-    emoji_server: int
-    timezone: str
+    __slots__: tuple[str, ...] = ("emoji_server", "timezone", "id", "created_at")
+
+    def __init__(self, *, id: int, created_at: datetime, emoji_server: int, timezone: str) -> None:
+        super().__init__(id=id, created_at=created_at)
+        self.emoji_server: int = emoji_server
+        self.timezone: str = timezone
 
     @classmethod
     def from_record(cls: Type[User], record: Record) -> User:
@@ -52,11 +57,14 @@ class User(Model):
         )
 
 
-@dataclass
 class Guild(Model):
-    prefixes: list[str]
-    owo_prefix: str
-    owo_counting: bool
+    __slots__: tuple[str, ...] = ("prefixes", "owo_prefix", "owo_counting", "id", "created_at")
+
+    def __init__(self, *, id: int, created_at: datetime, prefixes: list[str], owo_prefix: str, owo_counting: bool) -> None:
+        super().__init__(id=id, created_at=created_at)
+        self.prefixes: list[str] = prefixes
+        self.owo_prefix: str = owo_prefix
+        self.owo_counting: bool = owo_counting
 
     @classmethod
     def from_record(cls: Type[Guild], record: Record) -> Guild:
@@ -80,7 +88,8 @@ class ModelManager:
         ON CONFLICT (uid) DO NOTHING
         RETURNING *
         """
-        record: Record | None = await self.pool.fetchrow(query, user_id)
+        async with self.pool.acquire() as connection:
+            record: Record | None = await connection.fetchrow(query, user_id)
 
         if not record:
             maybe_user: User | None = await self.get_user(user_id)
@@ -92,7 +101,10 @@ class ModelManager:
 
     async def get_user(self, user_id: int) -> Optional[User]:
         query: str = "SELECT * FROM users WHERE uid = $1"
-        record: Record | None = await self.pool.fetchrow(query, user_id)
+
+        async with self.pool.acquire() as connection:
+            record: Record | None = await connection.fetchrow(query, user_id)
+
         if record is None:
             log.getChild("get_user").debug("Failed to get user with id %s", user_id)
             return None
@@ -110,7 +122,10 @@ class ModelManager:
 
     async def get_all_users(self) -> dict[int, User]:
         query: str = "SELECT * FROM users"
-        records: list[Record] = await self.pool.fetch(query)
+
+        async with self.pool.acquire() as connection:
+            records: list[Record] = await connection.fetch(query)
+
         users: dict[int, User] = {record["uid"]: User.from_record(record) for record in records}
         return users
 
@@ -121,7 +136,9 @@ class ModelManager:
         ON CONFLICT (gid) DO NOTHING
         RETURNING *
         """
-        record: Record | None = await self.pool.fetchrow(query, guild_id)
+
+        async with self.pool.acquire() as connection:
+            record: Record | None = await connection.fetchrow(query, guild_id)
 
         if not record:
             maybe_guild: Guild | None = await self.get_guild(guild_id)
@@ -149,7 +166,10 @@ class ModelManager:
         WHERE guilds.gid = $1
         GROUP BY guilds.gid    
         """
-        record: Record | None = await self.pool.fetchrow(query, guild_id)
+
+        async with self.pool.acquire() as connection:
+            record: Record | None = await connection.fetchrow(query, guild_id)
+
         if record is None:
             _log: Logger = log.getChild("get_guild")
             _log.debug("Failed to get guild with id %s", guild_id)
@@ -172,15 +192,21 @@ class ModelManager:
         FROM guilds LEFT JOIN guild_prefixes ON guilds.gid = guild_prefixes.gid
         GROUP BY guilds.gid
         """
-        records: list[Record] = await self.pool.fetch(query)
+
+        async with self.pool.acquire() as connection:
+            records: list[Record] = await connection.fetch(query)
+
         guilds: dict[int, Guild] = {record["gid"]: Guild.from_record(record) for record in records}
         return guilds
 
     async def remove_guild_prefix(self, guild: Guild, prefix: str) -> Optional[Guild]:
         if prefix not in guild.prefixes:
             raise UserFeedbackExceptionFactory.create("That prefix does not exist", ExceptionLevel.WARNING)
+
         query: str = "DELETE FROM guild_prefixes WHERE gid = $1 AND prefix = $2"
-        await self.pool.execute(query, guild.id, prefix)
+
+        async with self.pool.acquire() as connection:
+            await connection.execute(query, guild.id, prefix)
 
         guild.prefixes.remove(prefix)
         return guild
@@ -188,22 +214,29 @@ class ModelManager:
     async def add_guild_prefix(self, guild: Guild, prefix: str) -> Optional[Guild]:
         if prefix in guild.prefixes:
             raise UserFeedbackExceptionFactory.create("That prefix already exists", ExceptionLevel.WARNING)
+
         query: str = "INSERT INTO guild_prefixes (gid, prefix) VALUES ($1, $2)"
-        await self.pool.execute(query, guild.id, prefix)
+
+        async with self.pool.acquire() as connection:
+            await connection.execute(query, guild.id, prefix)
 
         guild.prefixes.append(prefix)
         return guild
 
     async def set_guild_owo_prefix(self, guild: Guild, prefix: str) -> Guild:
         query: str = "UPDATE guilds SET owo_prefix = $1 WHERE gid = $2"
-        await self.pool.execute(query, prefix, guild.id)
+
+        async with self.pool.acquire() as connection:
+            await connection.execute(query, prefix, guild.id)
 
         guild.owo_prefix = prefix
         return guild
 
     async def toggle_guild_owo_counting(self, guild: Guild) -> Optional[Guild]:
         query: str = "UPDATE guilds SET owo_counting = NOT owo_counting WHERE gid = $1"
-        await self.pool.execute(query, guild.id)
+
+        async with self.pool.acquire() as connection:
+            await connection.execute(query, guild.id)
 
         guild.owo_counting = not guild.owo_counting
         return guild
