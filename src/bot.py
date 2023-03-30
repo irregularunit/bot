@@ -34,7 +34,7 @@ from bridges import RedisBridge
 from gateway import Gateway
 from models import Guild, ModelManager, User
 from settings import Config
-from utils import Context, ContextT
+from utils import Context, ContextT, GuildMessageable
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -112,7 +112,8 @@ class Bot(commands.Bot):
             return
 
         if ctx.guild:
-            assert isinstance(ctx.channel, (discord.TextChannel, discord.Thread))
+            if not isinstance(ctx.channel, GuildMessageable):
+                return
 
             if not ctx.channel.permissions_for(ctx.me).send_messages:  # type: ignore
                 if await self.is_owner(ctx.author):
@@ -271,9 +272,6 @@ class Bot(commands.Bot):
             except Exception as exc:
                 _log.exception(f"Failed to load {marked_as} {item!r}", exc_info=exc)
 
-        # We still need to start redis ourselves
-        # since I haven't got around to making a
-        # custom connection for it.
         await self.redis.connect()
 
         self.cached_guilds = await self.manager.get_all_guilds()
