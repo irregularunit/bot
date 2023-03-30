@@ -405,7 +405,8 @@ sorted_owo_commands = sorted(owo_commands)
 
 
 def check_owo_command(command: str) -> bool:
-    index: int = bisect.bisect_left(sorted_owo_commands, command.lower())
+    # Already expects the command to be lowercased
+    index: int = bisect.bisect_left(sorted_owo_commands, command)
     return index != len(sorted_owo_commands) and sorted_owo_commands[index] == command
 
 
