@@ -1,4 +1,4 @@
-# Discord bot
+# Just a discord bot
 
 Ignore this file, it's just a readme.
 
