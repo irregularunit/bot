@@ -237,8 +237,8 @@ class AsyncInstance(AsyncInstanceType):
 
         yield from self.compose_task(
             self.__ainit__(*self._args, **self._kwargs),
-        ).__await__()  
-        
+        ).__await__()
+
         # cursed
         return self
 

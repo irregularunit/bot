@@ -34,7 +34,7 @@ class Item:
 class Paginator(View):
     """Simple embed and file paginator view"""
 
-    def __init__(self, bot: Bot, *items: Item):
+    def __init__(self, bot: Bot, *items: Item) -> None:
         super().__init__()
         self.bot = bot
         self.items = items
@@ -55,22 +55,20 @@ class Paginator(View):
     async def edit(self, iact: Interaction, *, page: int):
         self.page = page
         unit = self.items[page]
-        await iact.response.edit_message(
-            content=unit.content, embed=unit.embed, attachments=unit.files
-        )
+        await iact.response.edit_message(content=unit.content, embed=unit.embed, attachments=unit.files)
 
     @button()
-    async def first(self, iact: Interaction, button: Button[Paginator]):
+    async def first(self, iact: Interaction, button: Button[Paginator]) -> None:
         await self.edit(iact, page=0)
 
     @button()
-    async def back(self, iact: Interaction, button: Button[Paginator]):
+    async def back(self, iact: Interaction, button: Button[Paginator]) -> None:
         await self.edit(iact, page=max(self.page - 1, 0))
 
     @button()
-    async def next(self, iact: Interaction, button: Button[Paginator]):
+    async def next(self, iact: Interaction, button: Button[Paginator]) -> None:
         await self.edit(iact, page=min(self.page + 1, len(self.items) - 1))
 
     @button()
-    async def skip(self, iact: Interaction, button: Button[Paginator]):
+    async def skip(self, iact: Interaction, button: Button[Paginator]) -> None:
         await self.edit(iact, page=len(self.items) - 1)

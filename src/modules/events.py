@@ -22,7 +22,7 @@ from models import Guild
 from utils import BaseExtension, check_owo_command, resize_to_limit, type_of
 
 if TYPE_CHECKING:
-    from src.bot import Bot
+    from bot import Bot
 
 __all__: tuple[str, ...] = ("DiscordEventListener",)
 
@@ -178,6 +178,20 @@ class DiscordEventListener(BaseExtension):
             avatar = resize_to_limit(BytesIO(avatar)).getvalue()
             self.push_item(after.id, after.name, avatar)
 
+    @commands.Cog.listener("on_user_update")
+    async def manage_user_update(self, before: discord.User, after: discord.User) -> None:
+        if before.name != after.name:
+            query = "INSERT INTO item_history (uid, item_type, item_value) VALUES ($1, $2, $3)"
+
+            async with self.bot.pool.acquire() as connection:
+                await connection.execute(query, after.id, "name", after.name)
+
+        if before.discriminator != after.discriminator:
+            query = "INSERT INTO item_history (uid, item_type, item_value) VALUES ($1, $2, $3)"
+
+            async with self.bot.pool.acquire() as connection:
+                await connection.execute(query, after.id, "discriminator", after.discriminator)
+
     @commands.Cog.listener("on_guild_remove")
     async def manage_guild_leave(self, guild: discord.Guild) -> None:
         query: str = "DELETE FROM guilds WHERE uid = $1"
@@ -196,7 +210,7 @@ class DiscordEventListener(BaseExtension):
                 # Why? I don't know. But we don't want to insert the same data twice.
                 return
 
-            await self.bot.redis.client.setex(f"status:{after.id}", 0, 3)
+            await self.bot.redis.client.setex(f"status:{after.id}", 3, 0)
             query: str = "INSERT INTO presence_history (uid, status, status_before) VALUES ($1, $2, $3)"
 
             async with self.bot.pool.acquire() as connection:

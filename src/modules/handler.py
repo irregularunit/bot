@@ -110,14 +110,14 @@ class DiscordErrorHandler(BaseExtension):
                     message="You are not the owner of this bot, so you cannot use this command.",
                 )
                 return await ctx.safe_send(content=err.to_string())
-            
+
             return await ctx.safe_send(content=err.to_string())
 
         if isinstance(exc, commands.CommandOnCooldown):
             if await self.bot.redis.client.get(f"cooldown:{ctx.author.id}") is not None:
                 return
 
-            await self.bot.redis.client.setex(f"cooldown:{ctx.author.id}", 5, exc.retry_after)
+            await self.bot.redis.client.setex(f"cooldown:{ctx.author.id}", int(exc.retry_after), 1)
 
             time_counter = self.to_discord_time_format(exc.retry_after)
             return await ctx.safe_send(
@@ -139,7 +139,7 @@ class DiscordErrorHandler(BaseExtension):
                     message="Ion do dm's.",
                 )
                 return await ctx.safe_send(content=err.to_string())
-            
+
             return await ctx.safe_send(content=err.to_string())
 
         if isinstance(error, commands.MemberNotFound):
@@ -156,7 +156,7 @@ class DiscordErrorHandler(BaseExtension):
                     message="You do not have the required permissions to use this command.",
                 )
                 return await ctx.safe_send(content=err.to_string())
-            
+
             return await ctx.safe_send(content=err.to_string())
 
         if isinstance(error, commands.BotMissingPermissions):
