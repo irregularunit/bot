@@ -50,7 +50,7 @@ class User(Model):
     @classmethod
     def from_record(cls: Type[User], record: Record) -> User:
         return cls(
-            id=record["uid"],
+            id=record["uuid"],
             emoji_server=record["emoji_server"],
             timezone=record["timezone"],
             created_at=record["created_at"],
@@ -67,7 +67,7 @@ class User(Model):
         query = io.StringIO()
 
         for table in to_cascade:
-            query.write(f"DELETE FROM {table} WHERE uid = $1;")
+            query.write(f"DELETE FROM {table} WHERE uuid = $1;")
 
         async with pool.acquire() as connection:
             await connection.execute(query.getvalue(), self.id)
@@ -99,9 +99,9 @@ class ModelManager:
 
     async def create_user(self, user_id: int) -> User:
         query: str = """
-        INSERT INTO users (uid)
+        INSERT INTO users (uuid)
         VALUES ($1)
-        ON CONFLICT (uid) DO NOTHING
+        ON CONFLICT (uuid) DO NOTHING
         RETURNING *
         """
         async with self.pool.acquire() as connection:
@@ -116,7 +116,7 @@ class ModelManager:
         return User.from_record(record)
 
     async def get_user(self, user_id: int) -> Optional[User]:
-        query: str = "SELECT * FROM users WHERE uid = $1"
+        query: str = "SELECT * FROM users WHERE uuid = $1"
 
         async with self.pool.acquire() as connection:
             record: Record | None = await connection.fetchrow(query, user_id)
@@ -133,7 +133,7 @@ class ModelManager:
         return user
 
     async def set_user_timezone(self, user_id: int, timezone: str) -> None:
-        query: str = "UPDATE users SET timezone = $1 WHERE uid = $2"
+        query: str = "UPDATE users SET timezone = $1 WHERE uuid = $2"
         await self.pool.execute(query, timezone, user_id)
 
     async def get_all_users(self) -> dict[int, User]:
@@ -142,7 +142,7 @@ class ModelManager:
         async with self.pool.acquire() as connection:
             records: list[Record] = await connection.fetch(query)
 
-        users: dict[int, User] = {record["uid"]: User.from_record(record) for record in records}
+        users: dict[int, User] = {record["uuid"]: User.from_record(record) for record in records}
         return users
 
     async def create_guild(self, guild_id: int) -> Guild:

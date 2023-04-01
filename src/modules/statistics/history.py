@@ -191,31 +191,31 @@ class DiscordUserHistory(BaseExtension):
         member: discord.Member = commands.param(default=None, converter=MemberConverter(), displayed_default="You"),
     ) -> Optional[discord.Message]:
         user: discord.Member = member or ctx.author
-
-        cal = CountingCalender(user.id, ctx.guild.id)
-        query: str = cal.struct_query()
+        query = "SELECT * FROM get_counting_score($1, $2)"
 
         async with self.bot.pool.acquire() as connection:
-            counting_history = await connection.fetch(query)
+            history = await connection.fetchrow(query, user.id, ctx.guild.id)
 
-        def get_record_index(record: Any, idx: int) -> str:
-            return self.format_count(record[idx]["count"])
+            print(history)
+
+        def get_record_index(record: Any, pos: str, /) -> str:
+            return self.format_count(record[pos])
 
         embed: EmbedBuilder = (
             EmbedBuilder(
                 description=(
                     f"**{get_random_emoji()} {user.display_name}'s Score**\n\n"
-                    f"Total score: `{get_record_index(counting_history, 8)}`"
+                    f"Total score: `{get_record_index(history, 'all_time')}`"
                 ),
             )
             .add_field(
                 name="__**Present Stats**__",
                 value=(
                     f"""
-                    >>> Today: `{get_record_index(counting_history, 0)}`
-                    This Week: `{get_record_index(counting_history, 2)}`
-                    This Month: `{get_record_index(counting_history, 4)}`
-                    This Year: `{get_record_index(counting_history, 6)}`
+                    >>> Today: `{get_record_index(history, 'today')}`
+                    This Week: `{get_record_index(history, 'this_week')}`
+                    This Month: `{get_record_index(history, 'this_month')}`
+                    This Year: `{get_record_index(history, 'this_year')}`
                     """
                 ),
                 inline=False,
@@ -224,10 +224,10 @@ class DiscordUserHistory(BaseExtension):
                 name="__**Past Stats**__",
                 value=(
                     f"""
-                    >>> Yesterday: `{get_record_index(counting_history, 1)}`
-                    Last Week: `{get_record_index(counting_history, 3)}`
-                    Last Month: `{get_record_index(counting_history, 5)}`
-                    Last Year: `{get_record_index(counting_history, 7)}`
+                    >>> Yesterday: `{get_record_index(history, 'yesterday')}`
+                    Last Week: `{get_record_index(history, 'last_week')}`
+                    Last Month: `{get_record_index(history, 'last_month')}`
+                    Last Year: `{get_record_index(history, 'last_year')}`
                     """
                 ),
                 inline=False,

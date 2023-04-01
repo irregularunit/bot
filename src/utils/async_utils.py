@@ -264,9 +264,6 @@ class AsyncInstance(AsyncInstanceType):
         if not tasks:
             return
 
-        # Gather all the tasks and wait for them to finish.
-        # Could use the new syntax but I am not sure if every contributor
-        # is using 3.11 yet. Changable in the future.
         await asyncio.gather(*tasks, return_exceptions=True)
 
     @overload
@@ -310,10 +307,11 @@ if __name__ == "__main__":
 
         inst = await Test(1, 2)
         print(inst)
+
         inst.add()
         inst.sub()
+
         print(inst.__tasks__)
         await inst.close()
-        print("closed")
 
     asyncio.run(test_async_class())

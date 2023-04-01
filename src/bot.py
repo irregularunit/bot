@@ -143,7 +143,6 @@ class Bot(commands.Bot):
             self.cached_prefixes[message.guild.id] = pattern
 
         if match := self.cached_prefixes[message.guild.id].match(message.content):
-            print(match)
             return match.group()
 
         # Fallback, but it shouldn't be needed
