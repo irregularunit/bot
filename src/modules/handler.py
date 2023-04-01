@@ -103,11 +103,14 @@ class DiscordErrorHandler(BaseExtension):
             return
 
         if isinstance(exc, commands.NotOwner):
-            err = self.create_error(
-                exception=commands.NotOwner,
-                level=ExceptionLevel.ERROR,
-                message="You are not the owner of this bot, so you cannot use this command.",
-            )
+            if not (err := self.get_error(commands.NotOwner)):
+                err = self.create_error(
+                    exception=commands.NotOwner,
+                    level=ExceptionLevel.ERROR,
+                    message="You are not the owner of this bot, so you cannot use this command.",
+                )
+                return await ctx.safe_send(content=err.to_string())
+            
             return await ctx.safe_send(content=err.to_string())
 
         if isinstance(exc, commands.CommandOnCooldown):
@@ -129,11 +132,14 @@ class DiscordErrorHandler(BaseExtension):
             return await self.handle_missing_required_argument(ctx, exc)
 
         if isinstance(error, commands.NoPrivateMessage):
-            err = self.create_error(
-                exception=commands.NoPrivateMessage,
-                level=ExceptionLevel.ERROR,
-                message="Ion do dm's.",
-            )
+            if not (err := self.get_error(commands.NoPrivateMessage)):
+                err = self.create_error(
+                    exception=commands.NoPrivateMessage,
+                    level=ExceptionLevel.ERROR,
+                    message="Ion do dm's.",
+                )
+                return await ctx.safe_send(content=err.to_string())
+            
             return await ctx.safe_send(content=err.to_string())
 
         if isinstance(error, commands.MemberNotFound):
@@ -143,11 +149,14 @@ class DiscordErrorHandler(BaseExtension):
             return await self.handle_bad_argument(ctx, error)
 
         if isinstance(error, commands.MissingPermissions):
-            err = self.create_error(
-                exception=commands.MissingPermissions,
-                level=ExceptionLevel.WARNING,
-                message="You do not have the required permissions to use this command.",
-            )
+            if not (err := self.get_error(commands.MissingPermissions)):
+                err = self.create_error(
+                    exception=commands.MissingPermissions,
+                    level=ExceptionLevel.WARNING,
+                    message="You do not have the required permissions to use this command.",
+                )
+                return await ctx.safe_send(content=err.to_string())
+            
             return await ctx.safe_send(content=err.to_string())
 
         if isinstance(error, commands.BotMissingPermissions):
