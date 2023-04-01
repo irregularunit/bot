@@ -49,7 +49,7 @@ class UserFeedbackException(CommandError):
         formatted_message: str = self.message
         for formatter in self.formatters:
             formatted_message = formatter(formatted_message)
-        return f"{self.emoji_strategy.get_emoji()} | {formatted_message}"
+        return f"**{self.emoji_strategy.get_emoji()} |** {formatted_message}"
 
 
 class UserFeedbackEmojiStrategy(ABC):

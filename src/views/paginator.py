@@ -3,8 +3,10 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING, Optional
 
-from discord import ButtonStyle, Embed, File, Interaction
+from discord import ButtonStyle, File, Interaction
 from discord.ui import Button, View, button
+
+from models import EmbedBuilder
 
 if TYPE_CHECKING:
     from bot import Bot
@@ -19,7 +21,7 @@ class Item:
         self,
         *,
         content: Optional[str] = None,
-        embed: Optional[Embed] = None,
+        embed: Optional[EmbedBuilder] = None,
         files: Optional[list[File]] = None,
     ):
         self.content = content
@@ -36,10 +38,10 @@ class Paginator(View):
 
     def __init__(self, bot: Bot, *items: Item) -> None:
         super().__init__()
-        self.bot = bot
-        self.items = items
+        self.bot: Bot = bot
+        self.items: tuple[Item, ...] = items
         self.page = 0
-        self.emojis = {
+        self.emojis: dict[str, str] = {
             "first": "⏮",
             "back": "◀",
             "next": "▶",
@@ -52,7 +54,7 @@ class Paginator(View):
                     child.style = ButtonStyle.primary
                 child.emoji = self.emojis[child.callback.callback.__name__]
 
-    async def edit(self, interaction: Interaction, *, page: int):
+    async def edit(self, interaction: Interaction, *, page: int) -> None:
         self.page = page
         unit = self.items[page]
         await interaction.response.edit_message(content=unit.content, embed=unit.embed, attachments=unit.files)

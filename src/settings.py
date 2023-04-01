@@ -46,6 +46,8 @@ class Config(BaseSettings):
     owo_emote: str = "<:owo:1089249009073410099>"
     owo_bot_id: int = 408785106942164992
 
+    blank_emote: str = "<:blank:1091782919938383952>"
+
     @property
     def psql(self) -> str:
         return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"

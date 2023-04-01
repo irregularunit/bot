@@ -57,6 +57,11 @@ class DiscordErrorHandler(BaseExtension):
         self.bot: Bot = bot
         self.flyweight: Dict[str, Error] = {}
 
+    @staticmethod
+    def to_discord_time_format(seconds: Union[int, float]) -> str:
+        time = discord.utils.utcnow() + datetime.timedelta(seconds=seconds)
+        return discord.utils.format_dt(time, style="R")
+
     def create_error(
         self,
         exception: Type[Exception],
@@ -129,7 +134,19 @@ class DiscordErrorHandler(BaseExtension):
             return await ctx.send_help(ctx.command)
 
         if isinstance(exc, commands.MissingRequiredArgument):
-            return await self.handle_missing_required_argument(ctx, exc)
+            arg = exc.param.name
+            signature = ctx.command.signature
+
+            full_qualified_signature = ctx.command.full_parent_name + ctx.command.qualified_name
+
+            partial_exception = UserFeedbackExceptionFactory.create(
+                message=(
+                    f"Missing required argument `{arg}`.\n" 
+                    f"{self.bot.config.blank_emote} **|** Usage: `{ctx.prefix}{full_qualified_signature} {signature}`"
+                ),
+                level=ExceptionLevel.ERROR,
+            )
+            return await ctx.safe_send(content=partial_exception.to_string())
 
         if isinstance(error, commands.NoPrivateMessage):
             if not (err := self.get_error(commands.NoPrivateMessage)):
@@ -146,7 +163,8 @@ class DiscordErrorHandler(BaseExtension):
             return await ctx.safe_send(content=f"Could not find a user with the name `{error.argument}`.")
 
         if isinstance(error, commands.BadArgument):
-            return await self.handle_bad_argument(ctx, error)
+            partial_exception = UserFeedbackExceptionFactory.create(message=str(error), level=ExceptionLevel.ERROR)
+            return await ctx.safe_send(content=partial_exception.to_string())
 
         if isinstance(error, commands.MissingPermissions):
             if not (err := self.get_error(commands.MissingPermissions)):
@@ -167,66 +185,6 @@ class DiscordErrorHandler(BaseExtension):
         log.getChild("on_command_error").exception(
             f"Unhandled exception in command {ctx.command.qualified_name}", exc_info=exc
         )
-
-    def to_discord_time_format(self, seconds: Union[int, float]) -> str:
-        time = discord.utils.utcnow() + datetime.timedelta(seconds=seconds)
-        return discord.utils.format_dt(time, style="R")
-
-    async def handle_missing_required_argument(
-        self, ctx: Context, error: commands.MissingRequiredArgument
-    ) -> Optional[discord.Message]:
-        assert ctx.command is not None
-
-        command = ctx.command
-        signature = command.signature
-        missing_argument = error.param.name
-
-        error_message = ' '.join(
-            f"{'^' if param.replace('[', '').replace(']', '') == missing_argument else ' '}{param}"
-            for param in signature.split()
-            if param != '*'
-        )
-        command_usage = f"{command.name} {error_message}"
-
-        lineo = command.callback.__code__.co_firstlineno
-        embed_description = f"""```sh
-        error: missing required argument {missing_argument}
-           --> $ext/{command.cog.qualified_name.lower()}.py:{lineo}
-             |
-        {lineo}  | {command_usage}
-             |
-             |
-             | => use help {command.qualified_name}
-        ```"""
-        embed_description = re.sub(r"^ {8}", "", embed_description, flags=re.MULTILINE)
-
-        return await ctx.safe_send(
-            embed=EmbedBuilder.factory(ctx, title="Required argument was missing!", description=embed_description)
-        )
-
-    async def handle_bad_argument(self, ctx: Context, error: commands.BadArgument) -> Optional[discord.Message]:
-        assert ctx.command is not None
-
-        error_lineno = ctx.command.callback.__code__.co_firstlineno
-
-        information = "Error: Bad argument passed\n"
-        about = f" --> $ext/{ctx.command.qualified_name.lower()}.py:{error_lineno}:{error_lineno + 1}\n"
-        designer = " | "
-
-        error_message_parts = error.args[0].split("\n")
-        error_message = f"```\n{information}{about}\n"
-
-        for part in error_message_parts:
-            error_message += f"{designer}{part}\n"
-        error_message += f"{designer}\n"
-        error_message += f"{designer} => use help {ctx.command.name}```"
-
-        embed = EmbedBuilder.factory(
-            ctx, title="Oh no! You've encountered an error!", description=error_message, timestamp=ctx.message.created_at
-        )
-        embed.set_footer(text=f"Invoked by {ctx.author}", icon_url=ctx.author.display_avatar.url)
-
-        return await ctx.maybe_reply(embed=embed)
 
 
 async def setup(bot: Bot) -> None:
