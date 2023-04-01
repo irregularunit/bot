@@ -36,6 +36,7 @@ class Config(BaseSettings):
     owner_ids: list[int]
     log_level: str = "INFO"
     client_user: int = 1054123882384212078
+    client_owner: int = 380067729400528896
 
     # shamelessly stolen from
     # https://htmlcolorcodes.com/colors/shades-of-blue/
