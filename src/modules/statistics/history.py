@@ -11,6 +11,7 @@ import inspect
 import math
 import os
 import sys
+import time
 from typing import TYPE_CHECKING, Any, Optional
 
 import discord
@@ -93,13 +94,17 @@ class DiscordUserHistory(BaseExtension):
             psql_version_query = await connection.fetchval("SELECT version()")
             psql_version = psql_version_query.split(" ")[1]
 
+            now = time.perf_counter()
+            await connection.fetchval("SELECT 1")
+            psql_latency = (time.perf_counter() - now) * 1000
+
         fields = (
             ("Python", python_version, True),
-            ("discord.py", discord_version, True),
+            ("Discord.py", discord_version, True),
             ("PostgreSQL", str(psql_version), True),
             ("Lines of code", str(lines_of_code), True),
-            ("Uptime", discord.utils.format_dt(self.bot.start_time, "f"), True),
-            ("Latency", f"{self.bot.latency * 1000:.2f}ms", True),
+            ("PostgreSQL Latency", f"{psql_latency:.2f}ms", True),
+            ("Discord Latency", f"{self.bot.latency * 1000:.2f}ms", True),
         )
 
         embed: EmbedBuilder = (
