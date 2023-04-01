@@ -29,6 +29,8 @@ log: Logger = getLogger(__name__)
 
 
 class Error:
+    __slots__: tuple[str, ...] = ("exception", "level", "message", "kwargs")
+
     def __init__(
         self,
         *,
@@ -101,7 +103,12 @@ class DiscordErrorHandler(BaseExtension):
             return
 
         if isinstance(exc, commands.NotOwner):
-            return await ctx.safe_send(content="You are not the owner of this bot, so you cannot use this command.")
+            err = self.create_error(
+                exception=commands.NotOwner,
+                level=ExceptionLevel.ERROR,
+                message="You are not the owner of this bot, so you cannot use this command.",
+            )
+            return await ctx.safe_send(content=err.to_string())
 
         if isinstance(exc, commands.CommandOnCooldown):
             if await self.bot.redis.client.get(f"cooldown:{ctx.author.id}") is not None:
@@ -122,7 +129,12 @@ class DiscordErrorHandler(BaseExtension):
             return await self.handle_missing_required_argument(ctx, exc)
 
         if isinstance(error, commands.NoPrivateMessage):
-            return await ctx.safe_send(content="Ion do dm's.")
+            err = self.create_error(
+                exception=commands.NoPrivateMessage,
+                level=ExceptionLevel.ERROR,
+                message="Ion do dm's.",
+            )
+            return await ctx.safe_send(content=err.to_string())
 
         if isinstance(error, commands.MemberNotFound):
             return await ctx.safe_send(content=f"Could not find a user with the name `{error.argument}`.")
@@ -131,7 +143,12 @@ class DiscordErrorHandler(BaseExtension):
             return await self.handle_bad_argument(ctx, error)
 
         if isinstance(error, commands.MissingPermissions):
-            return await ctx.safe_send(content="You do not have the required permissions to use this command.")
+            err = self.create_error(
+                exception=commands.MissingPermissions,
+                level=ExceptionLevel.WARNING,
+                message="You do not have the required permissions to use this command.",
+            )
+            return await ctx.safe_send(content=err.to_string())
 
         if isinstance(error, commands.BotMissingPermissions):
             # I don't care about this error tbh, config error on

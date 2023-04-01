@@ -155,7 +155,8 @@ class AsyncABCMeta(ABCMeta):
 
 
 class AsyncInstanceType(metaclass=AsyncABCMeta):
-    """
+    """A base for async classes.
+
     Parameters
     ----------
     *args: Any
@@ -236,7 +237,9 @@ class AsyncInstance(AsyncInstanceType):
 
         yield from self.compose_task(
             self.__ainit__(*self._args, **self._kwargs),
-        ).__await__()  # cursed
+        ).__await__()  
+        
+        # cursed
         return self
 
     def __del__(self) -> None:
@@ -266,8 +269,6 @@ class AsyncInstance(AsyncInstanceType):
         # is using 3.11 yet. Changable in the future.
         await asyncio.gather(*tasks, return_exceptions=True)
 
-    # I just looked up the overload docs and I am still confused
-    # hope this works, as plannend :p
     @overload
     async def __ainit__(self) -> None:
         ...
@@ -280,7 +281,7 @@ class AsyncInstance(AsyncInstanceType):
         ...
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
-        # We don't want to allow overriding __await__ as it is used
+        # We don't want to allow overriding __await__
         if cls.__await__ is not AsyncInstance.__await__:
             raise TypeError(
                 f"{cls.__name__} cannot override __await__",
