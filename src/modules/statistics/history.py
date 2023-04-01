@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 import discord
 from discord.ext import commands
+from discord.ui import Button, View, button
 
 from models import EmbedBuilder
 from utils import (
@@ -32,6 +33,33 @@ if TYPE_CHECKING:
     from utils import Context
 
 __all__: tuple[str, ...] = ("DiscordUserHistory",)
+
+
+class InfoView(View):
+    def __init__(self, invite: str, *, timeout: float = 60) -> None:
+        super().__init__(timeout=timeout)
+        self.inv: str = invite
+
+        buttons = [
+            Button(
+                label="GitHub",
+                url="https://github.com/irregularunit/bot",
+                style=discord.ButtonStyle.link,
+            ),
+            Button(
+                label="Invite",
+                url=self.inv,
+                style=discord.ButtonStyle.link,
+            ),
+        ]
+
+        for button in buttons:
+            self.add_item(button)
+
+    @button(label="Close", style=discord.ButtonStyle.danger)
+    async def close_button(self, interaction: discord.Interaction, button: Button) -> None:
+        await interaction.response.defer()
+        await interaction.delete_original_response()
 
 
 class DiscordUserHistory(BaseExtension):
@@ -90,7 +118,8 @@ class DiscordUserHistory(BaseExtension):
             .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
         )
 
-        await ctx.safe_send(embed=embed)
+        view = InfoView(self.bot.config.invite)
+        await ctx.safe_send(embed=embed, view=view)
 
     @commands.command(name="source", aliases=("src",))
     async def source_command(self, ctx: Context, *, command: Optional[str] = None) -> Optional[discord.Message]:
