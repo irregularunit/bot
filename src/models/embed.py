@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Iterable, Optional, Self, Type
 
 from discord import Colour, Embed, Member, Message, User
+from typing_extensions import override
 
 from settings import Config
 
@@ -23,6 +24,7 @@ config: Config = Config()  # type: ignore
 
 
 class EmbedBuilder(Embed):
+    @override
     def __init__(
         self,
         *,

@@ -8,14 +8,13 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
 from typing import TYPE_CHECKING
 
-from discord import ButtonStyle, Interaction, Message, Member, User, utils
+from discord import ButtonStyle, Interaction, Member, Message, User, utils
 from discord.ext import commands
 from discord.ui import Button, View, button
 
-from utils import BaseExtension, for_all_callbacks, get_random_emoji, async_all
+from utils import BaseExtension, async_all, for_all_callbacks, get_random_emoji
 
 if TYPE_CHECKING:
     from bot import Bot
@@ -57,7 +56,7 @@ class Transparency(BaseExtension):
     async def cog_check(self, ctx: Context) -> bool:
         checks = [commands.guild_only()]
         return await async_all(check(ctx) for check in checks)
-    
+
     @commands.group(name="delete", aliases=("rm",), invoke_without_command=False)
     async def delete(self, ctx: Context) -> None:
         ...
@@ -87,21 +86,16 @@ class Transparency(BaseExtension):
 
     @commands.command(name="suggest", aliases=("suggestion",))
     async def suggest(self, ctx: Context, *, suggestion: str) -> None:
-        owner = (
-            self.bot.get_user(self.bot.config.client_owner)
-            or await self.bot.fetch_user(self.bot.config.client_owner)
-        )
+        owner = self.bot.get_user(self.bot.config.client_owner) or await self.bot.fetch_user(self.bot.config.client_owner)
 
         prompt = SafetyPrompt(ctx.author)
         message: Message | None = await ctx.safe_send(
-            f"Are you sure you want to send this suggestion?\n"
-            f">>> {suggestion} ...\n",
-            view=prompt
+            f"Are you sure you want to send this suggestion?\n" f">>> {suggestion} ...\n", view=prompt
         )
 
         if not message:
             return
-        
+
         await prompt.wait()
 
         if prompt.confirmed:

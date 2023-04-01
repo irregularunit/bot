@@ -116,7 +116,7 @@ class AvatarHistoryView(View):
             return await self.ctx.send(
                 embed=EmbedBuilder.factory(
                     self.ctx,
-                    title=f"{self.member or self.ctx.author}'s has no avatar histor",
+                    title=f"{self.member or self.ctx.author}'s has no avatar history",
                 ).set_image(url=self.member.display_avatar)
             )
 

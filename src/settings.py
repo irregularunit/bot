@@ -12,6 +12,7 @@ from typing import AbstractSet, Any, Generator, Type
 import discord
 from pydantic import BaseSettings
 from pydantic.fields import ModelField
+from typing_extensions import override
 
 __all__: tuple[str, ...] = ("Config",)
 
@@ -83,6 +84,7 @@ class Config(BaseSettings):
         def _sequence_like(value: Any) -> bool:
             return isinstance(value, (list, tuple, set, frozenset, GeneratorType, deque))
 
+        @override
         @classmethod
         def prepare_field(cls, field: ModelField) -> None:
             env_names: list[str] | AbstractSet[str]

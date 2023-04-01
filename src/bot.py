@@ -29,6 +29,7 @@ import asyncpg
 import discord
 from aiohttp import ClientError
 from discord.ext import commands
+from typing_extensions import override
 
 from bridges import RedisBridge
 from gateway import Gateway
@@ -55,6 +56,7 @@ class Bot(commands.Bot):
         cogs: Mapping[str, commands.Cog]
         start_time: datetime
 
+    @override
     def __init__(
         self,
         *,
@@ -97,6 +99,7 @@ class Bot(commands.Bot):
     async def to_thread(func: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs) -> T:
         return await asyncio.to_thread(func, *args, **kwargs)
 
+    @override
     async def get_context(self, message: discord.Message, *, cls: Type[ContextT] = Context) -> Context:
         return await super().get_context(message, cls=cls or commands.Context["Bot"])
 
@@ -123,6 +126,7 @@ class Bot(commands.Bot):
 
         await self.invoke(ctx)
 
+    @override
     async def get_prefix(self, message: discord.Message) -> str | list[str]:
         prefixes: list[str] = [f"<@!{self.user.id}> ", f"<@{self.user.id}> ", "uwu ", "uwu"]
         if message.guild is None:
@@ -163,6 +167,7 @@ class Bot(commands.Bot):
 
         return await asyncpg.create_pool(dsn=dsn, init=init, **kwargs)
 
+    @override
     async def connect(self, *, reconnect: bool = True) -> None:
         backoff = discord.client.ExponentialBackoff()  # type: ignore
         ws_params: dict[str, Any] = {"initial": True, "shard_id": self.shard_id}
@@ -232,6 +237,7 @@ class Bot(commands.Bot):
                 # This is apparently what the official Discord client does.
                 ws_params.update(sequence=self.ws.sequence, resume=True, session=self.ws.session_id)
 
+    @override
     async def start(self, *args: Any, **kwargs: Any) -> None:
         await super().start(token=self.config.token, *args, **kwargs)
 
@@ -254,6 +260,7 @@ class Bot(commands.Bot):
 
             yield schema  # Returns the PosixPath object (assuming we don't use Windows)
 
+    @override
     async def setup_hook(self) -> None:
         _log: Logger = self.logger.getChild("setup_hook")
         for item in list(self.iter_extensions()) + list(self.iter_schemas()):
@@ -283,6 +290,7 @@ class Bot(commands.Bot):
 
         self.logger.getChild("on_ready").info("Connected to Discord.")
 
+    @override
     async def close(self) -> None:
         to_close: list[Any] = [self.pool, self.session, self.redis]
 

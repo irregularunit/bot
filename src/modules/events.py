@@ -261,7 +261,7 @@ class DiscordEventListener(BaseExtension):
         maybe_safe: str = ""
 
         # I know we "should" use casefold, but it's not needed in
-        # this case, since we're only a subset of ASCII characters.
+        # this case, since we're only using a subset of ASCII characters.
         if content.startswith(current_guild.owo_prefix):
             maybe_safe: str = content[len(current_guild.owo_prefix) :].strip().split(" ")[0].lower()
 
