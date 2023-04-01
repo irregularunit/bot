@@ -130,23 +130,23 @@ class Bot(commands.Bot):
     async def get_prefix(self, message: discord.Message) -> str | list[str]:
         prefixes: list[str] = [f"<@!{self.user.id}> ", f"<@{self.user.id}> ", "uwu ", "uwu"]
         if message.guild is None:
-            # We're in a DM, which generally shouldn't happen. But
-            # the type checker doesn't get that, so we have to do this.
-            escaped_prefixes: list[str] = list(map(re.escape, prefixes))
-            if match := re.match(fr"^(?:{'|'.join(escaped_prefixes)})\s*", message.content):
-                return match.group()
-            return commands.when_mentioned_or(*prefixes)(self, message)
+            # No dm's :3
+            raise commands.NoPrivateMessage()
 
         if message.guild.id not in self.cached_prefixes:
-            # We're caching the Pattern object because it's faster than
-            # fetching and recompiling the prefixes every time.
             guild: Guild = await self.manager.get_or_create_guild(message.guild.id)
-            pattern: re.Pattern[str] = re.compile(fr"^(?:{'|'.join(map(re.escape, guild.prefixes))})\s*")
+            pattern: re.Pattern[str] = re.compile(
+                r"|".join(re.escape(prefix) + r"\s*" for prefix in guild.prefixes),
+                re.IGNORECASE,
+            )
+
             self.cached_prefixes[message.guild.id] = pattern
 
         if match := self.cached_prefixes[message.guild.id].match(message.content):
+            print(match)
             return match.group()
 
+        # Fallback, but it shouldn't be needed
         return commands.when_mentioned_or(*prefixes)(self, message)
 
     @classmethod

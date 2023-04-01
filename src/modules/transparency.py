@@ -26,6 +26,8 @@ log: logging.Logger = logging.getLogger(__name__)
 
 
 class SafetyPrompt(View):
+    """A view that asks the user to confirm an action."""
+
     def __init__(self, user: Member | User) -> None:
         super().__init__()
         self.user: Member | User = user
