@@ -53,6 +53,10 @@ class DiscordEventListener(BaseExtension):
         self.__owo_std_commands: tuple[str, ...] = ("owo", "uwu")
         self.send_queue_task.start()
 
+    @staticmethod
+    def message_timestamp_to_datetime_with_tz(timestamp: float) -> datetime:
+        return datetime.fromtimestamp(timestamp, tz=timezone.utc)
+
     def push_item(self, user_id: int, name: str | None, image: bytes, /) -> None:
         self._send_queue.append(SendQueueItem(user_id, name, image))
 
@@ -241,9 +245,6 @@ class DiscordEventListener(BaseExtension):
                 self.message_timestamp_to_datetime_with_tz(message.created_at.timestamp()),
             )
 
-    def message_timestamp_to_datetime_with_tz(self, timestamp: float) -> datetime:
-        return datetime.fromtimestamp(timestamp, tz=timezone.utc)
-
     @commands.Cog.listener("on_message")
     async def manage_messages(self, message: discord.Message) -> None:
         if not message.guild or message.author.bot:
@@ -311,7 +312,14 @@ class DiscordEventListener(BaseExtension):
         new_guild: Guild = await self.bot.manager.set_guild_owo_prefix(guild, prefix)
         self.bot.cached_guilds[message.guild.id] = new_guild
 
-        await message.add_reaction(self.bot.config.owo_emote)
+        try:
+            await message.add_reaction(self.bot.config.owo_emote)
+        except (
+            discord.HTTPException,
+            discord.Forbidden,
+        ) as exc:
+            _log: Logger = log.getChild("manage_prefix_change")
+            _log.warning("Failed to add reaction to prefixed message: %s", exc)
 
 
 async def setup(bot: Bot) -> None:
