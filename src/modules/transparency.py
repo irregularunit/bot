@@ -56,7 +56,7 @@ class Transparency(BaseExtension):
         ...
 
     @delete.command(name="recordset", aliases=("rs",))
-    async def delete_mydata(self, ctx: Context) -> None:
+    async def delete_recordset(self, ctx: Context) -> None:
         user: User = await self.bot.manager.get_or_create_user(ctx.author.id)
 
         prompt = SafetyPrompt(user)
