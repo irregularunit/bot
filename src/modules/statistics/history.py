@@ -110,7 +110,7 @@ class DiscordUserHistory(BaseExtension):
                 )
             )
             .set_thumbnail(url=self.bot.user.display_avatar)
-            .set_author(name="🔍 Servant Source Code")
+            .set_author(name="Servant Source Code")
             .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
         )
 
@@ -119,13 +119,17 @@ class DiscordUserHistory(BaseExtension):
         else:
             cmd = self.bot.get_command(command)
             if cmd is None:
-                return await ctx.safe_send("🔍 The command you are looking for does not exist.", embed=embed)
+                return await ctx.safe_send(
+                    f"{get_random_emoji()} The command you are looking for does not exist.", embed=embed
+                )
 
             src = getattr(cmd, "_original_callback", cmd.callback).__code__
             filename = src.co_filename
 
             if not filename:
-                return await ctx.safe_send("🔍 The command you are looking for cannot be found.", embed=embed)
+                return await ctx.safe_send(
+                    f"{get_random_emoji()} The command you are looking for cannot be found.", embed=embed
+                )
 
             (
                 lines,

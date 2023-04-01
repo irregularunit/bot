@@ -79,6 +79,7 @@ class CountingCalender:
                 now.replace(year=now.year - 1, month=1, day=1),
                 now.replace(year=now.year - 1, month=12, day=31) + datetime.timedelta(days=1),
             ),
+            # Some random date in the past
             "all time": (now.replace(year=2018, month=1, day=1), now + datetime.timedelta(days=1)),
         }
 

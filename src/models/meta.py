@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import io
 from logging import Logger, getLogger
 from typing import TYPE_CHECKING, Optional, Type
 
@@ -55,6 +55,22 @@ class User(Model):
             timezone=record["timezone"],
             created_at=record["created_at"],
         )
+
+    async def delete(self, pool: Pool) -> None:
+        to_cascade = [
+            "avatar_history",
+            "item_history",
+            "presence_history",
+            "users",
+            "owo_counting",
+        ]
+        query = io.StringIO()
+
+        for table in to_cascade:
+            query.write(f"DELETE FROM {table} WHERE uid = $1;")
+
+        async with pool.acquire() as connection:
+            await connection.execute(query.getvalue(), self.id)
 
 
 class Guild(Model):
