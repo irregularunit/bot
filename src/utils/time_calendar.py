@@ -96,13 +96,13 @@ class CountingCalender:
         for time, (start, end) in self.time_mapping.items():
             if time == "all time":
                 inital_query.write(
-                    f"SELECT COUNT(*) FROM owo_counting WHERE uid = {self.user} AND created_at <= to_timestamp({end})"
+                    f"SELECT COUNT(*) FROM owo_counting WHERE uuid = {self.user} AND created_at <= to_timestamp({end})"
                     f" AND gid = {self.guid}"
                 )
             else:
                 inital_query.write(
                     (
-                        f"SELECT COUNT(*) FROM owo_counting WHERE uid = {self.user} AND "
+                        f"SELECT COUNT(*) FROM owo_counting WHERE uuid = {self.user} AND "
                         f"created_at BETWEEN to_timestamp({start}) AND to_timestamp({end})"
                         f" AND gid = {self.guid}"
                     )
@@ -120,8 +120,8 @@ class CountingCalender:
         start, end = self.time_mapping[maybe_date]
 
         return (
-            f"SELECT uid, COUNT(*) as count FROM owo_counting WHERE "
+            f"SELECT uuid, COUNT(*) as count FROM owo_counting WHERE "
             f"created_at BETWEEN to_timestamp({start}) AND to_timestamp({end}) "
             f"AND gid = {self.guid} "
-            f"GROUP BY uid ORDER BY count DESC LIMIT {min(amount, 25)}"
+            f"GROUP BY uuid ORDER BY count DESC LIMIT {min(amount, 25)}"
         )

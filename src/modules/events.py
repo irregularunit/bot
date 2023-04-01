@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import re
-import uuid
+import uuid as uuid_lib
 from datetime import datetime, timezone
 from io import BytesIO
 from logging import Logger, getLogger
@@ -88,7 +88,7 @@ class DiscordEventListener(BaseExtension):
         try:
             message: discord.Message = await self.cached_channel.send(
                 content=f"{item.name} ({item.user_id})",
-                file=discord.File(BytesIO(item.image), filename=f"{uuid.uuid4()}.{type_of(item.image)}"),
+                file=discord.File(BytesIO(item.image), filename=f"{uuid_lib.uuid4()}.{type_of(item.image)}"),
             )
         except Exception as exc:
             log.exception("Failed to send message to channel", exc_info=exc)
@@ -96,7 +96,7 @@ class DiscordEventListener(BaseExtension):
             self._is_running = False
             return
 
-        query: str = "INSERT INTO item_history (uid, item_type, item_value) VALUES ($1, $2, $3)"
+        query: str = "INSERT INTO item_history (uuid, item_type, item_value) VALUES ($1, $2, $3)"
 
         async with self.bot.pool.acquire() as connection:
             await connection.execute(query, item.user_id, "avatar", message.attachments[0].url)
@@ -142,7 +142,7 @@ class DiscordEventListener(BaseExtension):
             self._send_queue.append(inst)
             to_queue.append(inst)
 
-        member_query: str = "INSERT INTO users (uid, created_at) VALUES ($1, $2) ON CONFLICT DO NOTHING;"
+        member_query: str = "INSERT INTO users (uuid, created_at) VALUES ($1, $2) ON CONFLICT DO NOTHING;"
         created_at: datetime = discord.utils.utcnow()
 
         async with self.bot.pool.acquire() as connection:
@@ -185,20 +185,20 @@ class DiscordEventListener(BaseExtension):
     @commands.Cog.listener("on_user_update")
     async def manage_user_update(self, before: discord.User, after: discord.User) -> None:
         if before.name != after.name:
-            query = "INSERT INTO item_history (uid, item_type, item_value) VALUES ($1, $2, $3)"
+            query = "INSERT INTO item_history (uuid, item_type, item_value) VALUES ($1, $2, $3)"
 
             async with self.bot.pool.acquire() as connection:
                 await connection.execute(query, after.id, "name", after.name)
 
         if before.discriminator != after.discriminator:
-            query = "INSERT INTO item_history (uid, item_type, item_value) VALUES ($1, $2, $3)"
+            query = "INSERT INTO item_history (uuid, item_type, item_value) VALUES ($1, $2, $3)"
 
             async with self.bot.pool.acquire() as connection:
                 await connection.execute(query, after.id, "discriminator", after.discriminator)
 
     @commands.Cog.listener("on_guild_remove")
     async def manage_guild_leave(self, guild: discord.Guild) -> None:
-        query: str = "DELETE FROM guilds WHERE uid = $1"
+        query: str = "DELETE FROM guilds WHERE uuid = $1"
 
         async with self.bot.pool.acquire() as connection:
             await connection.execute(query, guild.id)
@@ -215,7 +215,7 @@ class DiscordEventListener(BaseExtension):
                 return
 
             await self.bot.redis.client.setex(f"status:{after.id}", 3, 0)
-            query: str = "INSERT INTO presence_history (uid, status, status_before) VALUES ($1, $2, $3)"
+            query: str = "INSERT INTO presence_history (uuid, status, status_before) VALUES ($1, $2, $3)"
 
             async with self.bot.pool.acquire() as connection:
                 await connection.execute(
@@ -238,7 +238,7 @@ class DiscordEventListener(BaseExtension):
 
         async with self.bot.pool.acquire() as connection:
             await connection.execute(
-                "INSERT INTO owo_counting (uid, gid, word, created_at) VALUES ($1, $2, $3, $4)",
+                "INSERT INTO owo_counting (uuid, gid, word, created_at) VALUES ($1, $2, $3, $4)",
                 uid,
                 message.guild.id,
                 word,

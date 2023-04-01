@@ -97,7 +97,6 @@ class DiscordErrorHandler(BaseExtension):
 
         # We handle custom exceptions first
         if isinstance(error, UserFeedbackException):
-            # I love this
             return await ctx.safe_send(content=error.to_string())
 
         # Gets the original exception
@@ -130,13 +129,12 @@ class DiscordErrorHandler(BaseExtension):
             )
 
         if isinstance(exc, commands.TooManyArguments):
-            # maybe add better error handling later?
+            # Maybe add better error handling later?
             return await ctx.send_help(ctx.command)
 
         if isinstance(exc, commands.MissingRequiredArgument):
             arg = exc.param.name
             signature = ctx.command.signature
-
             full_qualified_signature = ctx.command.full_parent_name + ctx.command.qualified_name
 
             partial_exception = UserFeedbackExceptionFactory.create(
@@ -179,7 +177,7 @@ class DiscordErrorHandler(BaseExtension):
 
         if isinstance(error, commands.BotMissingPermissions):
             # I don't care about this error tbh, config error on
-            # the user's side, :shrug:
+            # the user's side, not on our end.
             return
 
         log.getChild("on_command_error").exception(
