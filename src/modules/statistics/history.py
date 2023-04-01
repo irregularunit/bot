@@ -34,6 +34,10 @@ if TYPE_CHECKING:
 
 __all__: tuple[str, ...] = ("DiscordUserHistory",)
 
+BRANCH = "development"
+GITHUB_URL = "https://github.com/irregularunit/bot"
+LICENSE = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
+
 
 class InfoView(View):
     def __init__(self, invite: str, *, timeout: float = 60) -> None:
@@ -43,7 +47,7 @@ class InfoView(View):
         buttons = [
             Button(
                 label="GitHub",
-                url="https://github.com/irregularunit/bot",
+                url=GITHUB_URL,
                 style=discord.ButtonStyle.link,
             ),
             Button(
@@ -123,16 +127,12 @@ class DiscordUserHistory(BaseExtension):
 
     @commands.command(name="source", aliases=("src",))
     async def source_command(self, ctx: Context, *, command: Optional[str] = None) -> Optional[discord.Message]:
-        URL = "https://github.com/irregularunit/bot"
-        LICENSE = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
-        BRANCH = "development"
-
         embed: EmbedBuilder = (
             EmbedBuilder(
                 description=(
                     F"""
                     Servant is an open-source bot for Discord. 
-                    You can find the source code on [github]({URL}).
+                    You can find the source code on [github]({GITHUB_URL}).
 
                     > Licensed under [CC BY-NC-SA 4.0]({LICENSE}).
                     """
@@ -171,7 +171,7 @@ class DiscordUserHistory(BaseExtension):
                 name=f"Source Code for {cmd.name}",
                 value=(
                     f"""
-                    [View on Github]({URL}/blob/{BRANCH}/{loc}#L{start}-L{end})
+                    [View on Github]({GITHUB_URL}/blob/{BRANCH}/{loc}#L{start}-L{end})
                     """
                 ),
             )

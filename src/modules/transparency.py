@@ -8,14 +8,14 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from typing import TYPE_CHECKING
 
-from discord import ButtonStyle, Interaction, Message
+from discord import ButtonStyle, Interaction, Message, Member, User, utils
 from discord.ext import commands
 from discord.ui import Button, View, button
 
-from models import User
-from utils import BaseExtension, for_all_callbacks
+from utils import BaseExtension, for_all_callbacks, get_random_emoji, async_all
 
 if TYPE_CHECKING:
     from bot import Bot
@@ -27,9 +27,9 @@ log: logging.Logger = logging.getLogger(__name__)
 
 
 class SafetyPrompt(View):
-    def __init__(self, user: User) -> None:
+    def __init__(self, user: Member | User) -> None:
         super().__init__()
-        self.user: User = user
+        self.user: Member | User = user
         self.confirmed: bool = False
 
     @button(label="Yes", style=ButtonStyle.green)
@@ -45,21 +45,28 @@ class SafetyPrompt(View):
         await interaction.response.send_message("Action has been cancelled. No changes have been made.", ephemeral=True)
         self.stop()
 
+    async def interaction_check(self, interaction: Interaction) -> bool:
+        return interaction.user.id == self.user.id
+
 
 @for_all_callbacks(commands.cooldown(1, 3, commands.BucketType.user))
 class Transparency(BaseExtension):
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
 
+    async def cog_check(self, ctx: Context) -> bool:
+        checks = [commands.guild_only()]
+        return await async_all(check(ctx) for check in checks)
+    
     @commands.group(name="delete", aliases=("rm",), invoke_without_command=False)
     async def delete(self, ctx: Context) -> None:
         ...
 
     @delete.command(name="recordset", aliases=("rs",))
     async def delete_recordset(self, ctx: Context) -> None:
-        user: User = await self.bot.manager.get_or_create_user(ctx.author.id)
+        user = await self.bot.manager.get_or_create_user(ctx.author.id)
 
-        prompt = SafetyPrompt(user)
+        prompt = SafetyPrompt(ctx.author)
         message: Message | None = await ctx.safe_send(
             "Are you sure you want to delete your data? This action is irreversible.", view=prompt
         )
@@ -75,6 +82,35 @@ class Transparency(BaseExtension):
                 self.bot.cached_users.pop(user.id)
 
             await message.edit(content="Your data has been deleted. Thank you for using our services.", view=None)
+        else:
+            await message.edit(content="Action has been cancelled.", view=None)
+
+    @commands.command(name="suggest", aliases=("suggestion",))
+    async def suggest(self, ctx: Context, *, suggestion: str) -> None:
+        owner = (
+            self.bot.get_user(self.bot.config.client_owner)
+            or await self.bot.fetch_user(self.bot.config.client_owner)
+        )
+
+        prompt = SafetyPrompt(ctx.author)
+        message: Message | None = await ctx.safe_send(
+            f"Are you sure you want to send this suggestion?\n"
+            f">>> {suggestion} ...\n",
+            view=prompt
+        )
+
+        if not message:
+            return
+        
+        await prompt.wait()
+
+        if prompt.confirmed:
+            await owner.send(
+                f"**{get_random_emoji()} New suggestion from {ctx.author} ({ctx.author.id}):**\n"
+                f"**Date:** {utils.format_dt(utils.utcnow(), style='F')}\n"
+                f">>> {suggestion}"
+            )
+            await message.edit(content="Your suggestion has been sent. Thank you for your feedback!", view=None)
         else:
             await message.edit(content="Action has been cancelled.", view=None)
 
