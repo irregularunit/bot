@@ -76,7 +76,9 @@ class User(Model):
 class Guild(Model):
     __slots__: tuple[str, ...] = ("prefixes", "owo_prefix", "owo_counting", "id", "created_at")
 
-    def __init__(self, *, id: int, created_at: datetime, prefixes: list[str], owo_prefix: str, owo_counting: bool) -> None:
+    def __init__(
+        self, *, id: int, created_at: datetime, prefixes: list[str], owo_prefix: str, owo_counting: bool
+    ) -> None:
         super().__init__(id=id, created_at=created_at)
         self.prefixes: list[str] = prefixes
         self.owo_prefix: str = owo_prefix

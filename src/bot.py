@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import os
 import pathlib
+import random
 import re
 from logging import Logger, getLogger
 from typing import (
@@ -28,7 +29,7 @@ from typing import (
 import asyncpg
 import discord
 from aiohttp import ClientError
-from discord.ext import commands
+from discord.ext import commands, tasks
 from typing_extensions import override
 
 from bridges import RedisBridge
@@ -93,6 +94,8 @@ class Bot(commands.Bot):
         self.cached_users: dict[int, User] = {}
         self.cached_guilds: dict[int, Guild] = {}
         self.cached_prefixes: dict[int, re.Pattern] = {}
+
+        self.update_presence.start()
 
     @staticmethod
     @discord.utils.copy_doc(asyncio.to_thread)
@@ -288,6 +291,26 @@ class Bot(commands.Bot):
             self.start_time = discord.utils.utcnow()
 
         self.logger.getChild("on_ready").info("Connected to Discord.")
+
+    @tasks.loop(minutes=15)
+    async def update_presence(self) -> None:
+        presences: dict[discord.ActivityType, str] = {
+            discord.ActivityType.watching: (
+                f"over {len(self.guilds)} {'guilds' if len(self.guilds) != 1 else 'guild'}"
+            ),
+            discord.ActivityType.listening: f"to {len(self.users)} {'users' if len(self.users) != 1 else 'user'}",
+            discord.ActivityType.playing: (
+                f"with {len(self.commands)} {'commands' if len(self.commands) != 1 else 'command'}"
+            ),
+            discord.ActivityType.listening: "to your owo's",
+        }
+
+        activity_type, message = random.choice(list(presences.items()))
+        await self.change_presence(activity=discord.Activity(type=activity_type, name=message))
+
+    @update_presence.before_loop
+    async def before_presence(self) -> None:
+        await self.wait_until_ready()
 
     @override
     async def close(self) -> None:

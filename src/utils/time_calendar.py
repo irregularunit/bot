@@ -67,8 +67,14 @@ class CountingCalender:
         ranges = {
             "today": (now, now + datetime.timedelta(days=1)),
             "yesterday": (now - datetime.timedelta(days=1), now),
-            "this week": (now - datetime.timedelta(days=now.weekday()), now + datetime.timedelta(days=7 - now.weekday())),
-            "last week": (now - datetime.timedelta(days=now.weekday() + 7), now - datetime.timedelta(days=now.weekday())),
+            "this week": (
+                now - datetime.timedelta(days=now.weekday()),
+                now + datetime.timedelta(days=7 - now.weekday()),
+            ),
+            "last week": (
+                now - datetime.timedelta(days=now.weekday() + 7),
+                now - datetime.timedelta(days=now.weekday()),
+            ),
             "this month": (
                 now.replace(day=1),
                 now.replace(day=calendar.monthrange(now.year, now.month)[1]) + datetime.timedelta(days=1),

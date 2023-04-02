@@ -255,6 +255,7 @@ def resize_to_limit(image: BytesIO, limit: int = 8_000_000) -> BytesIO:
 
 def for_all_callbacks(decorator: Any) -> Callable[[Type[T]], Type[T]]:
     """Decorates all function command callbacks in a class"""
+
     def decorate(cls: Type[T]) -> Type[T]:
         for attr in dir(cls):
             method = getattr(cls, attr)

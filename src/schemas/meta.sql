@@ -171,6 +171,8 @@ END IF;
 RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+
 DO $$ BEGIN IF NOT EXISTS (
   SELECT 
     1 
