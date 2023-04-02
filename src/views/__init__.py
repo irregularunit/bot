@@ -6,5 +6,6 @@
 """
 
 from .avatar import AvatarHistoryView
+from .paginator import Item, Paginator
 
-__all__: tuple[str, ...] = ("AvatarHistoryView",)
+__all__: tuple[str, ...] = ("AvatarHistoryView", "Item", "Paginator")

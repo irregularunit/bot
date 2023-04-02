@@ -12,6 +12,7 @@ from typing import AbstractSet, Any, Generator, Type
 import discord
 from pydantic import BaseSettings
 from pydantic.fields import ModelField
+from typing_extensions import override
 
 __all__: tuple[str, ...] = ("Config",)
 
@@ -36,13 +37,16 @@ class Config(BaseSettings):
     owner_ids: list[int]
     log_level: str = "INFO"
     client_user: int = 1054123882384212078
+    client_owner: int = 380067729400528896
 
     # shamelessly stolen from
     # https://htmlcolorcodes.com/colors/shades-of-blue/
     color: int = 0x0096FF
 
-    # emojis and other stuff
-    owo: str = "<:owo:1089249009073410099>"
+    owo_emote: str = "<:owo:1089249009073410099>"
+    owo_bot_id: int = 408785106942164992
+
+    blank_emote: str = "<:blank:1091782919938383952>"
 
     @property
     def psql(self) -> str:
@@ -82,6 +86,7 @@ class Config(BaseSettings):
         def _sequence_like(value: Any) -> bool:
             return isinstance(value, (list, tuple, set, frozenset, GeneratorType, deque))
 
+        @override
         @classmethod
         def prepare_field(cls, field: ModelField) -> None:
             env_names: list[str] | AbstractSet[str]

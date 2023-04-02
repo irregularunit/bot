@@ -7,15 +7,26 @@
 
 from __future__ import annotations
 
+import inspect
 import math
+import os
 import sys
-from typing import TYPE_CHECKING, Optional
+import time
+from typing import TYPE_CHECKING, Any, Optional
 
 import discord
 from discord.ext import commands
+from discord.ui import Button, View, button
 
 from models import EmbedBuilder
-from utils import BaseExtension, CountingCalender, MemberConverter, count_source_lines
+from utils import (
+    BaseExtension,
+    CountingCalender,
+    MemberConverter,
+    TimeConverter,
+    count_source_lines,
+    get_random_emoji,
+)
 from views import AvatarHistoryView
 
 if TYPE_CHECKING:
@@ -23,6 +34,37 @@ if TYPE_CHECKING:
     from utils import Context
 
 __all__: tuple[str, ...] = ("DiscordUserHistory",)
+
+BRANCH = "development"
+GITHUB_URL = "https://github.com/irregularunit/bot"
+LICENSE = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
+
+
+class InfoView(View):
+    def __init__(self, invite: str, *, timeout: float = 60) -> None:
+        super().__init__(timeout=timeout)
+        self.inv: str = invite
+
+        buttons = [
+            Button(
+                label="GitHub",
+                url=GITHUB_URL,
+                style=discord.ButtonStyle.link,
+            ),
+            Button(
+                label="Invite",
+                url=self.inv,
+                style=discord.ButtonStyle.link,
+            ),
+        ]
+
+        for button in buttons:
+            self.add_item(button)
+
+    @button(label="Close", style=discord.ButtonStyle.danger)
+    async def close_button(self, interaction: discord.Interaction, button: Button) -> None:
+        await interaction.response.defer()
+        await interaction.delete_original_response()
 
 
 class DiscordUserHistory(BaseExtension):
@@ -48,29 +90,34 @@ class DiscordUserHistory(BaseExtension):
         discord_version = discord.__version__
         lines_of_code = count_source_lines()
 
-        psql_version_query = await self.bot.safe_connection.fetchval("SELECT version()")
-        psql_version = psql_version_query.split(" ")[1]
+        async with self.bot.pool.acquire() as connection:
+            psql_version_query = await connection.fetchval("SELECT version()")
+            psql_version = psql_version_query.split(" ")[1]
+
+            now = time.perf_counter()
+            await connection.fetchval("SELECT 1")
+            psql_latency = (time.perf_counter() - now) * 1000
 
         fields = (
             ("Python", python_version, True),
-            ("discord.py", discord_version, True),
+            ("Discord.py", discord_version, True),
             ("PostgreSQL", str(psql_version), True),
             ("Lines of code", str(lines_of_code), True),
-            ("Uptime", discord.utils.format_dt(self.bot.start_time, "R"), True),
-            ("Latency", f"{self.bot.latency * 1000:.2f}ms", True),
+            ("PostgreSQL Latency", f"{psql_latency:.2f}ms", True),
+            ("Discord Latency", f"{self.bot.latency * 1000:.2f}ms", True),
         )
 
         embed: EmbedBuilder = (
             EmbedBuilder(
                 description=(
                     """
-                    Our bot comes equipped with a variety of features to make 
+                    Servant comes equipped with a variety of features to make 
                     your server experience even better. With this valuable 
                     information at your fingertips, you'll never miss a beat when 
                     it comes to staying up-to-date with your community.
 
                     Whether you're a seasoned Discord user or just starting out, 
-                    our bot is the perfect addition to any server.
+                    Servant is the perfect addition to any server.
                     """
                 ),
                 fields=fields,
@@ -80,30 +127,61 @@ class DiscordUserHistory(BaseExtension):
             .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
         )
 
-        await ctx.safe_send(embed=embed)
+        view = InfoView(self.bot.config.invite)
+        await ctx.safe_send(embed=embed, view=view)
 
     @commands.command(name="source", aliases=("src",))
-    async def source_command(self, ctx: Context) -> None:
-        # The following embed pattern is a personal preference.
-        # You can use any embed pattern you want. I just really
-        # like this one. It feels more readable to me.
+    async def source_command(self, ctx: Context, *, command: Optional[str] = None) -> Optional[discord.Message]:
         embed: EmbedBuilder = (
             EmbedBuilder(
                 description=(
-                    """
+                    F"""
                     Servant is an open-source bot for Discord. 
-                    You can find the source code on [github](https://github.com/irregularunit/bot).
+                    You can find the source code on [github]({GITHUB_URL}).
 
-                    > Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+                    > Licensed under [CC BY-NC-SA 4.0]({LICENSE}).
                     """
                 )
             )
             .set_thumbnail(url=self.bot.user.display_avatar)
-            .set_author(name="🔍 Servant Source Code")
+            .set_author(name="Servant Source Code")
             .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
         )
 
-        await ctx.safe_send("A ⭐ is much appreciated!", embed=embed)
+        if command is None or command == "help":
+            return await ctx.safe_send("A ⭐ is much appreciated!", embed=embed)
+        else:
+            cmd = self.bot.get_command(command)
+            if cmd is None:
+                return await ctx.safe_send(
+                    f"{get_random_emoji()} The command you are looking for does not exist.", embed=embed
+                )
+
+            src = getattr(cmd, "_original_callback", cmd.callback).__code__
+            filename = src.co_filename
+
+            if not filename:
+                return await ctx.safe_send(
+                    f"{get_random_emoji()} The command you are looking for cannot be found.", embed=embed
+                )
+
+            (
+                lines,
+                start,
+            ) = inspect.getsourcelines(src)
+            end = start + len(lines) - 1
+            loc = os.path.realpath(filename).replace("\\", "/").split("/bot/")[1]
+
+            embed.add_field(
+                name=f"Source Code for {cmd.name}",
+                value=(
+                    f"""
+                    [View on Github]({GITHUB_URL}/blob/{BRANCH}/{loc}#L{start}-L{end})
+                    """
+                ),
+            )
+
+            return await ctx.safe_send(embed=embed)
 
     @commands.command(name="score", aliases=("sc",))
     async def score_command(
@@ -113,23 +191,29 @@ class DiscordUserHistory(BaseExtension):
         member: discord.Member = commands.param(default=None, converter=MemberConverter(), displayed_default="You"),
     ) -> Optional[discord.Message]:
         user: discord.Member = member or ctx.author
+        query = "SELECT * FROM get_counting_score($1, $2)"
 
-        cal = CountingCalender(user.id)
-        query: str = cal.struct_query()
+        async with self.bot.pool.acquire() as connection:
+            history = await connection.fetchrow(query, user.id, ctx.guild.id)
 
-        counting_history = await self.bot.safe_connection.fetch(query)
+        def get_record_index(record: Any, pos: str, /) -> str:
+            return self.format_count(record[pos])
+
         embed: EmbedBuilder = (
             EmbedBuilder(
-                description=f"Total score: `{self.format_count(counting_history[8]['count'])}`",
+                description=(
+                    f"**{get_random_emoji()} {user.display_name}'s Score**\n\n"
+                    f"Total score: `{get_record_index(history, 'all_time')}`"
+                ),
             )
             .add_field(
                 name="__**Present Stats**__",
                 value=(
                     f"""
-                    >>> Today: `{self.format_count(counting_history[0]["count"])}`
-                    This Week: `{self.format_count(counting_history[2]["count"])}`
-                    This Month: `{self.format_count(counting_history[4]["count"])}`
-                    This Year: `{self.format_count(counting_history[6]["count"])}`
+                    >>> Today: `{get_record_index(history, 'today')}`
+                    This Week: `{get_record_index(history, 'this_week')}`
+                    This Month: `{get_record_index(history, 'this_month')}`
+                    This Year: `{get_record_index(history, 'this_year')}`
                     """
                 ),
                 inline=False,
@@ -138,16 +222,52 @@ class DiscordUserHistory(BaseExtension):
                 name="__**Past Stats**__",
                 value=(
                     f"""
-                    >>> Yesterday: `{self.format_count(counting_history[1]["count"])}`
-                    Last Week: `{self.format_count(counting_history[3]["count"])}`
-                    Last Month: `{self.format_count(counting_history[5]["count"])}`
-                    Last Year: `{self.format_count(counting_history[7]["count"])}`
+                    >>> Yesterday: `{get_record_index(history, 'yesterday')}`
+                    Last Week: `{get_record_index(history, 'last_week')}`
+                    Last Month: `{get_record_index(history, 'last_month')}`
+                    Last Year: `{get_record_index(history, 'last_year')}`
                     """
                 ),
                 inline=False,
             )
-            .set_author(name=f"{user.display_name}'s Score")
-            .set_thumbnail(url=user.display_avatar)
+            .set_thumbnail(url=self.bot.user.display_avatar)
+            .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
         )
+
+        await ctx.safe_send(embed=embed)
+
+    @commands.command(name="leaderboard", aliases=("lb",))
+    async def leaderboard_command(
+        self,
+        ctx: Context,
+        amount: int = 10,
+        *,
+        time: str = commands.param(default="all time", converter=TimeConverter(), displayed_default="all time"),
+    ) -> Optional[discord.Message]:
+        cal = CountingCalender(ctx.author.id, ctx.guild.id)
+        query: str = cal.leaderboard_query(time, amount)
+
+        async with self.bot.pool.acquire() as connection:
+            leaderboard = await connection.fetch(query)
+
+        embed: EmbedBuilder = (
+            EmbedBuilder()
+            .set_author(name=f"🏆 {time.title()} Leaderboard")
+            .set_thumbnail(url=self.bot.user.display_avatar)
+            .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
+        )
+
+        for i, row in enumerate(leaderboard, start=1):
+            user_id = row["uuid"]
+            user = self.bot.get_user(user_id) or await self.bot.fetch_user(user_id)
+            
+            embed.add_field(
+                name=f"#{i}. {user.display_name}",
+                value=f"Counting Score: `{math.floor(row['count'] / 3)}`",
+                inline=False,
+            )
+
+        if not embed.fields:
+            embed.description = "> No one has counted yet."
 
         await ctx.safe_send(embed=embed)

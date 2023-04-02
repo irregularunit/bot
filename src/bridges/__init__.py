@@ -5,5 +5,4 @@
  * For more information, see README.md and LICENSE
 """
 
-from .aiopsql import *
 from .aioredis import *

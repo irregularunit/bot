@@ -29,12 +29,13 @@ import asyncpg
 import discord
 from aiohttp import ClientError
 from discord.ext import commands
+from typing_extensions import override
 
-from bridges import PostgresBridge, RedisBridge
+from bridges import RedisBridge
 from gateway import Gateway
 from models import Guild, ModelManager, User
 from settings import Config
-from utils import Context, ContextT
+from utils import Context, ContextT, GuildMessageable
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -55,6 +56,7 @@ class Bot(commands.Bot):
         cogs: Mapping[str, commands.Cog]
         start_time: datetime
 
+    @override
     def __init__(
         self,
         *,
@@ -86,7 +88,6 @@ class Bot(commands.Bot):
 
         self.config: Config = Config()  # type: ignore (my IDE doesn't get it)
         self.logger: Logger = getLogger(__name__)
-        self.safe_connection: PostgresBridge = PostgresBridge(self.pool)
         self.manager: ModelManager = ModelManager(self.pool)
 
         self.cached_users: dict[int, User] = {}
@@ -98,6 +99,7 @@ class Bot(commands.Bot):
     async def to_thread(func: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs) -> T:
         return await asyncio.to_thread(func, *args, **kwargs)
 
+    @override
     async def get_context(self, message: discord.Message, *, cls: Type[ContextT] = Context) -> Context:
         return await super().get_context(message, cls=cls or commands.Context["Bot"])
 
@@ -113,7 +115,8 @@ class Bot(commands.Bot):
             return
 
         if ctx.guild:
-            assert isinstance(ctx.channel, (discord.TextChannel, discord.Thread))
+            if not isinstance(ctx.channel, GuildMessageable):
+                return
 
             if not ctx.channel.permissions_for(ctx.me).send_messages:  # type: ignore
                 if await self.is_owner(ctx.author):
@@ -123,26 +126,26 @@ class Bot(commands.Bot):
 
         await self.invoke(ctx)
 
+    @override
     async def get_prefix(self, message: discord.Message) -> str | list[str]:
         prefixes: list[str] = [f"<@!{self.user.id}> ", f"<@{self.user.id}> ", "uwu ", "uwu"]
         if message.guild is None:
-            # We're in a DM, which generally shouldn't happen. But
-            # the type checker doesn't get that, so we have to do this.
-            escaped_prefixes: list[str] = list(map(re.escape, prefixes))
-            if match := re.match(fr"^(?:{'|'.join(escaped_prefixes)})\s*", message.content):
-                return match.group()
-            return commands.when_mentioned_or(*prefixes)(self, message)
+            # No dm's :3
+            raise commands.NoPrivateMessage()
 
         if message.guild.id not in self.cached_prefixes:
-            # We're caching the Pattern object because it's faster than
-            # fetching and recompiling the prefixes every time.
             guild: Guild = await self.manager.get_or_create_guild(message.guild.id)
-            pattern: re.Pattern[str] = re.compile(fr"^(?:{'|'.join(map(re.escape, guild.prefixes))})\s*")
+            pattern: re.Pattern[str] = re.compile(
+                r"|".join(re.escape(prefix) + r"\s*" for prefix in guild.prefixes),
+                re.IGNORECASE,
+            )
+
             self.cached_prefixes[message.guild.id] = pattern
 
         if match := self.cached_prefixes[message.guild.id].match(message.content):
             return match.group()
 
+        # Fallback, but it shouldn't be needed
         return commands.when_mentioned_or(*prefixes)(self, message)
 
     @classmethod
@@ -163,6 +166,7 @@ class Bot(commands.Bot):
 
         return await asyncpg.create_pool(dsn=dsn, init=init, **kwargs)
 
+    @override
     async def connect(self, *, reconnect: bool = True) -> None:
         backoff = discord.client.ExponentialBackoff()  # type: ignore
         ws_params: dict[str, Any] = {"initial": True, "shard_id": self.shard_id}
@@ -196,7 +200,7 @@ class Bot(commands.Bot):
                 if not reconnect:
                     await self.close()
                     if isinstance(exc, discord.ConnectionClosed) and exc.code == 1000:
-                        # clean close, don't re-raise this
+                        # Clean close, don't re-raise this
                         return
                     raise
 
@@ -232,6 +236,7 @@ class Bot(commands.Bot):
                 # This is apparently what the official Discord client does.
                 ws_params.update(sequence=self.ws.sequence, resume=True, session=self.ws.session_id)
 
+    @override
     async def start(self, *args: Any, **kwargs: Any) -> None:
         await super().start(token=self.config.token, *args, **kwargs)
 
@@ -254,6 +259,7 @@ class Bot(commands.Bot):
 
             yield schema  # Returns the PosixPath object (assuming we don't use Windows)
 
+    @override
     async def setup_hook(self) -> None:
         _log: Logger = self.logger.getChild("setup_hook")
         for item in list(self.iter_extensions()) + list(self.iter_schemas()):
@@ -283,7 +289,15 @@ class Bot(commands.Bot):
 
         self.logger.getChild("on_ready").info("Connected to Discord.")
 
+    @override
     async def close(self) -> None:
         to_close: list[Any] = [self.pool, self.session, self.redis]
-        await asyncio.gather(*[c.close() for c in to_close if c is not None])
+
+        async with asyncio.TaskGroup() as group:
+            for c in to_close:
+                if c is None:
+                    continue
+
+                await group.create_task(c.close())
+
         await super().close()

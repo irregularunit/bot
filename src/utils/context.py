@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any, Literal, Optional, Self, TypeVar
 
 import discord
 from discord.ext import commands
+from typing_extensions import override
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
@@ -34,6 +35,7 @@ class Context(commands.Context["Bot"]):
         guild: discord.Guild
 
     @property
+    @override
     def clean_prefix(self) -> str:
         repl: str = f"@{self.me.display_name}".replace("\\", r"\\")
         pattern: re.Pattern[str] = re.compile(rf" < @!?{self.me.id}>")
@@ -54,6 +56,7 @@ class Context(commands.Context["Bot"]):
     def session(self) -> ClientSession:
         return self.bot.session
 
+    @override
     async def send_help(self, command: Optional[commands.Command | str] = None) -> None:
         # Opinionated choice that the help should default to the current command
         # why discord.py doesn't do this is beyond me
@@ -78,7 +81,7 @@ class Context(commands.Context["Bot"]):
             self.message.reference and self.message.reference.resolved
         )
         if isinstance(resolved_message, discord.DeletedReferencedMessage):
-            # *pat pat* - :3
+            # *pat pat* :>
             resolved_message = None
         try:
             return await (resolved_message.reply if resolved_message else self.send)(

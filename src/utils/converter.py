@@ -31,6 +31,8 @@ class MemberConverter(commands.Converter[discord.Member]):
         except commands.MemberNotFound:
             members: list[discord.Member] = await ctx.guild.query_members(argument, limit=5)
             if not members:
+                # Not even discord managed to find a member
+                # partially matching the argument
                 raise commands.MemberNotFound(argument)
             return members[0]
 
@@ -62,6 +64,8 @@ class EmojiConverter(commands.Converter[discord.Emoji]):
                 continue
 
         for component in message.components:
+            # This might look cursed for some people but
+            # it's faster than merging the contents.
             if isinstance(component, discord.ui.Button) and component.emoji is not None:
                 emojis.append(component.emoji)
 

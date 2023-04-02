@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Iterable, Optional, Self, Type
 
 from discord import Colour, Embed, Member, Message, User
+from typing_extensions import override
 
 from settings import Config
 
@@ -23,6 +24,7 @@ config: Config = Config()  # type: ignore
 
 
 class EmbedBuilder(Embed):
+    @override
     def __init__(
         self,
         *,
@@ -37,11 +39,14 @@ class EmbedBuilder(Embed):
 
     @classmethod
     def to_factory(cls: Type[Self], embed: Embed, **kwargs: Any) -> Self:
+        setattr(kwargs, "colour", config.color)
         instance = cls(**kwargs)
-        for key, value in embed.to_dict().items():
-            setattr(instance, key, value)
 
-        instance._colour = kwargs.get("colour", config.color)
+        for key, value in embed.to_dict().items():
+            if key in ("colour", "color"):
+                continue
+
+            setattr(instance, key, value)
 
         return instance
 
@@ -52,7 +57,6 @@ class EmbedBuilder(Embed):
         **kwargs: Any,
     ) -> Self:
         if embeds := message.embeds:
-            # Change the appearance to match our embeds
             return cls.to_factory(embeds[0], **kwargs)
 
         author: User | Member = message.author
@@ -78,5 +82,5 @@ class EmbedBuilder(Embed):
     @classmethod
     def factory(cls: Type[Self], ctx: Context, **kwargs: Any) -> Self:
         instance = cls(**kwargs)
-        instance.set_footer(text=f"Requested by {ctx.author.display_name}", icon_url=ctx.author.display_avatar)
+        instance.set_footer(text=f"Made with ❤️ by irregularunit.", icon_url=ctx.bot.user.display_avatar)
         return instance

@@ -127,7 +127,8 @@ class Jishaku(BaseExtension, *STANDARD_FEATURES, *OPTIONAL_FEATURES):
                         executor = AsyncCodeExecutor(argument.content, scope, arg_dict=arg_dict)
                         start = time.perf_counter()
 
-                        # Absolutely a garbage lib jesus christ.
+                        # Absolutely a garbage lib jesus christ. I hate it.
+                        # I hate it so much. I hate it so much. I hate it so much.
                         async for send, result in AsyncSender(executor):  # type: ignore
                             self.last_result = result
 

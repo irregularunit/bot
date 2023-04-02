@@ -11,33 +11,49 @@ import io
 import zoneinfo
 
 import discord
+from discord.ext import commands
 
-__all__: tuple[str, ...] = ("CountingCalender",)
+from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
+
+__all__: tuple[str, ...] = ("CountingCalender", "TimeConverter")
 
 
-RANGES = [
-    "today",
-    "yesterday",
-    "this week",
-    "last week",
-    "this month",
-    "last month",
-    "this year",
-    "last year",
-    "all time",
-]
+RANGES_SHORT = {
+    "today": ["t", "daily", "d"],
+    "yesterday": ["y"],
+    "this week": ["w", "weekly", "wk"],
+    "last week": ["lw"],
+    "this month": ["m", "monthly", "mo"],
+    "last month": ["lm"],
+    "this year": ["yearly", "yr"],
+    "last year": ["ly"],
+    "all time": ["all", "a", "total"],
+}
+
+
+class TimeConverter(commands.Converter[str]):
+    async def convert(self, ctx: commands.Context, argument: str) -> str:
+        for time in RANGES_SHORT:
+            if argument.lower() == time:
+                return time
+
+            if argument.lower() in RANGES_SHORT[time]:
+                return time
+
+        raise UserFeedbackExceptionFactory.create(f"Invalid time range: {argument}", level=ExceptionLevel.ERROR)
 
 
 class CountingCalender:
-    def __init__(self, user: int):
+    def __init__(self, user: int, guid: int):
         self.user: int = user
+        self.guid: int = guid
         self.time_mapping: dict[str, tuple[float, float]] = {}
         self.build_time_mapping()
 
     def build_time_mapping(self) -> None:
         start_date = discord.utils.utcnow().timestamp()
 
-        for time in RANGES:
+        for time in RANGES_SHORT:
             start_date, end_date = self.get_end_date(time)
             self.time_mapping[time] = start_date, end_date
 
@@ -63,10 +79,11 @@ class CountingCalender:
                 now.replace(year=now.year - 1, month=1, day=1),
                 now.replace(year=now.year - 1, month=12, day=31) + datetime.timedelta(days=1),
             ),
+            # Some random date in the past
             "all time": (now.replace(year=2018, month=1, day=1), now + datetime.timedelta(days=1)),
         }
 
-        if time not in ranges:
+        if time not in ranges and time not in RANGES_SHORT:
             raise ValueError(f"Invalid time range: {time}")
 
         start, end = ranges[time]
@@ -79,13 +96,15 @@ class CountingCalender:
         for time, (start, end) in self.time_mapping.items():
             if time == "all time":
                 inital_query.write(
-                    f"SELECT COUNT(*) FROM owo_counting WHERE uid = {self.user} AND created_at <= to_timestamp({end})"
+                    f"SELECT COUNT(*) FROM owo_counting WHERE uuid = {self.user} AND created_at <= to_timestamp({end})"
+                    f" AND gid = {self.guid}"
                 )
             else:
                 inital_query.write(
                     (
-                        f"SELECT COUNT(*) FROM owo_counting WHERE uid = {self.user} AND "
+                        f"SELECT COUNT(*) FROM owo_counting WHERE uuid = {self.user} AND "
                         f"created_at BETWEEN to_timestamp({start}) AND to_timestamp({end})"
+                        f" AND gid = {self.guid}"
                     )
                 )
             if time != "all time":
@@ -93,7 +112,16 @@ class CountingCalender:
 
         return inital_query.getvalue()
 
+    def leaderboard_query(self, time: str, amount: int = 10) -> str:
+        maybe_date = time.lower()
+        if maybe_date not in self.time_mapping:
+            raise UserFeedbackExceptionFactory.create(f"Invalid time range: {time}", level=ExceptionLevel.ERROR)
 
-if __name__ == "__main__":
-    cal = CountingCalender(123456789)
-    print(cal.struct_query())
+        start, end = self.time_mapping[maybe_date]
+
+        return (
+            f"SELECT uuid, COUNT(*) as count FROM owo_counting WHERE "
+            f"created_at BETWEEN to_timestamp({start}) AND to_timestamp({end}) "
+            f"AND gid = {self.guid} "
+            f"GROUP BY uuid ORDER BY count DESC LIMIT {min(amount, 25)}"
+        )
