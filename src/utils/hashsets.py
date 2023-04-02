@@ -7,7 +7,7 @@
 
 import bisect
 
-__all__: tuple[str, ...] = ("check_owo_command",)
+__all__: tuple[str, ...] = ("check_owo_command", "owo_command_set")
 
 owo_commands: tuple[str, ...] = (
     # battle folder
@@ -402,13 +402,13 @@ owo_commands: tuple[str, ...] = (
 )
 
 #sorted_owo_commands = sorted(owo_commands)
-owo_set = set(owo_commands)
+owo_command_set = set(owo_commands)
 
 
 def check_owo_command(command: str) -> bool:
     #index: int = bisect.bisect_left(sorted_owo_commands, command)
     #return index != len(sorted_owo_commands) and sorted_owo_commands[index] == command
-    return command in owo_set
+    return command in owo_command_set
 
 
 if __name__ == "__main__":
