@@ -4,7 +4,7 @@
 # * For more information, see README.md and LICENSE
 
 [tool.black]
-line-length = 125
+line-length = 120
 skip-string-normalization = true
 force-exclude = "LICENSE|.+.sql|.+.json|.+.md|.+.yml|.+.env|.+.txt"
 

@@ -108,6 +108,8 @@ class CollageAvatarButton(discord.ui.Button):
             embed.set_image(url=view.member.display_avatar.url)
             await interaction.response.edit_message(embed=embed, view=view)
         else:
-            embed.set_author(name=f"Avatar collage from {view.member.display_name}. 🥺", icon_url=view.ctx.me.display_avatar)
+            embed.set_author(
+                name=f"Avatar collage from {view.member.display_name}. 🥺", icon_url=view.ctx.me.display_avatar
+            )
             self.view.disable_view()
             self.view.message = await interaction.response.edit_message(embed=embed, attachments=[file], view=view)

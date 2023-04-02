@@ -139,7 +139,7 @@ class DiscordErrorHandler(BaseExtension):
 
             partial_exception = UserFeedbackExceptionFactory.create(
                 message=(
-                    f"Missing required argument `{arg}`.\n" 
+                    f"Missing required argument `{arg}`.\n"
                     f"{self.bot.config.blank_emote} **|** Usage: `{ctx.prefix}{full_qualified_signature} {signature}`"
                 ),
                 level=ExceptionLevel.ERROR,

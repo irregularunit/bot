@@ -22,7 +22,9 @@ if TYPE_CHECKING:
 
 
 class AvatarHistoryView(View):
-    def __init__(self, ctx: Context, /, *, member: discord.Member | discord.User, timeout: Optional[float] = 60.0) -> None:
+    def __init__(
+        self, ctx: Context, /, *, member: discord.Member | discord.User, timeout: Optional[float] = 60.0
+    ) -> None:
         super().__init__(timeout=timeout)
         self.ctx: Context = ctx
         self.bot: Bot = ctx.bot

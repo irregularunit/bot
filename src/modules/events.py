@@ -54,7 +54,7 @@ class DiscordEventListener(BaseExtension):
         self.send_queue_task.start()
 
     @staticmethod
-    def message_timestamp_to_datetime_with_tz(timestamp: float) -> datetime:
+    def timestamp_to_tztime(timestamp: float) -> datetime:
         return datetime.fromtimestamp(timestamp, tz=timezone.utc)
 
     def push_item(self, user_id: int, name: str | None, image: bytes, /) -> None:
@@ -71,7 +71,9 @@ class DiscordEventListener(BaseExtension):
                 # Discord is having issues. Let's try again later
                 await asyncio.sleep(15.0)
                 await self._read_avatar(member)
-            return log.exception("Unhandled Discord HTTPException while getting avatar for %s (%s)", member.name, member.id)
+            return log.exception(
+                "Unhandled Discord HTTPException while getting avatar for %s (%s)", member.name, member.id
+            )
 
         return avatar
 
@@ -115,7 +117,9 @@ class DiscordEventListener(BaseExtension):
         _log.info("New guild joined: %s (%s)", guild.name, guild.id)
         self.bot.cached_guilds[guild.id] = await self.bot.manager.get_or_create_guild(guild.id)
 
-        members: Sequence[discord.Member] | list[discord.Member] = await guild.chunk() if guild.chunked else guild.members
+        members: Sequence[discord.Member] | list[discord.Member] = (
+            await guild.chunk() if guild.chunked else guild.members
+        )
         to_queue: list[SendQueueItem] = []
         for member in members:
             try:
@@ -242,7 +246,7 @@ class DiscordEventListener(BaseExtension):
                 uid,
                 message.guild.id,
                 word,
-                self.message_timestamp_to_datetime_with_tz(message.created_at.timestamp()),
+                self.timestamp_to_tztime(message.created_at.timestamp()),
             )
 
     @commands.Cog.listener("on_message")
@@ -250,28 +254,25 @@ class DiscordEventListener(BaseExtension):
         if not message.guild or message.author.bot:
             return
 
-        if not message.guild.id in self.bot.cached_guilds:
-            self.bot.cached_guilds[message.guild.id] = await self.bot.manager.get_or_create_guild(message.guild.id)
-
-        current_guild: Guild = self.bot.cached_guilds[message.guild.id]
-        if not current_guild.owo_counting:
+        if not (current_guild := await self.bot.manager.get_or_create_guild(message.guild.id)).owo_counting:
             return
 
         content: str = message.content.lower()
         maybe_safe: str = ""
 
-        # I know we "should" use casefold, but it's not needed in
-        # this case, since we're only using a subset of ASCII characters.
         if content.startswith(current_guild.owo_prefix):
             maybe_safe: str = content[len(current_guild.owo_prefix) :].strip().split(" ")[0].lower()
 
             if not maybe_safe:
                 if not any(content.startswith(prefix) for prefix in self.__owo_std_commands):
-                    # Prefix only message, we don't care.
+                    # Custom prefix only message
                     return
 
         elif any(content.startswith(prefix) for prefix in self.__owo_std_commands):
             maybe_safe: str = content[3:].strip().split(" ")[0].lower()
+        else:
+            # Neither custom nor standard prefix
+            return
 
         # We handle hunt and battle first, so we can drop all the others later without
         # having to check for them in the validation function. Which makes it faster.
