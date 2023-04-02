@@ -82,6 +82,7 @@ class Transparency(BaseExtension):
             if user.id in self.bot.cached_users:
                 self.bot.cached_users.pop(user.id)
 
+            log.getChild("delete").info(f"Deleted user {user.id} ({ctx.author.name})")
             await message.edit(content="Your data has been deleted. Thank you for using our services.", view=None)
         else:
             await message.edit(content="Action has been cancelled.", view=None)
@@ -106,6 +107,7 @@ class Transparency(BaseExtension):
                 f"**Date:** {utils.format_dt(utils.utcnow(), style='F')}\n"
                 f">>> {suggestion}"
             )
+
             await message.edit(content="Your suggestion has been sent. Thank you for your feedback!", view=None)
         else:
             await message.edit(content="Action has been cancelled.", view=None)

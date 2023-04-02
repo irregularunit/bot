@@ -101,7 +101,8 @@ def humanize_timedelta(delta: timedelta) -> str:
 
 class suppress(AbstractContextManager[None]):
     """
-    Don't use this unless you know what you're doing. !!!
+    Don't use this unless you know what you're doing.
+
     It's super slow just as contextlib.suppress is. And should
     not be used in contexts where user response is expected.
 
@@ -253,6 +254,7 @@ def resize_to_limit(image: BytesIO, limit: int = 8_000_000) -> BytesIO:
 
 
 def for_all_callbacks(decorator: Any) -> Callable[[Type[T]], Type[T]]:
+    """Decorates all function command callbacks in a class"""
     def decorate(cls: Type[T]) -> Type[T]:
         for attr in dir(cls):
             method = getattr(cls, attr)

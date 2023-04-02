@@ -19,7 +19,7 @@ import discord
 from discord.ext import commands, tasks
 
 from models import Guild
-from utils import BaseExtension, check_owo_command, resize_to_limit, type_of
+from utils import BaseExtension, owo_command_set, resize_to_limit, type_of
 
 if TYPE_CHECKING:
     from bot import Bot
@@ -281,7 +281,7 @@ class DiscordEventListener(BaseExtension):
         elif maybe_safe in self.__owo_battle_commands:
             await self.insert_counting(message.author.id, message, "battle", 15)
 
-        elif check_owo_command(maybe_safe) is False:
+        elif maybe_safe in owo_command_set:
             # Returns True if the command exists in the hash map, False otherwise.
             await self.insert_counting(message.author.id, message, "owo", 10)
 
