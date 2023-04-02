@@ -178,6 +178,10 @@ class DiscordErrorHandler(BaseExtension):
         if isinstance(error, commands.BotMissingPermissions):
             # I don't care about this error tbh, config error on
             # the user's side, not on our end.
+            log.getChild("on_command_error").warning(
+                f"Bot is missing permissions to run command {ctx.command.qualified_name} in\n"
+                f"Guild: {ctx.guild.name} ({ctx.guild.id}) at {ctx.channel} ({ctx.channel.id})"
+            )
             return
 
         log.getChild("on_command_error").exception(
