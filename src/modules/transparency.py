@@ -89,7 +89,9 @@ class Transparency(BaseExtension):
 
     @commands.command(name="suggest", aliases=("suggestion",))
     async def suggest(self, ctx: Context, *, suggestion: str) -> None:
-        owner = self.bot.get_user(self.bot.config.client_owner) or await self.bot.fetch_user(self.bot.config.client_owner)
+        owner = self.bot.get_user(self.bot.config.client_owner) or await self.bot.fetch_user(
+            self.bot.config.client_owner
+        )
 
         prompt = SafetyPrompt(ctx.author)
         message: Message | None = await ctx.safe_send(

@@ -260,7 +260,7 @@ class DiscordUserHistory(BaseExtension):
         for i, row in enumerate(leaderboard, start=1):
             user_id = row["uuid"]
             user = self.bot.get_user(user_id) or await self.bot.fetch_user(user_id)
-            
+
             embed.add_field(
                 name=f"#{i}. {user.display_name}",
                 value=f"Counting Score: `{math.floor(row['count'] / 3)}`",

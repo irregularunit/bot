@@ -71,7 +71,9 @@ class DiscordEventListener(BaseExtension):
                 # Discord is having issues. Let's try again later
                 await asyncio.sleep(15.0)
                 await self._read_avatar(member)
-            return log.exception("Unhandled Discord HTTPException while getting avatar for %s (%s)", member.name, member.id)
+            return log.exception(
+                "Unhandled Discord HTTPException while getting avatar for %s (%s)", member.name, member.id
+            )
 
         return avatar
 
@@ -115,7 +117,9 @@ class DiscordEventListener(BaseExtension):
         _log.info("New guild joined: %s (%s)", guild.name, guild.id)
         self.bot.cached_guilds[guild.id] = await self.bot.manager.get_or_create_guild(guild.id)
 
-        members: Sequence[discord.Member] | list[discord.Member] = await guild.chunk() if guild.chunked else guild.members
+        members: Sequence[discord.Member] | list[discord.Member] = (
+            await guild.chunk() if guild.chunked else guild.members
+        )
         to_queue: list[SendQueueItem] = []
         for member in members:
             try:
