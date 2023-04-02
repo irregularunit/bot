@@ -79,8 +79,9 @@ class Transparency(BaseExtension):
 
         if prompt.confirmed:
             await user.delete(self.bot.pool)
-            if user.id in self.bot.cached_users:
-                self.bot.cached_users.pop(user.id)
+
+            if (cached_user := self.bot.cached_users.get(user.id)) is not None:
+                self.bot.cached_users.pop(cached_user.id)
 
             log.getChild("delete").info(f"Deleted user {user.id} ({ctx.author.name})")
             await message.edit(content="Your data has been deleted. Thank you for using our services.", view=None)
