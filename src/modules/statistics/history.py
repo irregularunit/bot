@@ -196,8 +196,6 @@ class DiscordUserHistory(BaseExtension):
         async with self.bot.pool.acquire() as connection:
             history = await connection.fetchrow(query, user.id, ctx.guild.id)
 
-            print(history)
-
         def get_record_index(record: Any, pos: str, /) -> str:
             return self.format_count(record[pos])
 
@@ -260,7 +258,9 @@ class DiscordUserHistory(BaseExtension):
         )
 
         for i, row in enumerate(leaderboard, start=1):
-            user = self.bot.get_user(row["uid"]) or await self.bot.fetch_user(row["uid"])
+            user_id = row["uuid"]
+            user = self.bot.get_user(user_id) or await self.bot.fetch_user(user_id)
+            
             embed.add_field(
                 name=f"#{i}. {user.display_name}",
                 value=f"Counting Score: `{math.floor(row['count'] / 3)}`",
