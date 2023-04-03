@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import asyncio
+import itertools
 import os
 import pathlib
 import random
@@ -265,21 +266,26 @@ class Bot(commands.Bot):
     @override
     async def setup_hook(self) -> None:
         _log: Logger = self.logger.getChild("setup_hook")
-        for item in list(self.iter_extensions()) + list(self.iter_schemas()):
-            marked_as: str = "extension" if isinstance(item, str) else "schema"
-            try:
-                # Honestly, Idk why I made it like this
-                if isinstance(item, str):
-                    await self.load_extension(item)
-                elif isinstance(item, pathlib.Path):
-                    await self.pool.execute(item.read_text())
-                else:
-                    _log.exception(f"Expected {item!r} to be a string or a Path, got {type(item)!r}")
-                    continue
 
-                _log.info(f"Loaded {marked_as} {item!r}")
-            except Exception as exc:
-                _log.exception(f"Failed to load {marked_as} {item!r}", exc_info=exc)
+        initial_exts: list[str] = list(self.iter_extensions())
+        initial_schemas: list[pathlib.Path] = list(self.iter_schemas())
+
+        errors = await asyncio.gather(
+            *[self.load_extension(ext) for ext in initial_exts],
+            *[self.pool.execute(schema.read_text()) for schema in initial_schemas],
+        )
+
+        for ext, error in zip(initial_exts, errors):
+            if error:
+                _log.exception(f"Failed to load extension {ext!r}", exc_info=error)
+            else:
+                _log.info(f"Loaded extension {ext!r}")
+
+        for schema, error in zip(initial_schemas, errors):
+            if error:
+                _log.exception(f"Failed to load schema {schema!r}", exc_info=error)
+            else:
+                _log.info(f"Loaded schema {schema!r}")
 
         await self.redis.connect()
 
@@ -290,7 +296,7 @@ class Bot(commands.Bot):
         if not getattr(self, "start_time", None):
             self.start_time = discord.utils.utcnow()
 
-        self.logger.getChild("on_ready").info("Connected to Discord.")
+        self.logger.getChild("on_ready").info("Successfully connected to Discord with %s as %s", self.user, self.user.id)
 
     @tasks.loop(minutes=15)
     async def update_presence(self) -> None:
