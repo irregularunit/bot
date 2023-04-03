@@ -9,6 +9,9 @@ from __future__ import annotations
 
 import asyncio
 import os
+import sys
+import logging
+import logging.handlers
 from logging import Logger, getLogger
 from typing import TYPE_CHECKING
 
@@ -34,7 +37,19 @@ os.environ["JISHAKU_RETAIN"] = "true"
 async def setup() -> tuple[Bot, Pool[Record], ClientSession]:
     setup_logging("INFO")
     prep_conf: Config = Config()  # type: ignore (my IDE doesn't get it)
+    logger: Logger = logging.getLogger()
 
+    handler = (
+        logging.handlers.RotatingFileHandler(
+            filename="logs/bot.log",
+            encoding="utf-8",
+            maxBytes=32 * 1024 * 1024,
+            backupCount=5,
+        )
+    )
+    handler.setFormatter(logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s"))
+
+    logger.addHandler(handler)
     loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
     session: ClientSession = ClientSession()
 
