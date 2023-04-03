@@ -27,7 +27,7 @@ class NameHistoryButton(discord.ui.Button):
             SELECT item_value, changed_at
             FROM item_history
             WHERE uuid = $1 AND item_type = 'name'
-            ORDER BY changed_at DESC
+            ORDER BY changed_at DESC LIMIT 10
             """,
             user_id,
         )
@@ -61,7 +61,7 @@ class NameHistoryButton(discord.ui.Button):
 
         embed = EmbedBuilder(title="Name History")
 
-        for name in name_history[:10]:
+        for name in name_history:
             embed.add_field(name=name["item_value"], value=name["changed_at"])
 
         await interaction.followup.send(embed=embed)
