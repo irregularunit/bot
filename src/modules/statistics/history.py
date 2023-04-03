@@ -27,7 +27,8 @@ from utils import (
     count_source_lines,
     get_random_emoji,
 )
-from views import AvatarHistoryView
+from views import AvatarHistoryView, PluginView
+from views.buttons import NameHistoryButton, CollageAvatarButton
 
 if TYPE_CHECKING:
     from bot import Bot
@@ -271,3 +272,46 @@ class DiscordUserHistory(BaseExtension):
             embed.description = "> No one has counted yet."
 
         await ctx.safe_send(embed=embed)
+
+    @commands.command(name="userinfo", aliases=("ui",))
+    async def userinfo_command(
+        self,
+        ctx: Context,
+        *,
+        member: discord.Member = commands.param(default=None, converter=MemberConverter(), displayed_default="You"),
+    ) -> Optional[discord.Message]:
+        user: discord.Member = member or ctx.author
+        joined_at = user.joined_at or discord.utils.utcnow()
+        
+        view = PluginView(ctx, member=user)
+        view.add_item(
+            NameHistoryButton(
+                label="Username History",
+                style=discord.ButtonStyle.blurple,
+                emoji="📜",
+            )
+        )
+        view.add_item(
+            CollageAvatarButton(
+                label="Avatar Collage",
+                style=discord.ButtonStyle.blurple,
+                emoji="🖼️",
+            )
+        )
+
+        embed: EmbedBuilder = (
+            EmbedBuilder(
+                description=(
+                    f"""
+                    **{get_random_emoji()} {user.display_name}'s Info**\n
+                    **User ID:** `{user.id}`
+                    **Account Created:** `{user.created_at.strftime("%b %d, %Y")}`
+                    **Joined Server:** `{joined_at.strftime("%b %d, %Y")}`
+                    """
+                )
+            )
+            .set_thumbnail(url=user.display_avatar)
+            .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
+        )
+
+        await ctx.safe_send(embed=embed, view=view)

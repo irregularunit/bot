@@ -6,5 +6,6 @@
 """
 
 from .collage import CollageAvatarButton
+from .names import NameHistoryButton
 
-__all__: tuple[str, ...] = ("CollageAvatarButton",)
+__all__: tuple[str, ...] = ("CollageAvatarButton", "NameHistoryButton")
