@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 import asyncio
-import itertools
 import os
 import pathlib
 import random
