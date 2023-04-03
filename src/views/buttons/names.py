@@ -61,9 +61,8 @@ class NameHistoryButton(discord.ui.Button):
 
         embed = EmbedBuilder(title="Name History")
 
-        for name in name_history:
+        for name in name_history[:10]:
             embed.add_field(name=name["item_value"], value=name["changed_at"])
 
         await interaction.followup.send(embed=embed)
-        self.disabled = False
         await interaction.response.edit_message(view=self.view)
