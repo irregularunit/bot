@@ -15,50 +15,24 @@ from discord.ui import View
 from models import EmbedBuilder
 
 from .buttons import CollageAvatarButton
+from .plugin import PluginView
 
 if TYPE_CHECKING:
     from bot import Bot
     from utils import Context
 
 
-class AvatarHistoryView(View):
+class AvatarHistoryView(PluginView):
     def __init__(
         self, ctx: Context, /, *, member: discord.Member | discord.User, timeout: Optional[float] = 60.0
     ) -> None:
-        super().__init__(timeout=timeout)
-        self.ctx: Context = ctx
-        self.bot: Bot = ctx.bot
-
-        self.member: discord.Member | discord.User = member
-        self.message: Optional[discord.Message] = None
+        super().__init__(ctx, member=member, timeout=timeout)
 
         self.cached_avatars: list[str] = []
         self.index: int = 0
 
-    def disable_view(self) -> None:
-        for item in self.children:
-            if isinstance(item, (discord.ui.Button, discord.ui.Select)):
-                # This check is purly done for type checking purposes
-                # and is not needed for the code to work.
-                if hasattr(item, "disabled"):
-                    # Same as: item.disabled = True
-                    # But this is the "proper" way to do it.
-                    setattr(item, "disabled", True)
-
-    async def on_timeout(self) -> None:
-        self.disable_view()
-        if self.message is not None:
-            await self.message.edit(view=self)
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user and interaction.user.id == self.ctx.author.id:
-            return True
-
-        await interaction.response.send_message("You cannot use this, sorry. :(", ephemeral=True)
-        return False
-
     async def fetch_avatar_history_items(self) -> list[str]:
-        query = "SELECT item_value FROM item_history WHERE uid = $1 AND item_type = $2"
+        query = "SELECT item_value FROM item_history WHERE uuid = $1 AND item_type = $2"
 
         async with self.bot.pool.acquire() as connection:
             res = await connection.fetch(query, self.member.id, "avatar")
