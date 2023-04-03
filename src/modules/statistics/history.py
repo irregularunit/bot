@@ -28,7 +28,7 @@ from utils import (
     get_random_emoji,
 )
 from views import AvatarHistoryView, PluginView
-from views.buttons import NameHistoryButton, CollageAvatarButton
+from views.buttons import CollageAvatarButton, NameHistoryButton
 
 if TYPE_CHECKING:
     from bot import Bot
@@ -282,7 +282,7 @@ class DiscordUserHistory(BaseExtension):
     ) -> Optional[discord.Message]:
         user: discord.Member = member or ctx.author
         joined_at = user.joined_at or discord.utils.utcnow()
-        
+
         view = PluginView(ctx, member=user)
         view.add_item(
             NameHistoryButton(

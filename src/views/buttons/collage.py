@@ -93,7 +93,7 @@ class CollageAvatarButton(discord.ui.Button):
 
         view = self.view
         self.disabled = True
-        
+
         embed = EmbedBuilder.factory(view.ctx)
         embed.set_image(url="attachment://collage.webp")
         embed.set_footer(text=f"Avatar collage of {view.member}")

@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 
 __all__: tuple[str, ...] = ("PluginView",)
 
+
 class PluginView(View):
     def __init__(
         self, ctx: Context, /, *, member: discord.Member | discord.User, timeout: Optional[float] = 60.0

@@ -295,7 +295,9 @@ class Bot(commands.Bot):
         if not getattr(self, "start_time", None):
             self.start_time = discord.utils.utcnow()
 
-        self.logger.getChild("on_ready").info("Successfully connected to Discord with %s as %s", self.user, self.user.id)
+        self.logger.getChild("on_ready").info(
+            "Successfully connected to Discord with %s as %s", self.user, self.user.id
+        )
 
     @tasks.loop(minutes=15)
     async def update_presence(self) -> None:
