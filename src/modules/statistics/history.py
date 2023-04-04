@@ -284,20 +284,8 @@ class DiscordUserHistory(BaseExtension):
         joined_at = user.joined_at or discord.utils.utcnow()
 
         view = PluginView(ctx, member=user)
-        view.add_item(
-            NameHistoryButton(
-                label="Username History",
-                style=discord.ButtonStyle.blurple,
-                emoji="📜",
-            )
-        )
-        view.add_item(
-            CollageAvatarButton(
-                label="Avatar Collage",
-                style=discord.ButtonStyle.blurple,
-                emoji="🖼️",
-            )
-        )
+        view.add_item(NameHistoryButton(label="Username History", style=discord.ButtonStyle.blurple, emoji="📜"))
+        view.add_item(CollageAvatarButton(label="Avatar Collage", style=discord.ButtonStyle.blurple, emoji="🖼️"))
 
         embed: EmbedBuilder = (
             EmbedBuilder(
