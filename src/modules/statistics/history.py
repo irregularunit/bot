@@ -102,8 +102,8 @@ class DiscordUserHistory(BaseExtension):
         fields = (
             ("Python", python_version, True),
             ("Discord.py", discord_version, True),
-            ("PostgreSQL", str(psql_version), True),
             ("Lines of code", str(lines_of_code), True),
+            ("PostgreSQL", str(psql_version), True),
             ("PostgreSQL Latency", f"{psql_latency:.2f}ms", True),
             ("Discord Latency", f"{self.bot.latency * 1000:.2f}ms", True),
         )
@@ -320,25 +320,22 @@ class DiscordUserHistory(BaseExtension):
     async def joinlist_command(self, ctx: Context) -> Optional[discord.Message]:
         sorted_list = sorted(ctx.guild.members, key=lambda m: m.joined_at or discord.utils.utcnow())
 
-        pages: list[str] = [
-            "\n".join(
-                f"**{i + 1}.** {member.display_name} - {discord.utils.format_dt(member.joined_at or discord.utils.utcnow(), style='R')}"
-                for i, member in enumerate(sorted_list[page * 10 : (page + 1) * 10])
-            )
-            for page in range(math.ceil(len(sorted_list) / 10))
-        ]
         items: list[Item] = [
             Item(
                 embed=EmbedBuilder(
-                    description=page,
+                    description="\n".join(
+                        f"**{i + 1}.** {member.display_name} - "
+                        f"{discord.utils.format_dt(member.joined_at or discord.utils.utcnow(), style='R')}"
+                        for i, member in enumerate(sorted_list[page * 10 : (page + 1) * 10])
+                    ),
                     color=discord.Color.blurple(),
                 )
-                .set_footer(text=f"Page {i + 1} of {len(pages)}")
+                .set_footer(text=f"Page {i + 1} of {math.ceil(len(sorted_list) / 10)}")
                 .set_author(name=f"📜 Join List")
                 .set_thumbnail(url=self.bot.user.display_avatar)
                 .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
             )
-            for i, page in enumerate(pages)
+            for i, page in enumerate(range(math.ceil(len(sorted_list) / 10)))
         ]
 
         view = Paginator(self.bot, *items)
