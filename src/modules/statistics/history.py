@@ -241,12 +241,12 @@ class DiscordUserHistory(BaseExtension):
     async def leaderboard_command(
         self,
         ctx: Context,
-        amount: int = 10,
+        amount: Optional[int] = 10,
         *,
         time: str = commands.param(default="all time", converter=TimeConverter(), displayed_default="all time"),
     ) -> Optional[discord.Message]:
         cal = CountingCalender(ctx.author.id, ctx.guild.id)
-        query: str = cal.leaderboard_query(time, amount)
+        query: str = cal.leaderboard_query(time, amount if amount else 10)
 
         async with self.bot.pool.acquire() as connection:
             leaderboard = await connection.fetch(query)
