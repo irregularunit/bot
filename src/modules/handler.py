@@ -121,7 +121,11 @@ class DiscordErrorHandler(BaseExtension):
             if await self.bot.redis.client.get(f"cooldown:{ctx.author.id}") is not None:
                 return
 
-            await self.bot.redis.client.setex(f"cooldown:{ctx.author.id}", int(exc.retry_after), 1)
+            await self.bot.redis.client.setex(
+                name=f"cooldown:{ctx.author.id}",
+                value="1",
+                time=int(exc.retry_after) + 1,
+            )
 
             time_counter = self.to_discord_time_format(exc.retry_after)
             return await ctx.safe_send(

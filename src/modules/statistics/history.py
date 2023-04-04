@@ -27,7 +27,7 @@ from utils import (
     count_source_lines,
     get_random_emoji,
 )
-from views import AvatarHistoryView, PluginView
+from views import AvatarHistoryView, Item, Paginator, PluginView
 from views.buttons import CollageAvatarButton, NameHistoryButton
 
 if TYPE_CHECKING:
@@ -315,3 +315,31 @@ class DiscordUserHistory(BaseExtension):
         )
 
         await ctx.safe_send(embed=embed, view=view)
+
+    @commands.command(name="joinlist", aliases=("jl",))
+    async def joinlist_command(self, ctx: Context) -> Optional[discord.Message]:
+        sorted_list = sorted(ctx.guild.members, key=lambda m: m.joined_at or discord.utils.utcnow())
+
+        pages: list[str] = [
+            "\n".join(
+                f"**{i + 1}.** {member.display_name} - {discord.utils.format_dt(member.joined_at or discord.utils.utcnow(), style='R')}"
+                for i, member in enumerate(sorted_list[page * 10 : (page + 1) * 10])
+            )
+            for page in range(math.ceil(len(sorted_list) / 10))
+        ]
+        items: list[Item] = [
+            Item(
+                embed=EmbedBuilder(
+                    description=page,
+                    color=discord.Color.blurple(),
+                )
+                .set_footer(text=f"Page {i + 1} of {len(pages)}")
+                .set_author(name=f"📜 Join List")
+                .set_thumbnail(url=self.bot.user.display_avatar)
+                .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
+            )
+            for i, page in enumerate(pages)
+        ]
+
+        view = Paginator(self.bot, *items)
+        await ctx.safe_send(view=view, embed=items[0].embed)

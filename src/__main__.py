@@ -8,10 +8,10 @@
 from __future__ import annotations
 
 import asyncio
-import os
-import sys
 import logging
 import logging.handlers
+import os
+import sys
 from logging import Logger, getLogger
 from typing import TYPE_CHECKING
 
@@ -39,13 +39,11 @@ async def setup() -> tuple[Bot, Pool[Record], ClientSession]:
     prep_conf: Config = Config()  # type: ignore (my IDE doesn't get it)
     logger: Logger = logging.getLogger()
 
-    handler = (
-        logging.handlers.RotatingFileHandler(
-            filename="logs/bot.log",
-            encoding="utf-8",
-            maxBytes=32 * 1024 * 1024,
-            backupCount=5,
-        )
+    handler = logging.handlers.RotatingFileHandler(
+        filename="logs/bot.log",
+        encoding="utf-8",
+        maxBytes=32 * 1024 * 1024,
+        backupCount=5,
     )
     handler.setFormatter(logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s"))
 
