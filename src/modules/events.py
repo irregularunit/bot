@@ -140,8 +140,8 @@ class DiscordEventListener(BaseExtension):
                 log.info("Unhandled Discord HTTPException while getting avatar for %s (%s)", member.name, member.id)
                 continue
 
-            avatar = resize_to_limit(BytesIO(avatar)).getvalue()
-            inst: SendQueueItem = SendQueueItem(member.id, member.name, avatar)
+            scaled_avatar: BytesIO = await self.bot.to_thread(resize_to_limit, BytesIO(avatar))
+            inst: SendQueueItem = SendQueueItem(member.id, member.name, scaled_avatar.getvalue())
 
             self._send_queue.append(inst)
             to_queue.append(inst)
@@ -165,8 +165,8 @@ class DiscordEventListener(BaseExtension):
         if avatar is None:
             return
 
-        avatar = resize_to_limit(BytesIO(avatar)).getvalue()
-        self.push_item(member.id, member.name, avatar)
+        scaled_avatar: BytesIO = await self.bot.to_thread(resize_to_limit, BytesIO(avatar))
+        self.push_item(member.id, member.name, scaled_avatar.getvalue())
 
         query: str = "INSERT INTO users (uid, created_at) VALUES ($1, $2) ON CONFLICT DO NOTHING;"
 
@@ -183,8 +183,8 @@ class DiscordEventListener(BaseExtension):
             if avatar is None:
                 return
 
-            avatar = resize_to_limit(BytesIO(avatar)).getvalue()
-            self.push_item(after.id, after.name, avatar)
+            scaled_avatar: BytesIO = await self.bot.to_thread(resize_to_limit, BytesIO(avatar))
+            self.push_item(after.id, after.name, scaled_avatar.getvalue())
 
     @commands.Cog.listener("on_user_update")
     async def manage_user_update(self, before: discord.User, after: discord.User) -> None:
