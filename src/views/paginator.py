@@ -41,18 +41,18 @@ class Paginator(View):
         self.bot: Bot = bot
         self.items: tuple[Item, ...] = items
         self.page = 0
-        self.emojis: dict[str, str] = {
-            "first": "⏮",
-            "back": "◀",
-            "next": "▶",
-            "skip": "⏭",
+        self.labels: dict[str, str] = {
+            "first": "<<",
+            "back": "<",
+            "next": ">",
+            "skip": ">>",
         }
 
         for child in self.children:
             if isinstance(child, Button):
                 if child.style == ButtonStyle.secondary:
                     child.style = ButtonStyle.primary
-                child.emoji = self.emojis[child.callback.callback.__name__]
+                child.label = self.labels[child.callback.callback.__name__]
 
     async def edit(self, interaction: Interaction, *, page: int) -> None:
         self.page = page

@@ -101,11 +101,9 @@ class CollageAvatarButton(discord.ui.Button):
         file: discord.File | None = await self.get_member_collage(view.member)
 
         if not file:
-            embed.set_author(name="No avatar history found. 🫠", icon_url=view.ctx.me.display_avatar)
+            embed.set_author(name="No avatar history found. 🫠")
             embed.set_image(url=view.member.display_avatar.url)
             await interaction.response.edit_message(embed=embed, view=view)
         else:
-            embed.set_author(
-                name=f"Avatar collage for {view.member.display_name}. 🥺", icon_url=view.ctx.me.display_avatar
-            )
+            embed.set_author(name=f"Avatar collage for {view.member.display_name}. 🥺")
             self.view.message = await interaction.response.edit_message(embed=embed, attachments=[file], view=view)

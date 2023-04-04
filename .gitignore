@@ -16,3 +16,4 @@ venv/
 *.yaml
 *.py[cod]
 *$py.class
+*.log
