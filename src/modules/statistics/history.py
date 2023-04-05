@@ -27,7 +27,8 @@ from utils import (
     count_source_lines,
     get_random_emoji,
 )
-from views import AvatarHistoryView
+from views import AvatarHistoryView, Item, Paginator, PluginView
+from views.buttons import CollageAvatarButton, NameHistoryButton
 
 if TYPE_CHECKING:
     from bot import Bot
@@ -101,8 +102,8 @@ class DiscordUserHistory(BaseExtension):
         fields = (
             ("Python", python_version, True),
             ("Discord.py", discord_version, True),
-            ("PostgreSQL", str(psql_version), True),
             ("Lines of code", str(lines_of_code), True),
+            ("PostgreSQL", str(psql_version), True),
             ("PostgreSQL Latency", f"{psql_latency:.2f}ms", True),
             ("Discord Latency", f"{self.bot.latency * 1000:.2f}ms", True),
         )
@@ -240,12 +241,12 @@ class DiscordUserHistory(BaseExtension):
     async def leaderboard_command(
         self,
         ctx: Context,
-        amount: int = 10,
+        amount: Optional[int] = 10,
         *,
         time: str = commands.param(default="all time", converter=TimeConverter(), displayed_default="all time"),
     ) -> Optional[discord.Message]:
         cal = CountingCalender(ctx.author.id, ctx.guild.id)
-        query: str = cal.leaderboard_query(time, amount)
+        query: str = cal.leaderboard_query(time, amount if amount else 10)
 
         async with self.bot.pool.acquire() as connection:
             leaderboard = await connection.fetch(query)
@@ -271,3 +272,59 @@ class DiscordUserHistory(BaseExtension):
             embed.description = "> No one has counted yet."
 
         await ctx.safe_send(embed=embed)
+
+    @commands.command(name="userinfo", aliases=("ui",))
+    async def userinfo_command(
+        self,
+        ctx: Context,
+        *,
+        member: discord.Member = commands.param(default=None, converter=MemberConverter(), displayed_default="You"),
+    ) -> Optional[discord.Message]:
+        user: discord.Member = member or ctx.author
+        joined_at = user.joined_at or discord.utils.utcnow()
+
+        view = PluginView(ctx, member=user)
+        view.add_item(NameHistoryButton(label="Username History", style=discord.ButtonStyle.blurple, emoji="📜"))
+        view.add_item(CollageAvatarButton(label="Avatar Collage", style=discord.ButtonStyle.blurple, emoji="🖼️"))
+
+        embed: EmbedBuilder = (
+            EmbedBuilder(
+                description=(
+                    f"""
+                    **{get_random_emoji()} {user.display_name}'s Info**\n
+                    **User ID:** `{user.id}`
+                    **Account Created:** `{user.created_at.strftime("%b %d, %Y")}`
+                    **Joined Server:** `{joined_at.strftime("%b %d, %Y")}`
+                    """
+                )
+            )
+            .set_thumbnail(url=user.display_avatar)
+            .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
+        )
+
+        await ctx.safe_send(embed=embed, view=view)
+
+    @commands.command(name="joinlist", aliases=("jl",))
+    async def joinlist_command(self, ctx: Context) -> Optional[discord.Message]:
+        sorted_list = sorted(ctx.guild.members, key=lambda m: m.joined_at or discord.utils.utcnow())
+
+        items: list[Item] = [
+            Item(
+                embed=EmbedBuilder(
+                    description="\n".join(
+                        f"**{i + 1}.** {member.display_name} - "
+                        f"{discord.utils.format_dt(member.joined_at or discord.utils.utcnow(), style='R')}"
+                        for i, member in enumerate(sorted_list[page * 10 : (page + 1) * 10])
+                    ),
+                    color=discord.Color.blurple(),
+                )
+                .set_footer(text=f"Page {i + 1} of {math.ceil(len(sorted_list) / 10)}")
+                .set_author(name=f"📜 Join List")
+                .set_thumbnail(url=self.bot.user.display_avatar)
+                .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
+            )
+            for i, page in enumerate(range(math.ceil(len(sorted_list) / 10)))
+        ]
+
+        view = Paginator(self.bot, *items)
+        await ctx.safe_send(view=view, embed=items[0].embed)

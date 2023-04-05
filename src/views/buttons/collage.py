@@ -9,15 +9,12 @@ from __future__ import annotations
 
 import math
 from io import BytesIO
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any, Optional
 
 import discord
 from PIL import Image
 
 from models import EmbedBuilder
-
-if TYPE_CHECKING:
-    from ..avatar import AvatarHistoryView
 
 
 class CollageAvatarButton(discord.ui.Button):
@@ -78,7 +75,7 @@ class CollageAvatarButton(discord.ui.Button):
         assert self.view is not None
 
         results = await self.view.bot.pool.fetch(
-            "SELECT * FROM avatar_history WHERE uid = $1 ORDER BY changed_at DESC", member.id
+            "SELECT * FROM avatar_history WHERE uuid = $1 ORDER BY changed_at DESC", member.id
         )
         if not results:
             return None
@@ -94,9 +91,9 @@ class CollageAvatarButton(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction) -> None:
         assert self.view is not None
 
-        # Note for my future self:
-        # Create a type for views that use this button.
-        view: AvatarHistoryView = self.view
+        view = self.view
+        self.disabled = True
+
         embed = EmbedBuilder.factory(view.ctx)
         embed.set_image(url="attachment://collage.webp")
         embed.set_footer(text=f"Avatar collage of {view.member}")
@@ -104,12 +101,9 @@ class CollageAvatarButton(discord.ui.Button):
         file: discord.File | None = await self.get_member_collage(view.member)
 
         if not file:
-            embed.set_author(name="No avatar history found. 🫠", icon_url=view.ctx.me.display_avatar)
+            embed.set_author(name="No avatar history found. 🫠")
             embed.set_image(url=view.member.display_avatar.url)
             await interaction.response.edit_message(embed=embed, view=view)
         else:
-            embed.set_author(
-                name=f"Avatar collage from {view.member.display_name}. 🥺", icon_url=view.ctx.me.display_avatar
-            )
-            self.view.disable_view()
+            embed.set_author(name=f"Avatar collage for {view.member.display_name}. 🥺")
             self.view.message = await interaction.response.edit_message(embed=embed, attachments=[file], view=view)

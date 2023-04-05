@@ -1,22 +1,24 @@
-# Just a discord bot
+# Welcome to my Discord bot!
 
-Ignore this file, it's just a readme.
+Thank you for checking out my Discord bot! This readme.md file is just a brief introduction to the bot and its licensing terms.
 
-If you need to contact me do that at discord: irregularunit#4564
+## Contact
 
-# License
+If you need to get in touch with me, please feel free to reach out on Discord at **irregularunit#4564**. I'm always happy to hear feedback and suggestions for improving the bot!
 
-| :bangbang: | THIS IS NOT LEGAL ADVICE |
-| :--------: | :----------------------- |
+## License
 
-"Bot" is licensed under the Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0) license.
+| :bangbang: | PLEASE NOTE: THIS IS NOT LEGAL ADVICE |
+| :--------: | :------------------------------------ |
 
-This license allows others to distribute, remix, and build upon the work for non-commercial purposes, as long as they credit "Irregular Unit" and release their derivative works under the same license. The license also requires that any new work created using "Bot" must be distributed under the same license terms.
+My bot is licensed under the Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0) license. This license allows others to distribute, remix, and build upon the bot for non-commercial purposes, as long as they credit me (Irregular Unit) and release their derivative works under the same license. Any new work created using my bot must also be distributed under the same license terms.
 
-In summary, this means that you are free to use Bot for non-commercial purposes, modify it, and share it with others, as long as you credit "Irregular Unit" and license any derivative works under the same license.
+In summary, this means that you are free to use my bot for non-commercial purposes, modify it, and share it with others, as long as you give me credit and license any derivative works under the same license.
 
 Please note that this license does not provide any warranties or guarantees and is not intended to limit any rights that you may have under applicable copyright law.
 
-# Disclaimer
+## Disclaimer
 
-Please note that while "Irregular Unit" has made every effort to ensure the accuracy and reliability of "Bot", they cannot be held responsible for any errors, omissions, or damages that may result from the use of this bot. By using "Bot", you agree to indemnify and hold "Irregular Unit" harmless from any and all claims, damages, losses, or expenses that may arise from your use of this bot.
+While I have made every effort to ensure the accuracy and reliability of my bot, please note that I cannot be held responsible for any errors, omissions, or damages that may result from its use. By using my bot, you agree to indemnify and hold me harmless from any and all claims, damages, losses, or expenses that may arise from your use of the bot.
+
+Thank you again for checking out my bot! I hope you find it useful and enjoyable.

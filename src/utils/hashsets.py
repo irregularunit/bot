@@ -401,7 +401,6 @@ owo_commands: tuple[str, ...] = (
     "z",
 )
 
-# sorted_owo_commands = sorted(owo_commands)
 owo_command_set = set(owo_commands)
 
 
