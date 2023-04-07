@@ -112,20 +112,20 @@ class DiscordUserHistory(BaseExtension):
         embed: EmbedBuilder = (
             EmbedBuilder(
                 description=(
-                    """
-                    Servant comes equipped with a variety of features to make 
+                    f"""
+                    {self.bot.user.name} comes equipped with a variety of features to make 
                     your server experience even better. With this valuable 
                     information at your fingertips, you'll never miss a beat when 
                     it comes to staying up-to-date with your community.
 
                     Whether you're a seasoned Discord user or just starting out, 
-                    Servant is the perfect addition to any server.
+                    {self.bot.user.name} is the perfect addition to any server.
                     """
                 ),
                 fields=fields,
             )
             .set_thumbnail(url=self.bot.user.display_avatar)
-            .set_author(name="🔍 Servant Informationcenter")
+            .set_author(name=f"🔍 {self.bot.user.name} Informationcenter")
             .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
         )
 
@@ -137,8 +137,8 @@ class DiscordUserHistory(BaseExtension):
         embed: EmbedBuilder = (
             EmbedBuilder(
                 description=(
-                    F"""
-                    Servant is an open-source bot for Discord. 
+                    f"""
+                    {self.bot.user.name} is an open-source bot for Discord. 
                     You can find the source code on [github]({GITHUB_URL}).
 
                     > Licensed under [CC BY-NC-SA 4.0]({LICENSE}).
@@ -146,7 +146,7 @@ class DiscordUserHistory(BaseExtension):
                 )
             )
             .set_thumbnail(url=self.bot.user.display_avatar)
-            .set_author(name="Servant Source Code")
+            .set_author(name=f"{self.bot.user.name} Source Code")
             .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
         )
 
