@@ -77,10 +77,9 @@ class Managment(BaseExtension):
             .add_field(
                 name="Configured prefixes",
                 value=(
-                    ">>> " +
-                    "\n".join(f"`{prefix}`" for prefix in guild.prefixes)
-                    if guild.prefixes else
-                    "No prefixes configured."
+                    ">>> " + "\n".join(f"`{prefix}`" for prefix in guild.prefixes)
+                    if guild.prefixes
+                    else "No prefixes configured."
                 ),
                 inline=False,
             )

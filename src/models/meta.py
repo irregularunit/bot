@@ -230,7 +230,7 @@ class ModelManager:
         return guild
 
     async def add_guild_prefix(self, guild: Guild, prefix: str) -> Guild:
-        if prefix in guild.prefixes:
+        if prefix in guild.prefixes or len(prefix) > 5:
             raise UserFeedbackExceptionFactory.create("That prefix already exists", ExceptionLevel.WARNING)
 
         query: str = "INSERT INTO guild_prefixes (gid, prefix) VALUES ($1, $2)"
