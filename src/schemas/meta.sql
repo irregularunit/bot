@@ -162,10 +162,10 @@ SELECT
 FROM 
   (
     SELECT 
-      'uwu' AS prefix 
+      's!' AS prefix 
     UNION ALL 
     SELECT 
-      'uwu '
+      's.'
   ) AS default_prefixes;
 END IF;
 RETURN NEW;

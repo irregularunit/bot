@@ -217,7 +217,7 @@ class ModelManager:
         guilds: dict[int, Guild] = {record["gid"]: Guild.from_record(record) for record in records}
         return guilds
 
-    async def remove_guild_prefix(self, guild: Guild, prefix: str) -> Optional[Guild]:
+    async def remove_guild_prefix(self, guild: Guild, prefix: str) -> Guild:
         if prefix not in guild.prefixes:
             raise UserFeedbackExceptionFactory.create("That prefix does not exist", ExceptionLevel.WARNING)
 
@@ -229,7 +229,7 @@ class ModelManager:
         guild.prefixes.remove(prefix)
         return guild
 
-    async def add_guild_prefix(self, guild: Guild, prefix: str) -> Optional[Guild]:
+    async def add_guild_prefix(self, guild: Guild, prefix: str) -> Guild:
         if prefix in guild.prefixes:
             raise UserFeedbackExceptionFactory.create("That prefix already exists", ExceptionLevel.WARNING)
 
