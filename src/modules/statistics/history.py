@@ -42,9 +42,10 @@ LICENSE = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
 
 
 class InfoView(View):
-    def __init__(self, invite: str, *, timeout: float = 60) -> None:
+    def __init__(self, inv: str, what: str, *, timeout: float = 60) -> None:
         super().__init__(timeout=timeout)
-        self.inv: str = invite
+        self.inv: str = inv
+        self.what: str = what
 
         buttons = [
             Button(
@@ -53,7 +54,7 @@ class InfoView(View):
                 style=discord.ButtonStyle.link,
             ),
             Button(
-                label="Invite",
+                label=self.what,
                 url=self.inv,
                 style=discord.ButtonStyle.link,
             ),
@@ -128,7 +129,7 @@ class DiscordUserHistory(BaseExtension):
             .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
         )
 
-        view = InfoView(self.bot.config.invite)
+        view = InfoView(self.bot.config.invite, "Invite")
         await ctx.safe_send(embed=embed, view=view)
 
     @commands.command(name="source", aliases=("src",))
@@ -172,17 +173,9 @@ class DiscordUserHistory(BaseExtension):
             ) = inspect.getsourcelines(src)
             end = start + len(lines) - 1
             loc = os.path.realpath(filename).replace("\\", "/").split("/bot/")[1]
+            view = InfoView(f"{GITHUB_URL}/blob/{BRANCH}/{loc}#L{start}-L{end}", f"{cmd.name.title()}")
 
-            embed.add_field(
-                name=f"Source Code for {cmd.name}",
-                value=(
-                    f"""
-                    [View on Github]({GITHUB_URL}/blob/{BRANCH}/{loc}#L{start}-L{end})
-                    """
-                ),
-            )
-
-            return await ctx.safe_send(embed=embed)
+            return await ctx.safe_send(embed=embed, view=view)
 
     @commands.command(name="score", aliases=("sc",))
     async def score_command(
