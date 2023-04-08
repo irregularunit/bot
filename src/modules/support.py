@@ -71,7 +71,7 @@ class SupportServer(BaseExtension):
             if 4 <= n % 100 <= 20
             else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
         )
-    
+
     async def cache_channel(self, which: str) -> discord.TextChannel:
         if which == "welcome":
             wchannel = await self.bot.fetch_channel(WELCOME_CHANNEL_ID)
@@ -81,7 +81,7 @@ class SupportServer(BaseExtension):
 
             self.cached_welcome_channel = wchannel
             return self.cached_welcome_channel
-        
+
         elif which == "pit_queue":
             pchannel = await self.bot.fetch_channel(PIT_QUEUE_CHANNEL_ID)
 
@@ -123,17 +123,19 @@ class SupportServer(BaseExtension):
             DRONES_ROLE_ID: int = 1094280797604814868
             drones_role: discord.Role = member.guild.get_role(DRONES_ROLE_ID)  # type: ignore
 
-            if len(member.roles) > 1 and member.id not in (
-                self.bot.user.id,
-            ):
-                await member.kick(reason="Bot has a custom role and was invited with permissions")
+            if len(member.roles) > 1 and member.id not in (self.bot.user.id,):
+                await member.kick(
+                    reason="Bot has a custom role and was invited with permissions"
+                )
                 return
-            
+
             if drones_role not in member.roles:
                 await member.add_roles(drones_role)
 
             if self.cached_pit_queue_channel is None:
-                self.cached_pit_queue_channel = await self.cache_channel("pit_queue")
+                self.cached_pit_queue_channel = await self.cache_channel(
+                    "pit_queue"
+                )
 
             async with self.bot.pool.acquire() as conn:
                 result = await conn.fetchrow(
@@ -151,7 +153,9 @@ class SupportServer(BaseExtension):
                     )
 
                     if not res:
-                        await member.kick(reason="Bot never applied for approval")
+                        await member.kick(
+                            reason="Bot never applied for approval"
+                        )
                         return
 
                 embed = EmbedBuilder(
@@ -162,7 +166,7 @@ class SupportServer(BaseExtension):
                         > **Reason:** {res["reason"]}
                         > **Requestor:** <@{res["uuid"]}>
                         """
-                    )
+                    ),
                 ).set_thumbnail(url=member.avatar)
 
                 await self.cached_pit_queue_channel.send(embed=embed)
@@ -187,10 +191,10 @@ class SupportServer(BaseExtension):
             if self.cached_pit_queue_channel is None:
                 channel = await self.cache_channel("pit_queue")
                 self.cached_pit_queue_channel = channel
-                
 
-            await self.cached_pit_queue_channel.send(f"**ℹ️ |** {member.name} has been removed from the server.")
-
+            await self.cached_pit_queue_channel.send(
+                f"**ℹ️ |** {member.name} has been removed from the server."
+            )
 
     @commands.group(
         name="add",
@@ -201,20 +205,25 @@ class SupportServer(BaseExtension):
         await ctx.send_help()
 
     @add.command(name="bot")
-    async def add_bot(self, ctx: Context, bot: discord.User, *, reason: commands.clean_content):
-
+    async def add_bot(
+        self,
+        ctx: Context,
+        bot: discord.User,
+        *,
+        reason: commands.clean_content,
+    ):
         if not bot.bot:
             raise UserFeedbackExceptionFactory.create(
                 "The specified user is not a bot.",
                 ExceptionLevel.INFO,
             )
-        
+
         if bot in ctx.guild.members:
             raise UserFeedbackExceptionFactory.create(
                 "The specified bot is already in the server.",
                 ExceptionLevel.INFO,
             )
-        
+
         async with self.bot.pool.acquire() as conn:
             result = await conn.fetchrow(
                 "SELECT * FROM bot_pits WHERE uuid = $1 AND appid = $2 AND pending = TRUE",
@@ -227,7 +236,7 @@ class SupportServer(BaseExtension):
                 "You already have a bot pending approval.",
                 ExceptionLevel.INFO,
             )
-        
+
         prompt = SafetyPrompt(ctx.author)
 
         message = await ctx.safe_send(
@@ -253,7 +262,6 @@ class SupportServer(BaseExtension):
             if self.cached_pit_queue_channel is None:
                 channel = await self.cache_channel("pit_queue")
                 self.cached_pit_queue_channel = channel
-                
 
             invite: str = discord.utils.oauth_url(
                 bot.id,
@@ -287,7 +295,7 @@ class SupportServer(BaseExtension):
                 "The specified user is not a bot.",
                 ExceptionLevel.INFO,
             )
-        
+
         async with self.bot.pool.acquire() as conn:
             result = await conn.fetchrow(
                 "SELECT * FROM bot_pits WHERE appid = $1 AND pending = TRUE",
@@ -299,7 +307,7 @@ class SupportServer(BaseExtension):
                 "The specified bot is not pending approval.",
                 ExceptionLevel.INFO,
             )
-        
+
         async with self.bot.pool.acquire() as conn:
             await conn.execute(
                 "UPDATE bot_pits SET pending = FALSE WHERE appid = $1",
@@ -310,8 +318,11 @@ class SupportServer(BaseExtension):
             channel = await self.cache_channel("pit_queue")
             self.cached_pit_queue_channel = channel
 
-        await self.cached_pit_queue_channel.send(f"**ℹ️ |** {bot.name} has been approved.")
+        await self.cached_pit_queue_channel.send(
+            f"**ℹ️ |** {bot.name} has been approved."
+        )
         await ctx.message.add_reaction("✅")
+
 
 async def setup(bot: Bot) -> None:
     await bot.add_cog(SupportServer(bot))
