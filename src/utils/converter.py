@@ -8,41 +8,126 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Any
 
 import discord
 from discord.ext import commands
 
+from exceptions import UserFeedbackExceptionFactory, ExceptionLevel
+
 if TYPE_CHECKING:
-    from bot import Bot
+    from bot import Bot, BotT
     from utils import Context
 
 __all__: tuple[str, ...] = ("MemberConverter", "EmojiConverter")
-custom_emoji: re.Pattern[str] = re.compile(
+_CUSTOM_EMOJI_REGEX: re.Pattern[str] = re.compile(
     r"<(?P<a>a)?:(?P<name>[a-zA-Z0-9_~]{1,}):(?P<id>[0-9]{15,19})>"
 )
+_ID_REGEX = re.compile(r'([0-9]{15,20})$')
+
+
+def get_from_guilds(bot: Bot, getter: str, argument: Any) -> Any:
+    result = None
+    for guild in bot.guilds:
+        result = getattr(guild, getter)(argument)
+        if result:
+            return result
+    return result
 
 
 class MemberConverter(commands.Converter[discord.Member]):
-    """A case-insensitive member converter that allows for partial matches."""
+    @staticmethod
+    def get_id_match(argument):
+        return _ID_REGEX.match(argument)
 
-    async def convert(
-        self, ctx: Context, argument: str
+    async def query_member_named(
+        self, guild: discord.Guild, argument: str
     ) -> Optional[discord.Member]:
-        try:
-            member: discord.Member = await commands.MemberConverter().convert(
-                ctx, argument
+        cache = guild._state.member_cache_flags.joined
+        if len(argument) > 5 and argument[-5] == '#':
+            username, _, discriminator = argument.rpartition('#')
+            members = await guild.query_members(
+                username, limit=100, cache=cache
             )
+            return discord.utils.get(
+                members, name=username, discriminator=discriminator
+            )
+        else:
+            members = await guild.query_members(
+                argument, limit=100, cache=cache
+            )
+            return discord.utils.find(
+                lambda m: m.name == argument or m.nick == argument, members
+            )
+
+    async def query_member_by_id(
+        self, bot: Bot, guild: discord.Guild, user_id: int
+    ) -> Optional[discord.Member]:
+        ws = bot._get_websocket(shard_id=guild.shard_id)
+        cache = guild._state.member_cache_flags.joined
+        if ws.is_ratelimited():
+            # If we're being rate limited on the WS, then fall back to using the HTTP API
+            # So we don't have to wait ~60 seconds for the query to finish
+            try:
+                member = await guild.fetch_member(user_id)
+            except discord.HTTPException:
+                return None
+
+            if cache:
+                guild._add_member(member)
             return member
-        except commands.MemberNotFound:
-            members: list[discord.Member] = await ctx.guild.query_members(
-                argument, limit=5
-            )
-            if not members:
-                # Not even discord managed to find a member
-                # partially matching the argument
-                raise commands.MemberNotFound(argument)
-            return members[0]
+
+        # If we're not being rate limited then we can use the websocket to actually query
+        members = await guild.query_members(
+            limit=1, user_ids=[user_id], cache=cache
+        )
+        if not members:
+            return None
+        return members[0]
+
+    async def convert(self, ctx: Context, argument: str) -> discord.Member:
+        bot = ctx.bot
+        match = self.get_id_match(argument) or re.match(
+            r'<@!?([0-9]{15,20})>$', argument
+        )
+        guild = ctx.guild
+        result = None
+        user_id = None
+
+        if match is None:
+            # not a mention...
+            if guild:
+                result = guild.get_member_named(argument)
+            else:
+                result = get_from_guilds(bot, 'get_member_named', argument)
+        else:
+            user_id = int(match.group(1))
+            if guild:
+                result = guild.get_member(user_id) or discord.utils.get(
+                    ctx.message.mentions, id=user_id
+                )
+            else:
+                result = get_from_guilds(bot, 'get_member', user_id)
+
+        if not isinstance(result, discord.Member):
+            if guild is None:
+                raise UserFeedbackExceptionFactory.create(
+                    f"Could not find member `{argument}` in any guild.",
+                    ExceptionLevel.ERROR,
+                )
+
+            if user_id is not None:
+                result = await self.query_member_by_id(bot, guild, user_id)
+            else:
+                result = await self.query_member_named(guild, argument)
+
+            if not result:
+                raise UserFeedbackExceptionFactory.create(
+                    f"Could not find member `{argument}` in guild `{guild.name}`.",
+                    ExceptionLevel.ERROR,
+                )
+
+        return result
 
 
 class EmojiConverter(commands.Converter[discord.PartialEmoji]):
@@ -60,7 +145,7 @@ class EmojiConverter(commands.Converter[discord.PartialEmoji]):
 
         message_emojis: Optional[
             list[tuple[str, str, str]]
-        ] = custom_emoji.findall(message_content)
+        ] = _CUSTOM_EMOJI_REGEX.findall(message_content)
 
         if not message_emojis:
             return None

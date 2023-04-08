@@ -16,7 +16,7 @@ from discord.ext import commands
 
 from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
 from models import EmbedBuilder
-from utils import BaseExtension, async_all, get_random_emoji, no_sentinel
+from utils import BaseExtension, async_all, get_random_emoji
 
 from .transparency import SafetyPrompt
 
