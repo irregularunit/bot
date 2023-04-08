@@ -6,9 +6,9 @@
 """
 
 from .avatar import AvatarHistoryView
+from .emoji import EmoteUnit, EmoteView
 from .paginator import Item, Paginator
 from .plugin import PluginView
-from .emoji import EmoteUnit, EmoteView
 
 __all__: tuple[str, ...] = (
     "AvatarHistoryView",

@@ -142,7 +142,7 @@ class ModelManager:
 
     async def set_user_emoji_server(self, user: User, emoji_server: int) -> User:
         query: str = "UPDATE users SET emoji_server = $1 WHERE uuid = $2"
-        
+
         async with self.pool.acquire() as connection:
             await connection.execute(query, emoji_server, user.id)
 

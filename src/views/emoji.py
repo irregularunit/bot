@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, LiteralString
 
-from discord import ButtonStyle, Interaction, PartialEmoji, Guild, Member
+from discord import ButtonStyle, Guild, Interaction, Member, PartialEmoji
 from discord.ui import Button, View, button
 
 from models import EmbedBuilder, User
@@ -36,10 +36,10 @@ class EmoteUnit:
         self.name: str = name
         self.id: int = id
         self.emote: PartialEmoji = emote
-    
+
     def __str__(self) -> str | None:
         return self.name
-    
+
 
 class EmoteView(View):
     """Simple embed and file paginator view"""
@@ -49,14 +49,14 @@ class EmoteView(View):
         self.bot: Bot = bot
         self.items: tuple[EmoteUnit, ...] = items
         self.page: int = 0
-    
+
     def generate_page(self, unit: EmoteUnit) -> EmbedBuilder:
         return (
             EmbedBuilder(description=f"`{unit.name}` `({unit.id})`")
             .set_image(url=unit.emote.url)
             .set_footer(text=f"Page {self.page + 1}/{len(self.items)}")
         )
-    
+
     def next_page(self) -> None:
         self.page = (self.page + 1) % len(self.items)
 
@@ -91,7 +91,7 @@ class StealEmoteButton(Button[EmoteView]):
             if resp.status == 200:
                 return await resp.read()
             return None
-        
+
     async def can_add_emoji(self, interaction: Interaction) -> tuple[str, bool]:
         assert self.view is not None
         bot: Bot = self.view.bot
@@ -105,26 +105,26 @@ class StealEmoteButton(Button[EmoteView]):
 
         if user.emoji_server == 0:
             return "Looks like you haven't set your emoji server yet.", False
-        
+
         emoji_server: Guild | None = bot.get_guild(user.emoji_server)
         if not emoji_server:
             return "Hey, I can't find your emoji server!", False
-        
+
         guild_user: Member | None = emoji_server.get_member(user_id)
         if not guild_user:
             return "You're not in your emoji server!", False
-        
+
         if not guild_user.guild_permissions.manage_emojis:
             return "You don't have permission to add emojis this server...", False
-        
+
         if not emoji_server.me.guild_permissions.manage_emojis:
             return "I don't have permission to add emojis this server...", False
-        
+
         if len(emoji_server.emojis) >= emoji_server.emoji_limit:
             return "Your emoji server has reached the maximum amount of emojis...", False
-        
+
         return "", True
-    
+
     def updated_stealcounter(self, page: int) -> None:
         self.steals[page] = self.steals.get(page, 0) + 1
 
@@ -132,16 +132,17 @@ class StealEmoteButton(Button[EmoteView]):
         assert self.view is not None
         items = self.view.items
 
-
         emoji: EmoteUnit = items[page - 1]
         tabs: LiteralString = '\t' * 6
 
         return (
             EmbedBuilder(description=f"`{emoji.name}` `({emoji.id})`")
             .set_image(url=emoji.emote.url)
-            .set_footer(text=f"Page {page}/{len(items)}{tabs}{self.steals[page]}x {'steal' if self.steals[page] == 1 else 'steals'}")
+            .set_footer(
+                text=f"Page {page}/{len(items)}{tabs}{self.steals[page]}x {'steal' if self.steals[page] == 1 else 'steals'}"
+            )
         )
-    
+
     async def add_emoji(self, interaction: Interaction, unit: EmoteUnit) -> None:
         assert self.view is not None
         bot: Bot = self.view.bot
@@ -154,7 +155,7 @@ class StealEmoteButton(Button[EmoteView]):
         emote: bytes | None = await self.read_emote(unit)
         if not emote:
             return await interaction.response.send_message("Couldn't read emote...", ephemeral=True)
-        
+
         try:
             await emoji_server.create_custom_emoji(name=unit.name, image=emote)
         except Exception as e:
@@ -163,7 +164,6 @@ class StealEmoteButton(Button[EmoteView]):
             self.updated_stealcounter(self.view.page)
             await interaction.response.edit_message(embed=self.generate_embed(self.view.page))
 
-
     async def callback(self, interaction: Interaction[Bot]) -> None:
         assert self.view is not None
         items = self.view.items
@@ -171,5 +171,5 @@ class StealEmoteButton(Button[EmoteView]):
         reason, can_add = await self.can_add_emoji(interaction)
         if not can_add:
             return await interaction.response.send_message(reason, ephemeral=True)
-        
+
         await self.add_emoji(interaction, items[self.view.page])

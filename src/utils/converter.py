@@ -75,7 +75,7 @@ class EmojiConverter(commands.Converter[discord.PartialEmoji]):
         return emojis
 
     async def convert(self, ctx: Context, argument: Optional[str]) -> Optional[list[discord.PartialEmoji]]:
-        if ctx.reference: # (False | None | discord.MessageReference)
+        if ctx.reference:  # (False | None | discord.MessageReference)
             return await self.from_message(ctx, ctx.reference)
 
         emojis: list[discord.PartialEmoji] = []
