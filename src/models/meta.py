@@ -303,7 +303,7 @@ class ModelManager:
         guild.owo_prefix = prefix
         return guild
 
-    async def toggle_guild_owo_counting(self, guild: Guild) -> Optional[Guild]:
+    async def toggle_guild_owo_counting(self, guild: Guild) -> Guild:
         query: str = (
             "UPDATE guilds SET owo_counting = NOT owo_counting WHERE gid = $1"
         )

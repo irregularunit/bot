@@ -15,7 +15,7 @@ import discord
 from discord.ext import commands
 
 from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
-from models import EmbedBuilder
+from models import EmbedBuilder, User
 from utils import (
     BaseExtension,
     EmojiConverter,
@@ -126,7 +126,9 @@ class Managment(BaseExtension):
         ),
     ) -> None:
         if not emojis:
-            maybe_emojis = await EmojiConverter().convert(ctx, None)
+            maybe_emojis: list[
+                discord.PartialEmoji
+            ] | None = await EmojiConverter().convert(ctx, None)
 
             if maybe_emojis:
                 emojis = maybe_emojis
@@ -136,7 +138,7 @@ class Managment(BaseExtension):
                     level=ExceptionLevel.INFO,
                 )
 
-        items = [
+        items: list[EmoteUnit] = [
             EmoteUnit(
                 name=emoji.name,
                 id=emoji.id or int(hex(id(emoji))[2:], 16),
@@ -169,7 +171,7 @@ class Managment(BaseExtension):
                 level=ExceptionLevel.WARNING,
             )
 
-        user = self.bot.cached_users.get(ctx.author.id)
+        user: User | None = self.bot.cached_users.get(ctx.author.id)
         if user is None:
             user = await self.bot.manager.get_or_create_user(ctx.author.id)
             self.bot.cached_users[user.id] = user
@@ -179,6 +181,27 @@ class Managment(BaseExtension):
         ] = await self.bot.manager.set_user_emoji_server(user, ctx.guild.id)
 
         await ctx.safe_send(f"Set your emoji server to `{ctx.guild.name}`.")
+
+    @commands.has_guild_permissions(administrator=True)
+    @commands.group(name="toggle", invoke_without_command=True)
+    async def toggle(self, ctx: Context) -> None:
+        await ctx.send_help()
+
+    @toggle.command(name="counting")
+    async def toggle_counting(self, ctx: Context) -> None:
+        if (guild := self.bot.cached_guilds.get(ctx.guild.id)) is None:
+            guild = await self.bot.manager.get_or_create_guild(ctx.guild.id)
+
+        self.bot.cached_guilds[
+            guild.id
+        ] = await self.bot.manager.toggle_guild_owo_counting(guild)
+
+        true, false = "✅", "❌"
+        await ctx.safe_send(
+            f"**{true if self.bot.cached_guilds[guild.id].owo_counting else false} |** "
+            f"counting has been "
+            f"**{'enabled' if self.bot.cached_guilds[guild.id].owo_counting else 'disabled'}**."
+        )
 
 
 async def setup(bot: Bot) -> None:

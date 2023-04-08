@@ -80,7 +80,11 @@ class Bot(commands.Bot):
             intents=intents,
             max_messages=2000,
             owner_ids=[380067729400528896],
-            help_command=commands.MinimalHelpCommand(),
+            help_command=commands.MinimalHelpCommand(
+                no_category="HelpSections",
+                verify_checks=False,
+                sort_commands=False,
+            ),
         )
         self.loop: asyncio.AbstractEventLoop = loop
         self.session: ClientSession = session
@@ -355,7 +359,6 @@ class Bot(commands.Bot):
             discord.ActivityType.playing: (
                 f"with {len(self.commands)} {'commands' if len(self.commands) != 1 else 'command'}"
             ),
-            discord.ActivityType.listening: "to your owo's",
         }
 
         activity_type, message = random.choice(list(presences.items()))

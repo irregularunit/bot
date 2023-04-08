@@ -46,7 +46,7 @@ class TimeConverter(commands.Converter[str]):
 
 
 class CountingCalender:
-    def __init__(self, user: int, guid: int):
+    def __init__(self, user: int, guid: int) -> None:
         self.user: int = user
         self.guid: int = guid
         self.time_mapping: dict[str, tuple[float, float]] = {}
@@ -68,7 +68,7 @@ class CountingCalender:
         if now.hour < 8:
             now -= datetime.timedelta(days=1)
 
-        ranges = {
+        ranges: dict[str, tuple[datetime.datetime, ...]] = {
             "today": (now, now + datetime.timedelta(days=1)),
             "yesterday": (now - datetime.timedelta(days=1), now),
             "this week": (

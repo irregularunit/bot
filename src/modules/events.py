@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 __all__: tuple[str, ...] = ("DiscordEventListener",)
 
 log: Logger = getLogger(__name__)
+AVATAR_CHANNEL_ID: int = 1094282348469702677
 
 
 class SendQueueItem(NamedTuple):
@@ -86,14 +87,19 @@ class DiscordEventListener(BaseExtension):
         if not self._send_queue or self._is_running:
             return
 
-        self.cached_channel = self.cached_channel or await self.bot.fetch_channel(1086710517323804924)  # type: ignore
-        assert isinstance(self.cached_channel, discord.TextChannel)
+        avatar_channel = self.cached_channel or await self.bot.fetch_channel(
+            AVATAR_CHANNEL_ID
+        )
+        if not isinstance(avatar_channel, discord.TextChannel):
+            raise RuntimeError("Avatar channel is not a text channel")
+
+        self.cached_channel = avatar_channel
 
         self._is_running = True
         item: SendQueueItem = self._send_queue.pop(0)
         try:
             message: discord.Message = await self.cached_channel.send(
-                content=f"{item.name} ({item.user_id})",
+                content=f"`{item.name}` `({item.user_id})`",
                 file=discord.File(
                     BytesIO(item.image),
                     filename=f"{uuid_lib.uuid4()}.{type_of(item.image)}",
