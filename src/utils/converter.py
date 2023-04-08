@@ -37,8 +37,8 @@ class MemberConverter(commands.Converter[discord.Member]):
             return members[0]
 
 
-class EmojiConverter(commands.Converter[discord.Emoji]):
-    """Converts a discord.Messsage to list of discord.Emoji."""
+class EmojiConverter(commands.Converter[discord.PartialEmoji]):
+    """Partial emoji converter, that also checks views."""
 
     async def from_message(self, ctx: Context, message: discord.Message) -> Optional[list[discord.PartialEmoji]]:
         message_content: str = message.content
@@ -57,15 +57,13 @@ class EmojiConverter(commands.Converter[discord.Emoji]):
         for emoji in message_emojis:
             try:
                 partial_emoji: discord.PartialEmoji = await commands.PartialEmojiConverter().convert(
-                    ctx, f"{emoji[0]}:{emoji[1]}:{emoji[2]}"
+                    ctx, f"<{emoji[0]}:{emoji[1]}:{emoji[2]}>"
                 )
                 emojis.append(partial_emoji)
             except commands.PartialEmojiConversionFailure:
                 continue
 
         for component in message.components:
-            # This might look cursed for some people but
-            # it's faster than merging the contents.
             if isinstance(component, discord.ui.Button) and component.emoji is not None:
                 emojis.append(component.emoji)
 
@@ -77,8 +75,8 @@ class EmojiConverter(commands.Converter[discord.Emoji]):
         return emojis
 
     async def convert(self, ctx: Context, argument: Optional[str]) -> Optional[list[discord.PartialEmoji]]:
-        if message := ctx.reference:
-            return await self.from_message(ctx, message)
+        if ctx.reference:  # (False | None | discord.MessageReference)
+            return await self.from_message(ctx, ctx.reference)
 
         emojis: list[discord.PartialEmoji] = []
 

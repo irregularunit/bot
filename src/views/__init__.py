@@ -6,7 +6,15 @@
 """
 
 from .avatar import AvatarHistoryView
+from .emoji import EmoteUnit, EmoteView
 from .paginator import Item, Paginator
 from .plugin import PluginView
 
-__all__: tuple[str, ...] = ("AvatarHistoryView", "Item", "Paginator", "PluginView")
+__all__: tuple[str, ...] = (
+    "AvatarHistoryView",
+    "Item",
+    "Paginator",
+    "PluginView",
+    "EmoteUnit",
+    "EmoteView",
+)

@@ -131,7 +131,7 @@ class Bot(commands.Bot):
 
     @override
     async def get_prefix(self, message: discord.Message) -> str | list[str]:
-        prefixes: list[str] = [f"<@!{self.user.id}> ", f"<@{self.user.id}> ", "uwu ", "uwu"]
+        prefixes: tuple[str, ...] = (f"<@!{self.user.id}> ", f"<@{self.user.id}> ")
         if message.guild is None:
             # No dm's :3
             raise commands.NoPrivateMessage()

@@ -19,6 +19,7 @@ from typing import (
     Final,
     Iterable,
     Iterator,
+    Literal,
     Optional,
     Self,
     Sequence,
@@ -50,6 +51,7 @@ __all__: tuple[str, ...] = (
     "emote_to_num",
     "resize_to_limit",
     "for_all_callbacks",
+    "no_sentinel",
 )
 
 
@@ -264,3 +266,14 @@ def for_all_callbacks(decorator: Any) -> Callable[[Type[T]], Type[T]]:
         return cls
 
     return decorate
+
+
+class NoSentinel:
+    __slots__: tuple[()] = ()
+    __eq__: Callable[..., Literal[False]] = lambda self, _: False
+    __bool__: Callable[..., Literal[False]] = lambda self: False
+    __hash__: Callable[..., Literal[0]] = lambda self: 0
+    __repr__: Callable[..., Literal["..."]] = lambda self: '...'
+
+
+no_sentinel: Any = NoSentinel()

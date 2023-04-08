@@ -5,8 +5,6 @@
  * For more information, see README.md and LICENSE
 """
 
-# Most of this code is copied from src/views/avatar.py
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional

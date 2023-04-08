@@ -42,9 +42,10 @@ LICENSE = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
 
 
 class InfoView(View):
-    def __init__(self, invite: str, *, timeout: float = 60) -> None:
+    def __init__(self, inv: str, what: str, *, timeout: float = 60) -> None:
         super().__init__(timeout=timeout)
-        self.inv: str = invite
+        self.inv: str = inv
+        self.what: str = what
 
         buttons = [
             Button(
@@ -53,7 +54,7 @@ class InfoView(View):
                 style=discord.ButtonStyle.link,
             ),
             Button(
-                label="Invite",
+                label=self.what,
                 url=self.inv,
                 style=discord.ButtonStyle.link,
             ),
@@ -111,24 +112,24 @@ class DiscordUserHistory(BaseExtension):
         embed: EmbedBuilder = (
             EmbedBuilder(
                 description=(
-                    """
-                    Servant comes equipped with a variety of features to make 
+                    f"""
+                    {self.bot.user.name} comes equipped with a variety of features to make 
                     your server experience even better. With this valuable 
                     information at your fingertips, you'll never miss a beat when 
                     it comes to staying up-to-date with your community.
 
                     Whether you're a seasoned Discord user or just starting out, 
-                    Servant is the perfect addition to any server.
+                    {self.bot.user.name} is the perfect addition to any server.
                     """
                 ),
                 fields=fields,
             )
             .set_thumbnail(url=self.bot.user.display_avatar)
-            .set_author(name="🔍 Servant Informationcenter")
+            .set_author(name=f"🔍 {self.bot.user.name} Informationcenter")
             .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
         )
 
-        view = InfoView(self.bot.config.invite)
+        view = InfoView(self.bot.config.invite, "Invite")
         await ctx.safe_send(embed=embed, view=view)
 
     @commands.command(name="source", aliases=("src",))
@@ -136,8 +137,8 @@ class DiscordUserHistory(BaseExtension):
         embed: EmbedBuilder = (
             EmbedBuilder(
                 description=(
-                    F"""
-                    Servant is an open-source bot for Discord. 
+                    f"""
+                    {self.bot.user.name} is an open-source bot for Discord. 
                     You can find the source code on [github]({GITHUB_URL}).
 
                     > Licensed under [CC BY-NC-SA 4.0]({LICENSE}).
@@ -145,7 +146,7 @@ class DiscordUserHistory(BaseExtension):
                 )
             )
             .set_thumbnail(url=self.bot.user.display_avatar)
-            .set_author(name="Servant Source Code")
+            .set_author(name=f"{self.bot.user.name} Source Code")
             .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
         )
 
@@ -172,17 +173,9 @@ class DiscordUserHistory(BaseExtension):
             ) = inspect.getsourcelines(src)
             end = start + len(lines) - 1
             loc = os.path.realpath(filename).replace("\\", "/").split("/bot/")[1]
+            view = InfoView(f"{GITHUB_URL}/blob/{BRANCH}/{loc}#L{start}-L{end}", f"{cmd.name.title()}")
 
-            embed.add_field(
-                name=f"Source Code for {cmd.name}",
-                value=(
-                    f"""
-                    [View on Github]({GITHUB_URL}/blob/{BRANCH}/{loc}#L{start}-L{end})
-                    """
-                ),
-            )
-
-            return await ctx.safe_send(embed=embed)
+            return await ctx.safe_send(embed=embed, view=view)
 
     @commands.command(name="score", aliases=("sc",))
     async def score_command(
