@@ -63,7 +63,9 @@ class EmbedBuilder(Embed):
         instance = cls(**kwargs)
 
         instance.description = message.content
-        instance.set_author(name=author.display_name, icon_url=author.display_avatar)
+        instance.set_author(
+            name=author.display_name, icon_url=author.display_avatar
+        )
 
         if message.attachments and message.attachments[0].content_type:
             if message.attachments[0].content_type.startswith("image"):
@@ -72,7 +74,9 @@ class EmbedBuilder(Embed):
         return instance
 
     @classmethod
-    def from_action(cls: Type[Self], *, title: str, gif: str, footer: Optional[str] = None) -> Self:
+    def from_action(
+        cls: Type[Self], *, title: str, gif: str, footer: Optional[str] = None
+    ) -> Self:
         instance: Self = cls(title=title).set_image(url=gif)
         if footer:
             instance.set_footer(text=footer)
@@ -82,5 +86,8 @@ class EmbedBuilder(Embed):
     @classmethod
     def factory(cls: Type[Self], ctx: Context, **kwargs: Any) -> Self:
         instance = cls(**kwargs)
-        instance.set_footer(text=f"Made with ❤️ by irregularunit.", icon_url=ctx.bot.user.display_avatar)
+        instance.set_footer(
+            text=f"Made with ❤️ by irregularunit.",
+            icon_url=ctx.bot.user.display_avatar,
+        )
         return instance

@@ -84,15 +84,21 @@ class Config(BaseSettings):
 
         @staticmethod
         def _sequence_like(value: Any) -> bool:
-            return isinstance(value, (list, tuple, set, frozenset, GeneratorType, deque))
+            return isinstance(
+                value, (list, tuple, set, frozenset, GeneratorType, deque)
+            )
 
         @override
         @classmethod
         def prepare_field(cls, field: ModelField) -> None:
             env_names: list[str] | AbstractSet[str]
 
-            field_info_from_config: dict[str, Any] = cls.get_field_info(field.name)
-            env: Any | None = field_info_from_config.get("env") or field.field_info.extra.get("env")
+            field_info_from_config: dict[str, Any] = cls.get_field_info(
+                field.name
+            )
+            env: Any | None = field_info_from_config.get(
+                "env"
+            ) or field.field_info.extra.get("env")
             if env is None:
                 if field.has_alias:
                     log.warning(
@@ -108,7 +114,9 @@ class Config(BaseSettings):
             elif cls._sequence_like(env):
                 env_names = list(env)
             else:
-                raise TypeError(f"Invalid field env type {type(env)} for field {field.name}")
+                raise TypeError(
+                    f"Invalid field env type {type(env)} for field {field.name}"
+                )
 
             if not cls.case_sensitive:
                 env_names = env_names.__class__(n.lower() for n in env_names)

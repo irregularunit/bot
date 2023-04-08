@@ -119,7 +119,11 @@ class suppress(AbstractContextManager[None]):
     """
 
     def __init__(
-        self, *exceptions: Type[BaseException], log: Optional[str] = None, capture: bool = True, **kwargs: Any
+        self,
+        *exceptions: Type[BaseException],
+        log: Optional[str] = None,
+        capture: bool = True,
+        **kwargs: Any,
     ) -> None:
         self._exceptions: tuple[Type[BaseException], ...] = exceptions
         self._log: str = log or "An exception was suppressed: %s"
@@ -135,7 +139,9 @@ class suppress(AbstractContextManager[None]):
         exc_value: Optional[BaseException] = None,
         traceback: Optional[TracebackType] = None,
     ) -> Optional[bool]:
-        if captured := exc_type is not None and issubclass(exc_type, self._exceptions):
+        if captured := exc_type is not None and issubclass(
+            exc_type, self._exceptions
+        ):
             if self._capture:
                 log.info(self._log % self._kwargs)
 
@@ -235,7 +241,12 @@ def resize_to_limit(image: BytesIO, limit: int = 8_000_000) -> BytesIO:
                 durations, frames = [], []
                 for frame in ImageSequence.Iterator(canvas):
                     durations.append(frame.info.get("duration", 0))
-                    frames.append(frame.resize([i // 2 for i in frame.size], resample=Image.BICUBIC))
+                    frames.append(
+                        frame.resize(
+                            [i // 2 for i in frame.size],
+                            resample=Image.BICUBIC,
+                        )
+                    )
 
                 frames[0].save(
                     image,

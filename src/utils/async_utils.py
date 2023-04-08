@@ -11,7 +11,16 @@ import asyncio
 import logging
 from abc import ABCMeta
 from contextlib import suppress
-from typing import Any, Callable, Coroutine, Generator, MutableSet, Optional, Self, overload
+from typing import (
+    Any,
+    Callable,
+    Coroutine,
+    Generator,
+    MutableSet,
+    Optional,
+    Self,
+    overload,
+)
 from weakref import WeakSet
 
 __all__: tuple[str, ...] = ("AsyncInstance",)
@@ -113,7 +122,9 @@ class Task:
                 )
                 continue
 
-            if asyncio.iscoroutine(result) or isinstance(result, asyncio.Future):
+            if asyncio.iscoroutine(result) or isinstance(
+                result, asyncio.Future
+            ):
                 # Simply add our coros to the list of tasks to wait on.
                 tasks.append(result)  # type: ignore
 
@@ -303,7 +314,9 @@ if __name__ == "__main__":
                 return self.a - self.b
 
             def __repr__(self) -> str:
-                return f"{self.__class__.__name__}({self._args}, {self._kwargs})"
+                return (
+                    f"{self.__class__.__name__}({self._args}, {self._kwargs})"
+                )
 
         inst = await Test(1, 2)
         print(inst)

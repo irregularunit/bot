@@ -53,7 +53,9 @@ async def setup() -> tuple[Bot, Pool[Record], ClientSession]:
         maxBytes=32 * 1024 * 1024,
         backupCount=5,
     )
-    handler.setFormatter(logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s"))
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s")
+    )
 
     logger.addHandler(handler)
     loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()

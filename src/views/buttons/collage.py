@@ -23,9 +23,13 @@ class CollageAvatarButton(discord.ui.Button):
         self.disabled = False
 
     def compute_grid_size(self, amount: int) -> int:
-        return int(amount**0.5) + 1 if amount**0.5 % 1 else int(amount**0.5)
+        return (
+            int(amount**0.5) + 1 if amount**0.5 % 1 else int(amount**0.5)
+        )
 
-    def create_collage(self, images: list[Image.Image], old: bool = True) -> BytesIO:
+    def create_collage(
+        self, images: list[Image.Image], old: bool = True
+    ) -> BytesIO:
         grid_size = self.compute_grid_size(len(images))
         rows: int = math.ceil(math.sqrt(len(images)))
 
@@ -48,7 +52,9 @@ class CollageAvatarButton(discord.ui.Button):
                     final_x, final_y = max(x, final_x), max(y, final_y)
                     times_x += 1
 
-                collage: Image.Image = collage.crop((0, 0, final_x + 256, final_y + 256))
+                collage: Image.Image = collage.crop(
+                    (0, 0, final_x + 256, final_y + 256)
+                )
 
                 buffer: BytesIO = BytesIO()
                 collage.save(buffer, format="webp")
@@ -63,7 +69,9 @@ class CollageAvatarButton(discord.ui.Button):
                     collage.paste(avatar, (x, y))
 
                 last_x, last_y = divmod(len(images) - 1, rows)
-                last_height, last_width = (last_x + 1) * 256, (last_y + 1) * 256
+                last_height, last_width = (last_x + 1) * 256, (
+                    last_y + 1
+                ) * 256
                 collage = collage.crop((0, 0, last_width, last_height))
 
                 buffer: BytesIO = BytesIO()
@@ -71,11 +79,14 @@ class CollageAvatarButton(discord.ui.Button):
                 buffer.seek(0)
                 return buffer
 
-    async def get_member_collage(self, member: discord.Member | discord.User) -> Optional[discord.File]:
+    async def get_member_collage(
+        self, member: discord.Member | discord.User
+    ) -> Optional[discord.File]:
         assert self.view is not None
 
         results = await self.view.bot.pool.fetch(
-            "SELECT * FROM avatar_history WHERE uuid = $1 ORDER BY changed_at DESC", member.id
+            "SELECT * FROM avatar_history WHERE uuid = $1 ORDER BY changed_at DESC",
+            member.id,
         )
         if not results:
             return None
@@ -85,7 +96,9 @@ class CollageAvatarButton(discord.ui.Button):
             with Image.open(BytesIO(result["avatar"])) as avatar:
                 images.append(avatar.resize((256, 256)).convert("RGBA"))
 
-        buffer: BytesIO = await self.view.bot.to_thread(self.create_collage, images, old=False)
+        buffer: BytesIO = await self.view.bot.to_thread(
+            self.create_collage, images, old=False
+        )
         return discord.File(buffer, filename="collage.webp")
 
     async def callback(self, interaction: discord.Interaction) -> None:
@@ -105,5 +118,9 @@ class CollageAvatarButton(discord.ui.Button):
             embed.set_image(url=view.member.display_avatar.url)
             await interaction.response.edit_message(embed=embed, view=view)
         else:
-            embed.set_author(name=f"Avatar collage for {view.member.display_name}. 🥺")
-            self.view.message = await interaction.response.edit_message(embed=embed, attachments=[file], view=view)
+            embed.set_author(
+                name=f"Avatar collage for {view.member.display_name}. 🥺"
+            )
+            self.view.message = await interaction.response.edit_message(
+                embed=embed, attachments=[file], view=view
+            )
