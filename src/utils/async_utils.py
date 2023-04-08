@@ -61,7 +61,7 @@ class Task:
         self.__closing: asyncio.Future[bool] = self.__loop.create_future()
 
     def get_child(self) -> Task:
-        # This is a bit of a hacky to get around the task that
+        # This is a bit of a hacky to get around the task
         # but it's the best way I can think of to do it.
         store = self.__class__(self.__loop)
         self.children.add(store)

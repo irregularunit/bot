@@ -43,7 +43,8 @@ class Managment(BaseExtension):
         checks = [commands.guild_only()]
         return await async_all(check(ctx) for check in checks)
 
-    def compile_prefixes(self, prefixes: list[str]) -> re.Pattern[str]:
+    @staticmethod
+    def compile_prefixes(prefixes: list[str]) -> re.Pattern[str]:
         return re.compile(
             r"|".join(re.escape(prefix) + r"\s*" for prefix in prefixes),
             re.IGNORECASE,
@@ -152,7 +153,10 @@ class Managment(BaseExtension):
 
     @emoji_set.command(name="guild", aliases=("server", "g", "s"))
     async def emoji_set_guild(self, ctx: Context) -> None:
-        assert isinstance(ctx.author, discord.Member)
+        if not isinstance(ctx.author, discord.Member):
+            # Purely for type checking, the cog_check above already
+            # ensures that this is a guild only command.
+            return
 
         if not ctx.author.guild_permissions.manage_emojis:
             raise UserFeedbackExceptionFactory.create(
