@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import copy
 from typing import TYPE_CHECKING, Any, Iterable, Optional, Self, Type
 
 from discord import Colour, Embed, Member, Message, User
@@ -91,3 +92,6 @@ class EmbedBuilder(Embed):
             icon_url=ctx.bot.user.display_avatar,
         )
         return instance
+
+    def build(self) -> Embed:
+        return copy.copy(self)

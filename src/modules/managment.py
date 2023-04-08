@@ -153,7 +153,10 @@ class Managment(BaseExtension):
 
     @emoji_set.command(name="guild", aliases=("server", "g", "s"))
     async def emoji_set_guild(self, ctx: Context) -> None:
-        assert isinstance(ctx.author, discord.Member)
+        if not isinstance(ctx.author, discord.Member):
+            # Purely for type checking, the cog_check above already
+            # ensures that this is a guild only command.
+            return
 
         if not ctx.author.guild_permissions.manage_emojis:
             raise UserFeedbackExceptionFactory.create(

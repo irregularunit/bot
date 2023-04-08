@@ -5,6 +5,7 @@
  * For more information, see README.md and LICENSE
  */
 
+
 CREATE TABLE IF NOT EXISTS users (
   uuid BIGINT PRIMARY KEY NOT NULL, 
   timezone TEXT NOT NULL DEFAULT 'UTC' CHECK (timezone <> ''), 
@@ -22,22 +23,23 @@ CREATE TABLE IF NOT EXISTS presence_history (
   changed_at TIMESTAMP WITH TIME ZONE DEFAULT (now() AT TIME ZONE 'UTC') NOT NULL
 );
 
-CREATE
-OR REPLACE FUNCTION limit_presence_history() RETURNS TRIGGER AS $$ BEGIN
-DELETE FROM
-  presence_history
-WHERE
-  uuid = NEW.uuid
+
+CREATE 
+OR REPLACE FUNCTION limit_presence_history() RETURNS TRIGGER AS $$ BEGIN 
+DELETE FROM 
+  presence_history 
+WHERE 
+  uuid = NEW.uuid 
   AND changed_at < (
-    SELECT
-      changed_at
-    FROM
-      presence_history
-    WHERE
-      uuid = NEW.uuid
-    ORDER BY
-      changed_at DESC OFFSET 1
-    LIMIT
+    SELECT 
+      changed_at 
+    FROM 
+      presence_history 
+    WHERE 
+      uuid = NEW.uuid 
+    ORDER BY 
+      changed_at DESC OFFSET 1 
+    LIMIT 
       1
   );
 RETURN NEW;
@@ -62,8 +64,8 @@ CREATE TABLE IF NOT EXISTS item_history (
 CREATE TABLE IF NOT EXISTS avatar_history (
   id BIGSERIAL PRIMARY KEY NOT NULL, 
   uuid BIGINT NOT NULL, 
-  format TEXT NOT NULL, 
-  avatar BYTEA NOT NULL, 
+  format TEXT NOT NULL, -- mime type
+  avatar BYTEA NOT NULL, -- image bytes
   changed_at TIMESTAMP WITH TIME ZONE DEFAULT (now() AT TIME ZONE 'UTC') NOT NULL
 );
 
@@ -149,12 +151,10 @@ CREATE TABLE IF NOT EXISTS owo_counting (
   id BIGSERIAL PRIMARY KEY NOT NULL, 
   uuid BIGINT NOT NULL, 
   gid BIGINT NOT NULL, 
-  word TEXT NOT NULL, 
+  word TEXT NOT NULL, -- type of counter
   created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
   CONSTRAINT owo_counting_word_check CHECK (
-    word IN (
-        'hunt', 'battle', 'owo'
-    )
+    word IN ('hunt', 'battle', 'owo')
   )
 );
 
@@ -311,3 +311,14 @@ SELECT
   all_time;
 END;
 $$ LANGUAGE plpgsql;
+
+
+CREATE TABLE IF NOT EXISTS bot_pits (
+  id BIGSERIAL PRIMARY KEY NOT NULL, 
+  uuid BIGINT NOT NULL, -- creator
+  appid BIGINT NOT NULL, -- application
+  pending BOOLEAN NOT NULL DEFAULT TRUE, -- is the bot pending approval?
+  reason TEXT NOT NULL DEFAULT 'Not specified', 
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT (now() AT TIME ZONE 'UTC') NOT NULL, 
+  CONSTRAINT bot_pits_uuid_fk FOREIGN KEY (uuid) REFERENCES users(uuid) ON DELETE CASCADE
+);
