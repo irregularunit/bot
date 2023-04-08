@@ -221,14 +221,22 @@ BEGIN
 SELECT 
   COUNT(*) FILTER (
     WHERE 
-      created_at >= now() AT TIME ZONE 'UTC' - INTERVAL '8 hours' 
-      AND created_at < now() AT TIME ZONE 'UTC'
-  ) AS today_count, 
+      created_at >= date_trunc(
+        'day', now() AT TIME ZONE 'UTC' - INTERVAL '8 hours'
+      ) 
+      AND created_at < date_trunc(
+        'day', now() AT TIME ZONE 'UTC' - INTERVAL '8 hours'
+      ) + INTERVAL '1 day'
+  ) AS today_count,
   COUNT(*) FILTER (
     WHERE 
-      created_at >= now() AT TIME ZONE 'UTC' - INTERVAL '32 hours' 
-      AND created_at < now() AT TIME ZONE 'UTC' - INTERVAL '8 hours'
-  ) AS yesterday_count, 
+      created_at >= date_trunc(
+        'day', now() AT TIME ZONE 'UTC' - INTERVAL '8 hours'
+      ) - INTERVAL '1 day' 
+      AND created_at < date_trunc(
+        'day', now() AT TIME ZONE 'UTC' - INTERVAL '8 hours'
+      )
+  ) AS yesterday_count,
   COUNT(*) FILTER (
     WHERE 
       created_at >= date_trunc(
