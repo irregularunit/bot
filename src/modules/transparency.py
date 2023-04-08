@@ -37,13 +37,17 @@ class SafetyPrompt(View):
     async def yes(self, interaction: Interaction, button: Button) -> None:
         self.confirmed = True
         await interaction.response.send_message(
-            "Thank you for confirming this action. Your request will be processed shortly.", ephemeral=True
+            "Thank you for confirming this action. Your request will be processed shortly.",
+            ephemeral=True,
         )
         self.stop()
 
     @button(label="No", style=ButtonStyle.red)
     async def no(self, interaction: Interaction, button: Button) -> None:
-        await interaction.response.send_message("Action has been cancelled. No changes have been made.", ephemeral=True)
+        await interaction.response.send_message(
+            "Action has been cancelled. No changes have been made.",
+            ephemeral=True,
+        )
         self.stop()
 
     async def interaction_check(self, interaction: Interaction) -> bool:
@@ -59,7 +63,9 @@ class Transparency(BaseExtension):
         checks = [commands.guild_only()]
         return await async_all(check(ctx) for check in checks)
 
-    @commands.group(name="delete", aliases=("rm",), invoke_without_command=False)
+    @commands.group(
+        name="delete", aliases=("rm",), invoke_without_command=False
+    )
     async def delete(self, ctx: Context) -> None:
         ...
 
@@ -69,7 +75,8 @@ class Transparency(BaseExtension):
 
         prompt = SafetyPrompt(ctx.author)
         message: Message | None = await ctx.safe_send(
-            "Are you sure you want to delete your data? This action is irreversible.", view=prompt
+            "Are you sure you want to delete your data? This action is irreversible.",
+            view=prompt,
         )
 
         if not message:
@@ -83,20 +90,27 @@ class Transparency(BaseExtension):
             if (cached_user := self.bot.cached_users.get(user.id)) is not None:
                 self.bot.cached_users.pop(cached_user.id)
 
-            log.getChild("delete").info(f"Deleted user {user.id} ({ctx.author.name})")
-            await message.edit(content="Your data has been deleted. Thank you for using our services.", view=None)
+            log.getChild("delete").info(
+                f"Deleted user {user.id} ({ctx.author.name})"
+            )
+            await message.edit(
+                content="Your data has been deleted. Thank you for using our services.",
+                view=None,
+            )
         else:
             await message.edit(content="Action has been cancelled.", view=None)
 
     @commands.command(name="suggest", aliases=("suggestion",))
     async def suggest(self, ctx: Context, *, suggestion: str) -> None:
-        owner = self.bot.get_user(self.bot.config.client_owner) or await self.bot.fetch_user(
+        owner = self.bot.get_user(
             self.bot.config.client_owner
-        )
+        ) or await self.bot.fetch_user(self.bot.config.client_owner)
 
         prompt = SafetyPrompt(ctx.author)
         message: Message | None = await ctx.safe_send(
-            f"Are you sure you want to send this suggestion?\n" f">>> {suggestion} ...\n", view=prompt
+            f"Are you sure you want to send this suggestion?\n"
+            f">>> {suggestion} ...\n",
+            view=prompt,
         )
 
         if not message:

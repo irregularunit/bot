@@ -61,7 +61,10 @@ class NameHistoryButton(discord.ui.Button):
 
         embed = EmbedBuilder(
             title="Name History",
-            description="\n".join(f"**{name['item_value']}** - {name['changed_at']}" for name in name_history),
+            description="\n".join(
+                f"**{name['item_value']}** - {name['changed_at']}"
+                for name in name_history
+            ),
         )
 
         await interaction.followup.send(embed=embed)

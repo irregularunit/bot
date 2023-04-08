@@ -15,7 +15,11 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Type, Union
 import discord
 from discord.ext import commands
 
-from exceptions import ExceptionLevel, UserFeedbackException, UserFeedbackExceptionFactory
+from exceptions import (
+    ExceptionLevel,
+    UserFeedbackException,
+    UserFeedbackExceptionFactory,
+)
 from models import EmbedBuilder
 from utils import BaseExtension
 
@@ -48,7 +52,9 @@ class Error:
         return f"<Error {self.exception.__name__} {self.level.name} {self.message} {self.kwargs}>"
 
     def to_string(self) -> str:
-        partial_exception = UserFeedbackExceptionFactory.create(message=self.message, level=self.level)
+        partial_exception = UserFeedbackExceptionFactory.create(
+            message=self.message, level=self.level
+        )
         return partial_exception.to_string()
 
 
@@ -72,7 +78,9 @@ class DiscordErrorHandler(BaseExtension):
         if (instance := self.get_error(exception)) is not None:
             return instance
 
-        instance = Error(exception=exception, level=level, message=message, **kwargs)
+        instance = Error(
+            exception=exception, level=level, message=message, **kwargs
+        )
         self.flyweight[exception.__name__] = instance
         return instance
 
@@ -80,7 +88,9 @@ class DiscordErrorHandler(BaseExtension):
         return self.flyweight.get(exception.__name__, None)
 
     @commands.Cog.listener("on_command_error")
-    async def on_command_error(self, ctx: Context, error: Exception) -> Optional[discord.Message]:
+    async def on_command_error(
+        self, ctx: Context, error: Exception
+    ) -> Optional[discord.Message]:
         if hasattr(ctx.command, "on_error"):
             # The invoked command has a local error handler
             # therefore we can safely ignore this error
@@ -91,7 +101,10 @@ class DiscordErrorHandler(BaseExtension):
             return
 
         if ctx.cog:
-            if ctx.cog._get_overridden_method(ctx.cog.cog_command_error) is not None:
+            if (
+                ctx.cog._get_overridden_method(ctx.cog.cog_command_error)
+                is not None
+            ):
                 # The cog which the invoked command belongs to has a local error handler
                 return
 
@@ -118,7 +131,10 @@ class DiscordErrorHandler(BaseExtension):
             return await ctx.safe_send(content=err.to_string())
 
         if isinstance(exc, commands.CommandOnCooldown):
-            if await self.bot.redis.client.get(f"cooldown:{ctx.author.id}") is not None:
+            if (
+                await self.bot.redis.client.get(f"cooldown:{ctx.author.id}")
+                is not None
+            ):
                 return
 
             await self.bot.redis.client.setex(
@@ -140,7 +156,9 @@ class DiscordErrorHandler(BaseExtension):
         if isinstance(exc, commands.MissingRequiredArgument):
             arg = exc.param.name
             signature = ctx.command.signature
-            full_qualified_signature = ctx.command.full_parent_name + ctx.command.qualified_name
+            full_qualified_signature = (
+                ctx.command.full_parent_name + ctx.command.qualified_name
+            )
 
             partial_exception = UserFeedbackExceptionFactory.create(
                 message=(
@@ -163,10 +181,14 @@ class DiscordErrorHandler(BaseExtension):
             return await ctx.safe_send(content=err.to_string())
 
         if isinstance(error, commands.MemberNotFound):
-            return await ctx.safe_send(content=f"Could not find a user with the name `{error.argument}`.")
+            return await ctx.safe_send(
+                content=f"Could not find a user with the name `{error.argument}`."
+            )
 
         if isinstance(error, commands.BadArgument):
-            partial_exception = UserFeedbackExceptionFactory.create(message=str(error), level=ExceptionLevel.ERROR)
+            partial_exception = UserFeedbackExceptionFactory.create(
+                message=str(error), level=ExceptionLevel.ERROR
+            )
             return await ctx.safe_send(content=partial_exception.to_string())
 
         if isinstance(error, commands.MissingPermissions):
@@ -190,7 +212,8 @@ class DiscordErrorHandler(BaseExtension):
             return
 
         log.getChild("on_command_error").exception(
-            f"Unhandled exception in command {ctx.command.qualified_name}", exc_info=exc
+            f"Unhandled exception in command {ctx.command.qualified_name}",
+            exc_info=exc,
         )
 
 

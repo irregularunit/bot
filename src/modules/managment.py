@@ -16,7 +16,13 @@ from discord.ext import commands
 
 from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
 from models import EmbedBuilder
-from utils import BaseExtension, EmojiConverter, async_all, for_all_callbacks, get_random_emoji
+from utils import (
+    BaseExtension,
+    EmojiConverter,
+    async_all,
+    for_all_callbacks,
+    get_random_emoji,
+)
 from views import EmoteUnit, EmoteView
 
 if TYPE_CHECKING:
@@ -49,9 +55,12 @@ class Managment(BaseExtension):
         if (guild := self.bot.cached_guilds.get(ctx.guild.id)) is None:
             guild = await self.bot.manager.get_or_create_guild(ctx.guild.id)
 
-        self.bot.cached_guilds[guild.id] = await self.bot.manager.add_guild_prefix(guild, prefix)
+        self.bot.cached_guilds[
+            guild.id
+        ] = await self.bot.manager.add_guild_prefix(guild, prefix)
         self.bot.cached_prefixes[ctx.guild.id] = await self.bot.to_thread(
-            self.compile_prefixes, self.bot.cached_guilds[ctx.guild.id].prefixes
+            self.compile_prefixes,
+            self.bot.cached_guilds[ctx.guild.id].prefixes,
         )
 
         await ctx.safe_send(f"Added `{prefix}` to the guild's prefixes.")
@@ -61,9 +70,12 @@ class Managment(BaseExtension):
         if (guild := self.bot.cached_guilds.get(ctx.guild.id)) is None:
             guild = await self.bot.manager.get_or_create_guild(ctx.guild.id)
 
-        self.bot.cached_guilds[guild.id] = await self.bot.manager.remove_guild_prefix(guild, prefix)
+        self.bot.cached_guilds[
+            guild.id
+        ] = await self.bot.manager.remove_guild_prefix(guild, prefix)
         self.bot.cached_prefixes[ctx.guild.id] = await self.bot.to_thread(
-            self.compile_prefixes, self.bot.cached_guilds[ctx.guild.id].prefixes
+            self.compile_prefixes,
+            self.bot.cached_guilds[ctx.guild.id].prefixes,
         )
 
         await ctx.safe_send(f"Removed `{prefix}` from the guild's prefixes.")
@@ -75,12 +87,18 @@ class Managment(BaseExtension):
 
         embed: EmbedBuilder = (
             EmbedBuilder()
-            .set_author(name=f"{get_random_emoji()} Prefix settings for {ctx.guild.name}")
-            .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
+            .set_author(
+                name=f"{get_random_emoji()} Prefix settings for {ctx.guild.name}"
+            )
+            .set_footer(
+                text="Made with ❤️ by irregularunit.",
+                icon_url=self.bot.user.display_avatar,
+            )
             .add_field(
                 name="Configured prefixes",
                 value=(
-                    ">>> " + "\n".join(f"`{prefix}`" for prefix in guild.prefixes)
+                    ">>> "
+                    + "\n".join(f"`{prefix}`" for prefix in guild.prefixes)
                     if guild.prefixes
                     else "No prefixes configured."
                 ),
@@ -91,13 +109,19 @@ class Managment(BaseExtension):
 
         await ctx.safe_send(embed=embed)
 
-    @commands.group(name="emoji", aliases=("emote", "emotes", "emojis"), invoke_without_command=True)
+    @commands.group(
+        name="emoji",
+        aliases=("emote", "emotes", "emojis"),
+        invoke_without_command=True,
+    )
     async def emoji(
         self,
         ctx: Context,
         *,
         emojis: Optional[list[discord.PartialEmoji]] = commands.param(
-            default=None, converter=EmojiConverter(), displayed_default="Message history or reference"
+            default=None,
+            converter=EmojiConverter(),
+            displayed_default="Message history or reference",
         ),
     ) -> None:
         if not emojis:
@@ -107,11 +131,17 @@ class Managment(BaseExtension):
                 emojis = maybe_emojis
             else:
                 raise UserFeedbackExceptionFactory.create(
-                    message="No emotes found in the message.", level=ExceptionLevel.INFO
+                    message="No emotes found in the message.",
+                    level=ExceptionLevel.INFO,
                 )
 
         items = [
-            EmoteUnit(name=emoji.name, id=emoji.id or int(hex(id(emoji))[2:], 16), emote=emoji) for emoji in emojis
+            EmoteUnit(
+                name=emoji.name,
+                id=emoji.id or int(hex(id(emoji))[2:], 16),
+                emote=emoji,
+            )
+            for emoji in emojis
         ]
 
         await EmoteView(self.bot, *items).send_to_ctx(ctx)
@@ -126,11 +156,13 @@ class Managment(BaseExtension):
 
         if not ctx.author.guild_permissions.manage_emojis:
             raise UserFeedbackExceptionFactory.create(
-                message="You don't have the required permissions to use this command.", level=ExceptionLevel.WARNING
+                message="You don't have the required permissions to use this command.",
+                level=ExceptionLevel.WARNING,
             )
         if not ctx.guild.me.guild_permissions.manage_emojis:
             raise UserFeedbackExceptionFactory.create(
-                message="I don't have the required permissions to use this command.", level=ExceptionLevel.WARNING
+                message="I don't have the required permissions to use this command.",
+                level=ExceptionLevel.WARNING,
             )
 
         user = self.bot.cached_users.get(ctx.author.id)
@@ -138,7 +170,9 @@ class Managment(BaseExtension):
             user = await self.bot.manager.get_or_create_user(ctx.author.id)
             self.bot.cached_users[user.id] = user
 
-        self.bot.cached_users[ctx.author.id] = await self.bot.manager.set_user_emoji_server(user, ctx.guild.id)
+        self.bot.cached_users[
+            ctx.author.id
+        ] = await self.bot.manager.set_user_emoji_server(user, ctx.guild.id)
 
         await ctx.safe_send(f"Set your emoji server to `{ctx.guild.name}`.")
 

@@ -13,7 +13,11 @@ from typing import Callable
 
 from discord.ext.commands import CommandError
 
-__all__: tuple[str, ...] = ("ExceptionLevel", "UserFeedbackExceptionFactory", "UserFeedbackException")
+__all__: tuple[str, ...] = (
+    "ExceptionLevel",
+    "UserFeedbackExceptionFactory",
+    "UserFeedbackException",
+)
 
 
 class ExceptionLevel(Enum):
@@ -95,6 +99,8 @@ class UserFeedbackExceptionFactory:
             message,
             # Probably not the best idea to default to DefaultUserFeedbackEmoji
             # but I guess it's fine for now. I'll probably change this later.
-            UserFeedbackExceptionFactory.EMOJI_STRATEGIES.get(level, DefaultUserFeedbackEmoji()),
+            UserFeedbackExceptionFactory.EMOJI_STRATEGIES.get(
+                level, DefaultUserFeedbackEmoji()
+            ),
             formatters,
         )

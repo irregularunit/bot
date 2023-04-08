@@ -64,20 +64,32 @@ class Paginator(View):
     async def edit(self, interaction: Interaction, *, page: int) -> None:
         self.page = page
         unit = self.items[page]
-        await interaction.response.edit_message(content=unit.content, embed=unit.embed, attachments=unit.files)
+        await interaction.response.edit_message(
+            content=unit.content, embed=unit.embed, attachments=unit.files
+        )
 
     @button()
-    async def first(self, interaction: Interaction, button: Button[Paginator]) -> None:
+    async def first(
+        self, interaction: Interaction, button: Button[Paginator]
+    ) -> None:
         await self.edit(interaction, page=0)
 
     @button()
-    async def back(self, interaction: Interaction, button: Button[Paginator]) -> None:
+    async def back(
+        self, interaction: Interaction, button: Button[Paginator]
+    ) -> None:
         await self.edit(interaction, page=max(self.page - 1, 0))
 
     @button()
-    async def next(self, interaction: Interaction, button: Button[Paginator]) -> None:
-        await self.edit(interaction, page=min(self.page + 1, len(self.items) - 1))
+    async def next(
+        self, interaction: Interaction, button: Button[Paginator]
+    ) -> None:
+        await self.edit(
+            interaction, page=min(self.page + 1, len(self.items) - 1)
+        )
 
     @button()
-    async def skip(self, interaction: Interaction, button: Button[Paginator]) -> None:
+    async def skip(
+        self, interaction: Interaction, button: Button[Paginator]
+    ) -> None:
         await self.edit(interaction, page=len(self.items) - 1)
