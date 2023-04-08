@@ -8,12 +8,12 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Optional, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 import discord
 from discord.ext import commands
 
-from exceptions import UserFeedbackExceptionFactory, ExceptionLevel
+from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
 
 if TYPE_CHECKING:
     from bot import Bot, BotT

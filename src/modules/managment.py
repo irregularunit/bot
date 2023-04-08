@@ -15,7 +15,7 @@ import discord
 from discord.ext import commands
 
 from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
-from models import EmbedBuilder
+from models import EmbedBuilder, User
 from utils import (
     BaseExtension,
     EmojiConverter,
@@ -126,7 +126,9 @@ class Managment(BaseExtension):
         ),
     ) -> None:
         if not emojis:
-            maybe_emojis = await EmojiConverter().convert(ctx, None)
+            maybe_emojis: list[
+                discord.PartialEmoji
+            ] | None = await EmojiConverter().convert(ctx, None)
 
             if maybe_emojis:
                 emojis = maybe_emojis
@@ -136,7 +138,7 @@ class Managment(BaseExtension):
                     level=ExceptionLevel.INFO,
                 )
 
-        items = [
+        items: list[EmoteUnit] = [
             EmoteUnit(
                 name=emoji.name,
                 id=emoji.id or int(hex(id(emoji))[2:], 16),
@@ -169,7 +171,7 @@ class Managment(BaseExtension):
                 level=ExceptionLevel.WARNING,
             )
 
-        user = self.bot.cached_users.get(ctx.author.id)
+        user: User | None = self.bot.cached_users.get(ctx.author.id)
         if user is None:
             user = await self.bot.manager.get_or_create_user(ctx.author.id)
             self.bot.cached_users[user.id] = user

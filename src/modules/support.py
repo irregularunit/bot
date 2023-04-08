@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 import logging
-import re
 from typing import TYPE_CHECKING, Optional
 
 import discord
@@ -189,8 +188,9 @@ class SupportServer(BaseExtension):
                 )
 
             if self.cached_pit_queue_channel is None:
-                channel = await self.cache_channel("pit_queue")
-                self.cached_pit_queue_channel = channel
+                self.cached_pit_queue_channel = await self.cache_channel(
+                    "pit_queue"
+                )
 
             await self.cached_pit_queue_channel.send(
                 f"**ℹ️ |** {member.name} has been removed from the server."
@@ -198,20 +198,19 @@ class SupportServer(BaseExtension):
 
     @commands.group(
         name="add",
-        aliases=("a",),
         invoke_without_command=True,
     )
     async def add(self, ctx: Context) -> None:
         await ctx.send_help()
 
-    @add.command(name="bot")
+    @add.command(name="bot", aliases=("app",))
     async def add_bot(
         self,
         ctx: Context,
         bot: discord.User,
         *,
         reason: commands.clean_content,
-    ):
+    ) -> None:
         if not bot.bot:
             raise UserFeedbackExceptionFactory.create(
                 "The specified user is not a bot.",
@@ -239,7 +238,7 @@ class SupportServer(BaseExtension):
 
         prompt = SafetyPrompt(ctx.author)
 
-        message = await ctx.safe_send(
+        message: discord.Message | None = await ctx.safe_send(
             f"""
             {ctx.author.mention}, please read the following before continuing:
             > The bot must not use prefixes which are already in use by other bots.
@@ -260,8 +259,9 @@ class SupportServer(BaseExtension):
                 )
 
             if self.cached_pit_queue_channel is None:
-                channel = await self.cache_channel("pit_queue")
-                self.cached_pit_queue_channel = channel
+                self.cached_pit_queue_channel = await self.cache_channel(
+                    "pit_queue"
+                )
 
             invite: str = discord.utils.oauth_url(
                 bot.id,
@@ -277,7 +277,7 @@ class SupportServer(BaseExtension):
                     {ctx.author.name} has submitted a bot for approval.
                     > **Bot:** {bot.name}
                     > **Reason:** {reason}
-                    > **Safe invite:** {invite}
+                    > **Safe invite:** [invite]({invite})
                     """
                 ),
             ).set_thumbnail(url=bot.display_avatar)
@@ -315,8 +315,9 @@ class SupportServer(BaseExtension):
             )
 
         if self.cached_pit_queue_channel is None:
-            channel = await self.cache_channel("pit_queue")
-            self.cached_pit_queue_channel = channel
+            self.cached_pit_queue_channel = await self.cache_channel(
+                "pit_queue"
+            )
 
         await self.cached_pit_queue_channel.send(
             f"**ℹ️ |** {bot.name} has been approved."
