@@ -40,9 +40,21 @@ class Model:
 
 
 class User(Model):
-    __slots__: tuple[str, ...] = ("emoji_server", "timezone", "id", "created_at")
+    __slots__: tuple[str, ...] = (
+        "emoji_server",
+        "timezone",
+        "id",
+        "created_at",
+    )
 
-    def __init__(self, *, id: int, created_at: datetime, emoji_server: int, timezone: str) -> None:
+    def __init__(
+        self,
+        *,
+        id: int,
+        created_at: datetime,
+        emoji_server: int,
+        timezone: str,
+    ) -> None:
         super().__init__(id=id, created_at=created_at)
         self.emoji_server: int = emoji_server
         self.timezone: str = timezone
@@ -74,10 +86,22 @@ class User(Model):
 
 
 class Guild(Model):
-    __slots__: tuple[str, ...] = ("prefixes", "owo_prefix", "owo_counting", "id", "created_at")
+    __slots__: tuple[str, ...] = (
+        "prefixes",
+        "owo_prefix",
+        "owo_counting",
+        "id",
+        "created_at",
+    )
 
     def __init__(
-        self, *, id: int, created_at: datetime, prefixes: list[str], owo_prefix: str, owo_counting: bool
+        self,
+        *,
+        id: int,
+        created_at: datetime,
+        prefixes: list[str],
+        owo_prefix: str,
+        owo_counting: bool,
     ) -> None:
         super().__init__(id=id, created_at=created_at)
         self.prefixes: list[str] = prefixes
@@ -112,7 +136,9 @@ class ModelManager:
         if not record:
             maybe_user: User | None = await self.get_user(user_id)
             if not maybe_user:
-                raise UserFeedbackExceptionFactory.create("Failed to create user", ExceptionLevel.ERROR)
+                raise UserFeedbackExceptionFactory.create(
+                    "Failed to create user", ExceptionLevel.ERROR
+                )
             return maybe_user
 
         return User.from_record(record)
@@ -124,7 +150,9 @@ class ModelManager:
             record: Record | None = await connection.fetchrow(query, user_id)
 
         if record is None:
-            log.getChild("get_user").debug("Failed to get user with id %s", user_id)
+            log.getChild("get_user").debug(
+                "Failed to get user with id %s", user_id
+            )
             return None
         return User.from_record(record)
 
@@ -136,7 +164,20 @@ class ModelManager:
 
     async def set_user_timezone(self, user_id: int, timezone: str) -> None:
         query: str = "UPDATE users SET timezone = $1 WHERE uuid = $2"
-        await self.pool.execute(query, timezone, user_id)
+
+        async with self.pool.acquire() as connection:
+            await connection.execute(query, timezone, user_id)
+
+    async def set_user_emoji_server(
+        self, user: User, emoji_server: int
+    ) -> User:
+        query: str = "UPDATE users SET emoji_server = $1 WHERE uuid = $2"
+
+        async with self.pool.acquire() as connection:
+            await connection.execute(query, emoji_server, user.id)
+
+        user.emoji_server = emoji_server
+        return user
 
     async def get_all_users(self) -> dict[int, User]:
         query: str = "SELECT * FROM users"
@@ -144,7 +185,9 @@ class ModelManager:
         async with self.pool.acquire() as connection:
             records: list[Record] = await connection.fetch(query)
 
-        users: dict[int, User] = {record["uuid"]: User.from_record(record) for record in records}
+        users: dict[int, User] = {
+            record["uuid"]: User.from_record(record) for record in records
+        }
         return users
 
     async def create_guild(self, guild_id: int) -> Guild:
@@ -161,7 +204,9 @@ class ModelManager:
         if not record:
             maybe_guild: Guild | None = await self.get_guild(guild_id)
             if not maybe_guild:
-                raise UserFeedbackExceptionFactory.create("Failed to create guild", ExceptionLevel.ERROR)
+                raise UserFeedbackExceptionFactory.create(
+                    "Failed to create guild", ExceptionLevel.ERROR
+                )
             return maybe_guild
 
         instance: Guild = Guild(
@@ -214,14 +259,20 @@ class ModelManager:
         async with self.pool.acquire() as connection:
             records: list[Record] = await connection.fetch(query)
 
-        guilds: dict[int, Guild] = {record["gid"]: Guild.from_record(record) for record in records}
+        guilds: dict[int, Guild] = {
+            record["gid"]: Guild.from_record(record) for record in records
+        }
         return guilds
 
-    async def remove_guild_prefix(self, guild: Guild, prefix: str) -> Optional[Guild]:
+    async def remove_guild_prefix(self, guild: Guild, prefix: str) -> Guild:
         if prefix not in guild.prefixes:
-            raise UserFeedbackExceptionFactory.create("That prefix does not exist", ExceptionLevel.WARNING)
+            raise UserFeedbackExceptionFactory.create(
+                "That prefix does not exist", ExceptionLevel.WARNING
+            )
 
-        query: str = "DELETE FROM guild_prefixes WHERE gid = $1 AND prefix = $2"
+        query: str = (
+            "DELETE FROM guild_prefixes WHERE gid = $1 AND prefix = $2"
+        )
 
         async with self.pool.acquire() as connection:
             await connection.execute(query, guild.id, prefix)
@@ -229,9 +280,11 @@ class ModelManager:
         guild.prefixes.remove(prefix)
         return guild
 
-    async def add_guild_prefix(self, guild: Guild, prefix: str) -> Optional[Guild]:
-        if prefix in guild.prefixes:
-            raise UserFeedbackExceptionFactory.create("That prefix already exists", ExceptionLevel.WARNING)
+    async def add_guild_prefix(self, guild: Guild, prefix: str) -> Guild:
+        if prefix in guild.prefixes or len(prefix) > 5:
+            raise UserFeedbackExceptionFactory.create(
+                "That prefix already exists", ExceptionLevel.WARNING
+            )
 
         query: str = "INSERT INTO guild_prefixes (gid, prefix) VALUES ($1, $2)"
 
@@ -250,8 +303,10 @@ class ModelManager:
         guild.owo_prefix = prefix
         return guild
 
-    async def toggle_guild_owo_counting(self, guild: Guild) -> Optional[Guild]:
-        query: str = "UPDATE guilds SET owo_counting = NOT owo_counting WHERE gid = $1"
+    async def toggle_guild_owo_counting(self, guild: Guild) -> Guild:
+        query: str = (
+            "UPDATE guilds SET owo_counting = NOT owo_counting WHERE gid = $1"
+        )
 
         async with self.pool.acquire() as connection:
             await connection.execute(query, guild.id)

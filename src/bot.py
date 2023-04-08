@@ -80,7 +80,11 @@ class Bot(commands.Bot):
             intents=intents,
             max_messages=2000,
             owner_ids=[380067729400528896],
-            help_command=commands.MinimalHelpCommand(),
+            help_command=commands.MinimalHelpCommand(
+                no_category="HelpSections",
+                verify_checks=False,
+                sort_commands=False,
+            ),
         )
         self.loop: asyncio.AbstractEventLoop = loop
         self.session: ClientSession = session
@@ -99,12 +103,18 @@ class Bot(commands.Bot):
 
     @staticmethod
     @discord.utils.copy_doc(asyncio.to_thread)
-    async def to_thread(func: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs) -> T:
+    async def to_thread(
+        func: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs
+    ) -> T:
         return await asyncio.to_thread(func, *args, **kwargs)
 
     @override
-    async def get_context(self, message: discord.Message, *, cls: Type[ContextT] = Context) -> Context:
-        return await super().get_context(message, cls=cls or commands.Context["Bot"])
+    async def get_context(
+        self, message: discord.Message, *, cls: Type[ContextT] = Context
+    ) -> Context:
+        return await super().get_context(
+            message, cls=cls or commands.Context["Bot"]
+        )
 
     async def process_commands(self, message: discord.Message, /) -> None:
         try:
@@ -123,7 +133,9 @@ class Bot(commands.Bot):
 
             if not ctx.channel.permissions_for(ctx.me).send_messages:  # type: ignore
                 if await self.is_owner(ctx.author):
-                    await ctx.send(f"I cannot send messages in {ctx.channel.name}.")
+                    await ctx.send(
+                        f"I cannot send messages in {ctx.channel.name}."
+                    )
 
                 return
 
@@ -131,21 +143,30 @@ class Bot(commands.Bot):
 
     @override
     async def get_prefix(self, message: discord.Message) -> str | list[str]:
-        prefixes: list[str] = [f"<@!{self.user.id}> ", f"<@{self.user.id}> ", "uwu ", "uwu"]
+        prefixes: tuple[str, ...] = (
+            f"<@!{self.user.id}> ",
+            f"<@{self.user.id}> ",
+        )
         if message.guild is None:
             # No dm's :3
             raise commands.NoPrivateMessage()
 
         if message.guild.id not in self.cached_prefixes:
-            guild: Guild = await self.manager.get_or_create_guild(message.guild.id)
+            guild: Guild = await self.manager.get_or_create_guild(
+                message.guild.id
+            )
             pattern: re.Pattern[str] = re.compile(
-                r"|".join(re.escape(prefix) + r"\s*" for prefix in guild.prefixes),
+                r"|".join(
+                    re.escape(prefix) + r"\s*" for prefix in guild.prefixes
+                ),
                 re.IGNORECASE,
             )
 
             self.cached_prefixes[message.guild.id] = pattern
 
-        if match := self.cached_prefixes[message.guild.id].match(message.content):
+        if match := self.cached_prefixes[message.guild.id].match(
+            message.content
+        ):
             return match.group()
 
         # Fallback, but it shouldn't be needed
@@ -153,7 +174,9 @@ class Bot(commands.Bot):
 
     @classmethod
     @discord.utils.copy_doc(asyncpg.create_pool)
-    async def create_pool(cls: Type[BotT], *, dsn: str, **kwargs: Any) -> Optional[Pool[Record]]:
+    async def create_pool(
+        cls: Type[BotT], *, dsn: str, **kwargs: Any
+    ) -> Optional[Pool[Record]]:
         prep_init: Any | None = kwargs.pop("init", None)
 
         async def init(connection: Connection[Any]) -> None:
@@ -172,7 +195,10 @@ class Bot(commands.Bot):
     @override
     async def connect(self, *, reconnect: bool = True) -> None:
         backoff = discord.client.ExponentialBackoff()  # type: ignore
-        ws_params: dict[str, Any] = {"initial": True, "shard_id": self.shard_id}
+        ws_params: dict[str, Any] = {
+            "initial": True,
+            "shard_id": self.shard_id,
+        }
         while not self.is_closed():
             try:
                 # Here we are trying to patch the gateway connection to
@@ -202,7 +228,10 @@ class Bot(commands.Bot):
                 self.dispatch("disconnect")
                 if not reconnect:
                     await self.close()
-                    if isinstance(exc, discord.ConnectionClosed) and exc.code == 1000:
+                    if (
+                        isinstance(exc, discord.ConnectionClosed)
+                        and exc.code == 1000
+                    ):
                         # Clean close, don't re-raise this
                         return
                     raise
@@ -226,18 +255,26 @@ class Bot(commands.Bot):
                 # regardless and rely on is_closed instead
                 if isinstance(exc, discord.ConnectionClosed):
                     if exc.code == 4014:
-                        raise discord.PrivilegedIntentsRequired(exc.shard_id) from None
+                        raise discord.PrivilegedIntentsRequired(
+                            exc.shard_id
+                        ) from None
                     if exc.code != 1000:
                         await self.close()
                         raise
 
                 retry: float = backoff.delay()
-                self.logger.exception("Attempting a reconnect in %.2fs.", retry)
+                self.logger.exception(
+                    "Attempting a reconnect in %.2fs.", retry
+                )
                 await asyncio.sleep(retry)
                 # Always try to RESUME the connection
                 # If the connection is not RESUME-able then the gateway will invalidate the session.
                 # This is apparently what the official Discord client does.
-                ws_params.update(sequence=self.ws.sequence, resume=True, session=self.ws.session_id)
+                ws_params.update(
+                    sequence=self.ws.sequence,
+                    resume=True,
+                    session=self.ws.session_id,
+                )
 
     @override
     async def start(self, *args: Any, **kwargs: Any) -> None:
@@ -249,7 +286,11 @@ class Bot(commands.Bot):
             yield item[i : i + size]
 
     def iter_extensions(self) -> Iterator[str]:
-        extension: list[str] = [file for file in os.listdir("src/modules") if not file.startswith("_")]
+        extension: list[str] = [
+            file
+            for file in os.listdir("src/modules")
+            if not file.startswith("_")
+        ]
         for file in extension:
             yield f"modules.{file[:-3] if file.endswith('.py') else file}"
 
@@ -271,18 +312,25 @@ class Bot(commands.Bot):
 
         errors = await asyncio.gather(
             *[self.load_extension(ext) for ext in initial_exts],
-            *[self.pool.execute(schema.read_text()) for schema in initial_schemas],
+            *[
+                self.pool.execute(schema.read_text())
+                for schema in initial_schemas
+            ],
         )
 
         for ext, error in zip(initial_exts, errors):
             if error:
-                _log.exception(f"Failed to load extension {ext!r}", exc_info=error)
+                _log.exception(
+                    f"Failed to load extension {ext!r}", exc_info=error
+                )
             else:
                 _log.info(f"Loaded extension {ext!r}")
 
         for schema, error in zip(initial_schemas, errors):
             if error:
-                _log.exception(f"Failed to load schema {schema!r}", exc_info=error)
+                _log.exception(
+                    f"Failed to load schema {schema!r}", exc_info=error
+                )
             else:
                 _log.info(f"Loaded schema {schema!r}")
 
@@ -296,7 +344,9 @@ class Bot(commands.Bot):
             self.start_time = discord.utils.utcnow()
 
         self.logger.getChild("on_ready").info(
-            "Successfully connected to Discord with %s as %s", self.user, self.user.id
+            "Successfully connected to Discord with %s as %s",
+            self.user,
+            self.user.id,
         )
 
     @tasks.loop(minutes=15)
@@ -309,11 +359,12 @@ class Bot(commands.Bot):
             discord.ActivityType.playing: (
                 f"with {len(self.commands)} {'commands' if len(self.commands) != 1 else 'command'}"
             ),
-            discord.ActivityType.listening: "to your owo's",
         }
 
         activity_type, message = random.choice(list(presences.items()))
-        await self.change_presence(activity=discord.Activity(type=activity_type, name=message))
+        await self.change_presence(
+            activity=discord.Activity(type=activity_type, name=message)
+        )
 
     @update_presence.before_loop
     async def before_presence(self) -> None:

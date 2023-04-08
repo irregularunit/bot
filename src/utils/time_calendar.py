@@ -40,11 +40,13 @@ class TimeConverter(commands.Converter[str]):
             if argument.lower() in RANGES_SHORT[time]:
                 return time
 
-        raise UserFeedbackExceptionFactory.create(f"Invalid time range: {argument}", level=ExceptionLevel.ERROR)
+        raise UserFeedbackExceptionFactory.create(
+            f"Invalid time range: {argument}", level=ExceptionLevel.ERROR
+        )
 
 
 class CountingCalender:
-    def __init__(self, user: int, guid: int):
+    def __init__(self, user: int, guid: int) -> None:
         self.user: int = user
         self.guid: int = guid
         self.time_mapping: dict[str, tuple[float, float]] = {}
@@ -60,11 +62,13 @@ class CountingCalender:
     def get_end_date(self, time: str) -> tuple[float, float]:
         # Our day starts at 8am until 8am the next day.
         # So if its before 8am, we want to start at 8am yesterday.
-        now = datetime.datetime.now(tz=zoneinfo.ZoneInfo("UTC")).replace(hour=8, minute=0, second=0, microsecond=0)
+        now = datetime.datetime.now(tz=zoneinfo.ZoneInfo("UTC")).replace(
+            hour=8, minute=0, second=0, microsecond=0
+        )
         if now.hour < 8:
             now -= datetime.timedelta(days=1)
 
-        ranges = {
+        ranges: dict[str, tuple[datetime.datetime, ...]] = {
             "today": (now, now + datetime.timedelta(days=1)),
             "yesterday": (now - datetime.timedelta(days=1), now),
             "this week": (
@@ -77,16 +81,27 @@ class CountingCalender:
             ),
             "this month": (
                 now.replace(day=1),
-                now.replace(day=calendar.monthrange(now.year, now.month)[1]) + datetime.timedelta(days=1),
+                now.replace(day=calendar.monthrange(now.year, now.month)[1])
+                + datetime.timedelta(days=1),
             ),
-            "last month": (now.replace(day=1) - datetime.timedelta(days=1), now.replace(day=1)),
-            "this year": (now.replace(month=1, day=1), now.replace(month=12, day=31) + datetime.timedelta(days=1)),
+            "last month": (
+                now.replace(day=1) - datetime.timedelta(days=1),
+                now.replace(day=1),
+            ),
+            "this year": (
+                now.replace(month=1, day=1),
+                now.replace(month=12, day=31) + datetime.timedelta(days=1),
+            ),
             "last year": (
                 now.replace(year=now.year - 1, month=1, day=1),
-                now.replace(year=now.year - 1, month=12, day=31) + datetime.timedelta(days=1),
+                now.replace(year=now.year - 1, month=12, day=31)
+                + datetime.timedelta(days=1),
             ),
             # Some random date in the past
-            "all time": (now.replace(year=2018, month=1, day=1), now + datetime.timedelta(days=1)),
+            "all time": (
+                now.replace(year=2018, month=1, day=1),
+                now + datetime.timedelta(days=1),
+            ),
         }
 
         if time not in ranges and time not in RANGES_SHORT:
@@ -121,7 +136,9 @@ class CountingCalender:
     def leaderboard_query(self, time: str, amount: int = 10) -> str:
         maybe_date = time.lower()
         if maybe_date not in self.time_mapping:
-            raise UserFeedbackExceptionFactory.create(f"Invalid time range: {time}", level=ExceptionLevel.ERROR)
+            raise UserFeedbackExceptionFactory.create(
+                f"Invalid time range: {time}", level=ExceptionLevel.ERROR
+            )
 
         start, end = self.time_mapping[maybe_date]
 

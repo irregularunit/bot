@@ -25,8 +25,16 @@ from utils import setup_logging, suppress
 if TYPE_CHECKING:
     from asyncpg import Pool, Record
 
-
 log: Logger = getLogger(__name__)
+
+try:
+    import uvloop  # type: ignore
+
+    if os.name in ("posix",):
+        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+except ImportError:
+    log.info("uvloop is not installed, using the default event loop policy.")
+    pass
 
 os.environ["JISHAKU_NO_UNDERSCORE"] = "true"
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "true"
@@ -45,7 +53,9 @@ async def setup() -> tuple[Bot, Pool[Record], ClientSession]:
         maxBytes=32 * 1024 * 1024,
         backupCount=5,
     )
-    handler.setFormatter(logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s"))
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s")
+    )
 
     logger.addHandler(handler)
     loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()

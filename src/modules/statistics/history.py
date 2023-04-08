@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from bot import Bot
     from utils import Context
 
-__all__: tuple[str, ...] = ("DiscordUserHistory",)
+__all__: tuple[str, ...] = ("TrackedDiscordHistory",)
 
 BRANCH = "development"
 GITHUB_URL = "https://github.com/irregularunit/bot"
@@ -42,9 +42,10 @@ LICENSE = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
 
 
 class InfoView(View):
-    def __init__(self, invite: str, *, timeout: float = 60) -> None:
+    def __init__(self, inv: str, what: str, *, timeout: float = 60) -> None:
         super().__init__(timeout=timeout)
-        self.inv: str = invite
+        self.inv: str = inv
+        self.what: str = what
 
         buttons = [
             Button(
@@ -53,7 +54,7 @@ class InfoView(View):
                 style=discord.ButtonStyle.link,
             ),
             Button(
-                label="Invite",
+                label=self.what,
                 url=self.inv,
                 style=discord.ButtonStyle.link,
             ),
@@ -63,12 +64,14 @@ class InfoView(View):
             self.add_item(button)
 
     @button(label="Close", style=discord.ButtonStyle.danger)
-    async def close_button(self, interaction: discord.Interaction, button: Button) -> None:
+    async def close_button(
+        self, interaction: discord.Interaction, button: Button
+    ) -> None:
         await interaction.response.defer()
         await interaction.delete_original_response()
 
 
-class DiscordUserHistory(BaseExtension):
+class TrackedDiscordHistory(BaseExtension):
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
 
@@ -81,7 +84,9 @@ class DiscordUserHistory(BaseExtension):
         self,
         ctx: Context,
         *,
-        member: discord.Member = commands.param(default=None, converter=MemberConverter(), displayed_default="You"),
+        member: discord.Member = commands.param(
+            default=None, converter=MemberConverter(), displayed_default="You"
+        ),
     ) -> None:
         await AvatarHistoryView(ctx, member=member or ctx.author).start()
 
@@ -111,42 +116,54 @@ class DiscordUserHistory(BaseExtension):
         embed: EmbedBuilder = (
             EmbedBuilder(
                 description=(
-                    """
-                    Servant comes equipped with a variety of features to make 
+                    f"""
+                    {self.bot.user.name} comes equipped with a variety of features to make 
                     your server experience even better. With this valuable 
                     information at your fingertips, you'll never miss a beat when 
                     it comes to staying up-to-date with your community.
 
                     Whether you're a seasoned Discord user or just starting out, 
-                    Servant is the perfect addition to any server.
+                    {self.bot.user.name} is the perfect addition to any server.
                     """
                 ),
                 fields=fields,
             )
             .set_thumbnail(url=self.bot.user.display_avatar)
-            .set_author(name="🔍 Servant Informationcenter")
-            .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
+            .set_author(name=f"🔍 {self.bot.user.name} Informationcenter")
+            .set_footer(
+                text="Made with ❤️ by irregularunit.",
+                icon_url=self.bot.user.display_avatar,
+            )
         )
 
-        view = InfoView(self.bot.config.invite)
+        view = InfoView(self.bot.config.invite, "Invite")
         await ctx.safe_send(embed=embed, view=view)
 
     @commands.command(name="source", aliases=("src",))
-    async def source_command(self, ctx: Context, *, command: Optional[str] = None) -> Optional[discord.Message]:
+    async def source_command(
+        self, ctx: Context, *, command: Optional[str] = None
+    ) -> Optional[discord.Message]:
         embed: EmbedBuilder = (
             EmbedBuilder(
                 description=(
-                    F"""
-                    Servant is an open-source bot for Discord. 
-                    You can find the source code on [github]({GITHUB_URL}).
+                    f"""
+                    {self.bot.user.name} is an open-source discord bot. 
+                    Feel free to contribute to the project.
 
-                    > Licensed under [CC BY-NC-SA 4.0]({LICENSE}).
+                    > ⭐ Star this repository on [GitHub]({GITHUB_URL}) to show your support.
+                    > 🐛 Report bugs or request features on [Issues]({GITHUB_URL}/issues).
+                    > 📖 Read the documentation on [Docs]({GITHUB_URL}/tree/{BRANCH}/docs).
+                    > 📝 Contribute to the source code on [Base]({GITHUB_URL}/tree/{BRANCH}).
+                    > 📚 Learn more about the bot on [About]({GITHUB_URL}/blob/{BRANCH}/README.md).
                     """
                 )
             )
             .set_thumbnail(url=self.bot.user.display_avatar)
-            .set_author(name="Servant Source Code")
-            .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
+            .set_author(name=f"{self.bot.user.name} Source Code")
+            .set_footer(
+                text="Made with ❤️ by irregularunit.",
+                icon_url=self.bot.user.display_avatar,
+            )
         )
 
         if command is None or command == "help":
@@ -155,7 +172,8 @@ class DiscordUserHistory(BaseExtension):
             cmd = self.bot.get_command(command)
             if cmd is None:
                 return await ctx.safe_send(
-                    f"{get_random_emoji()} The command you are looking for does not exist.", embed=embed
+                    f"{get_random_emoji()} The command you are looking for does not exist.",
+                    embed=embed,
                 )
 
             src = getattr(cmd, "_original_callback", cmd.callback).__code__
@@ -163,7 +181,8 @@ class DiscordUserHistory(BaseExtension):
 
             if not filename:
                 return await ctx.safe_send(
-                    f"{get_random_emoji()} The command you are looking for cannot be found.", embed=embed
+                    f"{get_random_emoji()} The command you are looking for cannot be found.",
+                    embed=embed,
                 )
 
             (
@@ -171,25 +190,24 @@ class DiscordUserHistory(BaseExtension):
                 start,
             ) = inspect.getsourcelines(src)
             end = start + len(lines) - 1
-            loc = os.path.realpath(filename).replace("\\", "/").split("/bot/")[1]
-
-            embed.add_field(
-                name=f"Source Code for {cmd.name}",
-                value=(
-                    f"""
-                    [View on Github]({GITHUB_URL}/blob/{BRANCH}/{loc}#L{start}-L{end})
-                    """
-                ),
+            loc = (
+                os.path.realpath(filename).replace("\\", "/").split("/bot/")[1]
+            )
+            view = InfoView(
+                f"{GITHUB_URL}/blob/{BRANCH}/{loc}#L{start}-L{end}",
+                f"{cmd.name.title()}",
             )
 
-            return await ctx.safe_send(embed=embed)
+            return await ctx.safe_send(embed=embed, view=view)
 
     @commands.command(name="score", aliases=("sc",))
     async def score_command(
         self,
         ctx: Context,
         *,
-        member: discord.Member = commands.param(default=None, converter=MemberConverter(), displayed_default="You"),
+        member: discord.Member = commands.param(
+            default=None, converter=MemberConverter(), displayed_default="You"
+        ),
     ) -> Optional[discord.Message]:
         user: discord.Member = member or ctx.author
         query = "SELECT * FROM get_counting_score($1, $2)"
@@ -232,7 +250,10 @@ class DiscordUserHistory(BaseExtension):
                 inline=False,
             )
             .set_thumbnail(url=self.bot.user.display_avatar)
-            .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
+            .set_footer(
+                text="Made with ❤️ by irregularunit.",
+                icon_url=self.bot.user.display_avatar,
+            )
         )
 
         await ctx.safe_send(embed=embed)
@@ -243,7 +264,11 @@ class DiscordUserHistory(BaseExtension):
         ctx: Context,
         amount: Optional[int] = 10,
         *,
-        time: str = commands.param(default="all time", converter=TimeConverter(), displayed_default="all time"),
+        time: str = commands.param(
+            default="all time",
+            converter=TimeConverter(),
+            displayed_default="all time",
+        ),
     ) -> Optional[discord.Message]:
         cal = CountingCalender(ctx.author.id, ctx.guild.id)
         query: str = cal.leaderboard_query(time, amount if amount else 10)
@@ -255,12 +280,17 @@ class DiscordUserHistory(BaseExtension):
             EmbedBuilder()
             .set_author(name=f"🏆 {time.title()} Leaderboard")
             .set_thumbnail(url=self.bot.user.display_avatar)
-            .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
+            .set_footer(
+                text="Made with ❤️ by irregularunit.",
+                icon_url=self.bot.user.display_avatar,
+            )
         )
 
         for i, row in enumerate(leaderboard, start=1):
             user_id = row["uuid"]
-            user = self.bot.get_user(user_id) or await self.bot.fetch_user(user_id)
+            user = self.bot.get_user(user_id) or await self.bot.fetch_user(
+                user_id
+            )
 
             embed.add_field(
                 name=f"#{i}. {user.display_name}",
@@ -278,14 +308,28 @@ class DiscordUserHistory(BaseExtension):
         self,
         ctx: Context,
         *,
-        member: discord.Member = commands.param(default=None, converter=MemberConverter(), displayed_default="You"),
+        member: discord.Member = commands.param(
+            default=None, converter=MemberConverter(), displayed_default="You"
+        ),
     ) -> Optional[discord.Message]:
         user: discord.Member = member or ctx.author
         joined_at = user.joined_at or discord.utils.utcnow()
 
         view = PluginView(ctx, member=user)
-        view.add_item(NameHistoryButton(label="Username History", style=discord.ButtonStyle.blurple, emoji="📜"))
-        view.add_item(CollageAvatarButton(label="Avatar Collage", style=discord.ButtonStyle.blurple, emoji="🖼️"))
+        view.add_item(
+            NameHistoryButton(
+                label="Username History",
+                style=discord.ButtonStyle.blurple,
+                emoji="📜",
+            )
+        )
+        view.add_item(
+            CollageAvatarButton(
+                label="Avatar Collage",
+                style=discord.ButtonStyle.blurple,
+                emoji="🖼️",
+            )
+        )
 
         embed: EmbedBuilder = (
             EmbedBuilder(
@@ -299,14 +343,22 @@ class DiscordUserHistory(BaseExtension):
                 )
             )
             .set_thumbnail(url=user.display_avatar)
-            .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
+            .set_footer(
+                text="Made with ❤️ by irregularunit.",
+                icon_url=self.bot.user.display_avatar,
+            )
         )
 
         await ctx.safe_send(embed=embed, view=view)
 
     @commands.command(name="joinlist", aliases=("jl",))
-    async def joinlist_command(self, ctx: Context) -> Optional[discord.Message]:
-        sorted_list = sorted(ctx.guild.members, key=lambda m: m.joined_at or discord.utils.utcnow())
+    async def joinlist_command(
+        self, ctx: Context
+    ) -> Optional[discord.Message]:
+        sorted_list: list[discord.Member] = sorted(
+            ctx.guild.members,
+            key=lambda m: m.joined_at or discord.utils.utcnow(),
+        )
 
         items: list[Item] = [
             Item(
@@ -314,14 +366,21 @@ class DiscordUserHistory(BaseExtension):
                     description="\n".join(
                         f"**{i + 1}.** {member.display_name} - "
                         f"{discord.utils.format_dt(member.joined_at or discord.utils.utcnow(), style='R')}"
-                        for i, member in enumerate(sorted_list[page * 10 : (page + 1) * 10])
+                        for i, member in enumerate(
+                            sorted_list[page * 10 : (page + 1) * 10]
+                        )
                     ),
                     color=discord.Color.blurple(),
                 )
-                .set_footer(text=f"Page {i + 1} of {math.ceil(len(sorted_list) / 10)}")
-                .set_author(name=f"📜 Join List")
+                .set_footer(
+                    text=f"Page {i + 1} of {math.ceil(len(sorted_list) / 10)}"
+                )
+                .set_author(name=f"📜 Join List for {ctx.guild.name}")
                 .set_thumbnail(url=self.bot.user.display_avatar)
-                .set_footer(text="Made with ❤️ by irregularunit.", icon_url=self.bot.user.display_avatar)
+                .set_footer(
+                    text="Made with ❤️ by irregularunit.",
+                    icon_url=self.bot.user.display_avatar,
+                )
             )
             for i, page in enumerate(range(math.ceil(len(sorted_list) / 10)))
         ]

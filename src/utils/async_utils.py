@@ -11,7 +11,16 @@ import asyncio
 import logging
 from abc import ABCMeta
 from contextlib import suppress
-from typing import Any, Callable, Coroutine, Generator, MutableSet, Optional, Self, overload
+from typing import (
+    Any,
+    Callable,
+    Coroutine,
+    Generator,
+    MutableSet,
+    Optional,
+    Self,
+    overload,
+)
 from weakref import WeakSet
 
 __all__: tuple[str, ...] = ("AsyncInstance",)
@@ -52,7 +61,7 @@ class Task:
         self.__closing: asyncio.Future[bool] = self.__loop.create_future()
 
     def get_child(self) -> Task:
-        # This is a bit of a hacky to get around the task that
+        # This is a bit of a hacky to get around the task
         # but it's the best way I can think of to do it.
         store = self.__class__(self.__loop)
         self.children.add(store)
@@ -113,7 +122,9 @@ class Task:
                 )
                 continue
 
-            if asyncio.iscoroutine(result) or isinstance(result, asyncio.Future):
+            if asyncio.iscoroutine(result) or isinstance(
+                result, asyncio.Future
+            ):
                 # Simply add our coros to the list of tasks to wait on.
                 tasks.append(result)  # type: ignore
 
@@ -303,7 +314,9 @@ if __name__ == "__main__":
                 return self.a - self.b
 
             def __repr__(self) -> str:
-                return f"{self.__class__.__name__}({self._args}, {self._kwargs})"
+                return (
+                    f"{self.__class__.__name__}({self._args}, {self._kwargs})"
+                )
 
         inst = await Test(1, 2)
         print(inst)
