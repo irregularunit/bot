@@ -13,13 +13,13 @@ from discord.ext import commands
 
 from utils import async_all, for_all_callbacks
 
-from .history import DiscordUserHistory
+from .history import TrackedDiscordHistory
 
 if TYPE_CHECKING:
     from bot import Bot
     from utils import Context
 
-features = (DiscordUserHistory,)
+features = (TrackedDiscordHistory,)
 
 
 @for_all_callbacks(commands.cooldown(1, 3, commands.BucketType.user))

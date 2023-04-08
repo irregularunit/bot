@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from bot import Bot
     from utils import Context
 
-__all__: tuple[str, ...] = ("DiscordUserHistory",)
+__all__: tuple[str, ...] = ("TrackedDiscordHistory",)
 
 BRANCH = "development"
 GITHUB_URL = "https://github.com/irregularunit/bot"
@@ -71,7 +71,7 @@ class InfoView(View):
         await interaction.delete_original_response()
 
 
-class DiscordUserHistory(BaseExtension):
+class TrackedDiscordHistory(BaseExtension):
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
 
@@ -147,10 +147,14 @@ class DiscordUserHistory(BaseExtension):
             EmbedBuilder(
                 description=(
                     f"""
-                    {self.bot.user.name} is an open-source bot for Discord. 
-                    You can find the source code on [github]({GITHUB_URL}).
+                    {self.bot.user.name} is an open-source discord bot. 
+                    Feel free to contribute to the project.
 
-                    > Licensed under [CC BY-NC-SA 4.0]({LICENSE}).
+                    > ⭐ Star this repository on [GitHub]({GITHUB_URL}) to show your support.
+                    > 🐛 Report bugs or request features on [Issues]({GITHUB_URL}/issues).
+                    > 📖 Read the documentation on [Docs]({GITHUB_URL}/tree/{BRANCH}/docs).
+                    > 📝 Contribute to the source code on [Base]({GITHUB_URL}/tree/{BRANCH}).
+                    > 📚 Learn more about the bot on [About]({GITHUB_URL}/blob/{BRANCH}/README.md).
                     """
                 )
             )

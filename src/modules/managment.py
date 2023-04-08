@@ -43,7 +43,8 @@ class Managment(BaseExtension):
         checks = [commands.guild_only()]
         return await async_all(check(ctx) for check in checks)
 
-    def compile_prefixes(self, prefixes: list[str]) -> re.Pattern[str]:
+    @staticmethod
+    def compile_prefixes(prefixes: list[str]) -> re.Pattern[str]:
         return re.compile(
             r"|".join(re.escape(prefix) + r"\s*" for prefix in prefixes),
             re.IGNORECASE,

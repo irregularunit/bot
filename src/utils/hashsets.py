@@ -405,8 +405,6 @@ owo_command_set = set(owo_commands)
 
 
 def check_owo_command(command: str) -> bool:
-    # index: int = bisect.bisect_left(sorted_owo_commands, command)
-    # return index != len(sorted_owo_commands) and sorted_owo_commands[index] == command
     return command in owo_command_set
 
 
