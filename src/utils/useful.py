@@ -187,7 +187,7 @@ def type_of(image: bytes) -> Optional[str]:
     def validate_mime(mime: str) -> bool:
         return mime in ("image/png", "image/jpeg", "image/webp", "image/gif")
 
-    mime = magic.from_buffer(image, mime=True)
+    mime: str = magic.from_buffer(image, mime=True)
     if not validate_mime(mime):
         return None
 

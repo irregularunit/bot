@@ -87,10 +87,12 @@ class DiscordEventListener(BaseExtension):
         if not self._send_queue or self._is_running:
             return
 
-        avatar_channel = self.cached_channel or await self.bot.fetch_channel(AVATAR_CHANNEL_ID)
+        avatar_channel = self.cached_channel or await self.bot.fetch_channel(
+            AVATAR_CHANNEL_ID
+        )
         if not isinstance(avatar_channel, discord.TextChannel):
             raise RuntimeError("Avatar channel is not a text channel")
-        
+
         self.cached_channel = avatar_channel
 
         self._is_running = True

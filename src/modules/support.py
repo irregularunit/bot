@@ -105,22 +105,24 @@ class SupportServer(BaseExtension):
             embed: EmbedBuilder = EmbedBuilder(
                 title="We're glad to have you here!",
                 description=(
-                    f"""
-                        Welcome to the **Friendica Assembly**, {member.mention}!
+                    f"""Welcome to the **Friendica Assembly**, {member.mention}!
 
-                        Please read the rules and enjoy your stay!
-                        > {get_random_emoji()} **Rules:** <#{RULE_CHANNEL_ID}>
-                        > {get_random_emoji()} **Informaton:** <#{PIT_INFORMATION_CHANNEL_ID}>
-                        
-                        You're our {join_position}{self.plural(join_position)} member!
-                        """
+                    Please read the rules and enjoy your stay!
+                    > {get_random_emoji()} **Rules:** <#{RULE_CHANNEL_ID}>
+                    > {get_random_emoji()} **Informaton:** <#{PIT_INFORMATION_CHANNEL_ID}>
+                    
+                    You're our {join_position}{self.plural(join_position)} member!
+                    """
                 ),
             ).set_thumbnail(url=member.guild.icon)
 
             await self.cached_welcome_channel.send(embed=embed)
         else:
             DRONES_ROLE_ID: int = 1094280797604814868
-            drones_role: discord.Role = member.guild.get_role(DRONES_ROLE_ID)  # type: ignore
+            drones_role: discord.Role | None = member.guild.get_role(DRONES_ROLE_ID)
+
+            if drones_role is None:
+                raise RuntimeError("Drones role not found")
 
             if len(member.roles) > 1 and member.id not in (self.bot.user.id,):
                 await member.kick(

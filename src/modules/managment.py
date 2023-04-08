@@ -182,6 +182,27 @@ class Managment(BaseExtension):
 
         await ctx.safe_send(f"Set your emoji server to `{ctx.guild.name}`.")
 
+    @commands.has_guild_permissions(administrator=True)
+    @commands.group(name="toggle", invoke_without_command=True)
+    async def toggle(self, ctx: Context) -> None:
+        await ctx.send_help()
+
+    @toggle.command(name="counting")
+    async def toggle_counting(self, ctx: Context) -> None:
+        if (guild := self.bot.cached_guilds.get(ctx.guild.id)) is None:
+            guild = await self.bot.manager.get_or_create_guild(ctx.guild.id)
+
+        self.bot.cached_guilds[
+            guild.id
+        ] = await self.bot.manager.toggle_guild_owo_counting(guild)
+
+        true, false = "✅", "❌"
+        await ctx.safe_send(
+            f"**{true if self.bot.cached_guilds[guild.id].owo_counting else false} |** "
+            f"counting has been "
+            f"**{'enabled' if self.bot.cached_guilds[guild.id].owo_counting else 'disabled'}**."
+        )
+
 
 async def setup(bot: Bot) -> None:
     await bot.add_cog(Managment(bot))
