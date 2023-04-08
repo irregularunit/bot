@@ -9,12 +9,15 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
+import discord
 from discord.ext import commands
 
 from models import EmbedBuilder
-from utils import BaseExtension, async_all, for_all_callbacks, get_random_emoji
+from exceptions import UserFeedbackExceptionFactory, ExceptionLevel
+from utils import BaseExtension, EmojiConverter, async_all, for_all_callbacks, get_random_emoji
+from views import EmoteUnit, EmoteView
 
 if TYPE_CHECKING:
     from bot import Bot
@@ -88,6 +91,73 @@ class Managment(BaseExtension):
 
         await ctx.safe_send(embed=embed)
 
+    @commands.group(
+            name="emoji",
+            aliases=("emote", "emotes", "emojis"),
+            invoke_without_command=True
+    )
+    async def emoji(
+        self,
+        ctx: Context,
+        *,
+        emojis: Optional[list[discord.PartialEmoji]] = commands.param(
+            default=None,
+            converter=EmojiConverter(),
+            displayed_default="Message history or reference"
+        )
+    ) -> None:
+        if not emojis:
+            maybe_emojis = await EmojiConverter().convert(ctx, None)
+
+            if maybe_emojis:
+                emojis = maybe_emojis
+            else:
+                raise UserFeedbackExceptionFactory.create(
+                    message="No emotes found in the message.",
+                    level=ExceptionLevel.INFO
+                )
+        
+        items = [
+            EmoteUnit(
+                name = emoji.name,
+                id = emoji.id or int(hex(id(emoji))[2:], 16),
+                emote = emoji
+            )
+            for emoji in emojis
+        ]
+
+        await EmoteView(self.bot, *items).send_to_ctx(ctx)
+
+    @emoji.group(name="set", aliases=("add",), invoke_without_command=True)
+    async def emoji_set(self, ctx: Context) -> None:
+        await ctx.send_help()
+
+    @emoji_set.command(name="guild", aliases=("server", "g", "s"))
+    async def emoji_set_guild(self, ctx: Context) -> None:
+        assert isinstance(ctx.author, discord.Member)
+
+        if not ctx.author.guild_permissions.manage_emojis:
+            raise UserFeedbackExceptionFactory.create(
+                message="You don't have the required permissions to use this command.",
+                level=ExceptionLevel.WARNING
+            )
+        if not ctx.guild.me.guild_permissions.manage_emojis:
+            raise UserFeedbackExceptionFactory.create(
+                message="I don't have the required permissions to use this command.",
+                level=ExceptionLevel.WARNING
+            )
+
+        user = self.bot.cached_users.get(ctx.author.id)
+        if user is None:
+            user = await self.bot.manager.get_or_create_user(ctx.author.id)
+            self.bot.cached_users[user.id] = user
+
+        self.bot.cached_users[ctx.author.id] = await self.bot.manager.set_user_emoji_server(
+            user, ctx.guild.id
+        )
+
+        await ctx.safe_send(f"Set your emoji server to `{ctx.guild.name}`.")
+        
 
 async def setup(bot: Bot) -> None:
     await bot.add_cog(Managment(bot))

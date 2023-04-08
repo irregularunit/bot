@@ -136,7 +136,18 @@ class ModelManager:
 
     async def set_user_timezone(self, user_id: int, timezone: str) -> None:
         query: str = "UPDATE users SET timezone = $1 WHERE uuid = $2"
-        await self.pool.execute(query, timezone, user_id)
+
+        async with self.pool.acquire() as connection:
+            await connection.execute(query, timezone, user_id)
+
+    async def set_user_emoji_server(self, user: User, emoji_server: int) -> User:
+        query: str = "UPDATE users SET emoji_server = $1 WHERE uuid = $2"
+        
+        async with self.pool.acquire() as connection:
+            await connection.execute(query, emoji_server, user.id)
+
+        user.emoji_server = emoji_server
+        return user
 
     async def get_all_users(self) -> dict[int, User]:
         query: str = "SELECT * FROM users"

@@ -111,9 +111,7 @@ class Transparency(BaseExtension):
                 f">>> {suggestion}"
             )
 
-            await message.edit(content="Your suggestion has been sent. Thank you for your feedback!", view=None)
-        else:
-            await message.edit(content="Action has been cancelled.", view=None)
+        await message.delete()
 
 
 async def setup(bot: Bot) -> None:
