@@ -15,15 +15,6 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 
-CREATE TABLE IF NOT EXISTS presence_history (
-  id BIGSERIAL PRIMARY KEY NOT NULL, 
-  uuid BIGINT NOT NULL, 
-  status TEXT NOT NULL, 
-  status_before TEXT NOT NULL, 
-  changed_at TIMESTAMP WITH TIME ZONE DEFAULT (now() AT TIME ZONE 'UTC') NOT NULL
-);
-
-
 CREATE 
 OR REPLACE FUNCTION limit_presence_history() RETURNS TRIGGER AS $$ BEGIN 
 DELETE FROM 
@@ -321,6 +312,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+
 CREATE TABLE IF NOT EXISTS bot_pits (
   id BIGSERIAL PRIMARY KEY NOT NULL, 
   uuid BIGINT NOT NULL, -- creator
@@ -329,4 +321,13 @@ CREATE TABLE IF NOT EXISTS bot_pits (
   reason TEXT NOT NULL DEFAULT 'Not specified', 
   created_at TIMESTAMP WITH TIME ZONE DEFAULT (now() AT TIME ZONE 'UTC') NOT NULL, 
   CONSTRAINT bot_pits_uuid_fk FOREIGN KEY (uuid) REFERENCES users(uuid) ON DELETE CASCADE
+);
+
+
+CREATE TABLE IF NOT EXISTS presence_history (
+  id BIGSERIAL PRIMARY KEY NOT NULL, 
+  uuid BIGINT NOT NULL, 
+  status TEXT NOT NULL, 
+  status_before TEXT NOT NULL, 
+  changed_at TIMESTAMP WITH TIME ZONE DEFAULT (now() AT TIME ZONE 'UTC') NOT NULL
 );

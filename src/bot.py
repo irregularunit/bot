@@ -36,7 +36,7 @@ from bridges import RedisBridge
 from gateway import Gateway
 from models import Guild, ModelManager, User
 from settings import Config
-from utils import Context, ContextT, GuildMessageable
+from utils import Context, ContextT, GuildMessageable, MinimalisticHelpCommand
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -80,11 +80,7 @@ class Bot(commands.Bot):
             intents=intents,
             max_messages=2000,
             owner_ids=[380067729400528896],
-            help_command=commands.MinimalHelpCommand(
-                no_category="HelpSections",
-                verify_checks=False,
-                sort_commands=False,
-            ),
+            help_command=MinimalisticHelpCommand()
         )
         self.loop: asyncio.AbstractEventLoop = loop
         self.session: ClientSession = session

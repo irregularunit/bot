@@ -27,9 +27,7 @@ class CollageAvatarButton(discord.ui.Button):
             int(amount**0.5) + 1 if amount**0.5 % 1 else int(amount**0.5)
         )
 
-    def create_collage(
-        self, images: list[Image.Image], old: bool = True
-    ) -> BytesIO:
+    def create_collage(self, images: list[Image.Image]) -> BytesIO:
         grid_size = self.compute_grid_size(len(images))
         rows: int = math.ceil(math.sqrt(len(images)))
 
@@ -38,46 +36,27 @@ class CollageAvatarButton(discord.ui.Button):
         # Feel free to rewrite it if you want.
         width = height = 256 * rows
 
-        if old:
-            with Image.new("RGBA", (width, height), (0, 0, 0, 0)) as collage:
-                times_x = times_y = final_x = final_y = 0
-                for avatar in images:
-                    if times_x == grid_size:
-                        times_y += 1
-                        times_x = 0
+        with Image.new("RGBA", (width, height), (0, 0, 0, 0)) as collage:
+            times_x = times_y = final_x = final_y = 0
+            for avatar in images:
+                if times_x == grid_size:
+                    times_y += 1
+                    times_x = 0
 
-                    x, y = times_x * 256, times_y * 256
-                    collage.paste(avatar, (x, y))
+                x, y = times_x * 256, times_y * 256
+                collage.paste(avatar, (x, y))
 
-                    final_x, final_y = max(x, final_x), max(y, final_y)
-                    times_x += 1
+                final_x, final_y = max(x, final_x), max(y, final_y)
+                times_x += 1
 
-                collage: Image.Image = collage.crop(
-                    (0, 0, final_x + 256, final_y + 256)
-                )
+            collage: Image.Image = collage.crop(
+                (0, 0, final_x + 256, final_y + 256)
+            )
 
-                buffer: BytesIO = BytesIO()
-                collage.save(buffer, format="webp")
-                buffer.seek(0)
-                return buffer
-        else:
-            # Currently testing this new method. Might be adjusted in the future.
-            # For now it seems to work just fine.
-            with Image.new("RGBA", (width, height), (0, 0, 0, 0)) as collage:
-                for i, avatar in enumerate(images):
-                    x, y = (i % rows) * 256, (i // rows) * 256
-                    collage.paste(avatar, (x, y))
-
-                last_x, last_y = divmod(len(images) - 1, rows)
-                last_height, last_width = (last_x + 1) * 256, (
-                    last_y + 1
-                ) * 256
-                collage = collage.crop((0, 0, last_width, last_height))
-
-                buffer: BytesIO = BytesIO()
-                collage.save(buffer, format="webp")
-                buffer.seek(0)
-                return buffer
+            buffer: BytesIO = BytesIO()
+            collage.save(buffer, format="webp")
+            buffer.seek(0)
+            return buffer
 
     async def get_member_collage(
         self, member: discord.Member | discord.User
@@ -97,7 +76,7 @@ class CollageAvatarButton(discord.ui.Button):
                 images.append(avatar.resize((256, 256)).convert("RGBA"))
 
         buffer: BytesIO = await self.view.bot.to_thread(
-            self.create_collage, images, old=False
+            self.create_collage, images
         )
         return discord.File(buffer, filename="collage.webp")
 
