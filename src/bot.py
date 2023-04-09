@@ -80,7 +80,7 @@ class Bot(commands.Bot):
             intents=intents,
             max_messages=2000,
             owner_ids=[380067729400528896],
-            help_command=MinimalisticHelpCommand()
+            help_command=MinimalisticHelpCommand(),
         )
         self.loop: asyncio.AbstractEventLoop = loop
         self.session: ClientSession = session

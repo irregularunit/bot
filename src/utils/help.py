@@ -8,10 +8,10 @@
 from __future__ import annotations
 
 from typing import cast
-from typing_extensions import override
 
 from discord.abc import Messageable
 from discord.ext.commands import MinimalHelpCommand
+from typing_extensions import override
 
 from models import EmbedBuilder
 
@@ -37,7 +37,7 @@ class MinimalisticHelpCommand(MinimalHelpCommand):
             "Type `{0}{1} <command>` for more info on a command.\n"
             "You can also type `{0}{1} <category>` for more info on a category."
         ).format(self.context.clean_prefix, self.invoked_with)
-    
+
     @override
     async def send_pages(self) -> None:
         from utils.context import Context
@@ -51,11 +51,9 @@ class MinimalisticHelpCommand(MinimalHelpCommand):
             )
 
         for page in self.paginator.pages:
-            embed: EmbedBuilder = (
-                EmbedBuilder.factory(
-                    cast(Context, self.context),
-                    description=page
-                )
-                .set_author(name="Help Menu", icon_url=self.context.bot.user.display_avatar)
+            embed: EmbedBuilder = EmbedBuilder.factory(
+                cast(Context, self.context), description=page
+            ).set_author(
+                name="Help Menu", icon_url=self.context.bot.user.display_avatar
             )
             await destination.send(embed=embed)
