@@ -22,6 +22,7 @@ from discord.ext import commands
 from discord.ui import Button, View, button
 from PIL import Image, ImageDraw, ImageFont
 
+from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
 from models import EmbedBuilder
 from utils import (
     BaseExtension,
@@ -196,9 +197,7 @@ class TrackedDiscordHistory(BaseExtension):
                 start,
             ) = inspect.getsourcelines(src)
             end = start + len(lines) - 1
-            loc = (
-                path.realpath(filename).replace("\\", "/").split("/bot/")[1]
-            )
+            loc = path.realpath(filename).replace("\\", "/").split("/bot/")[1]
             view = InfoView(
                 f"{GITHUB_URL}/blob/{BRANCH}/{loc}#L{start}-L{end}",
                 f"{cmd.name.title()}",
@@ -227,8 +226,8 @@ class TrackedDiscordHistory(BaseExtension):
         embed: EmbedBuilder = (
             EmbedBuilder(
                 description=(
-                    f"**{get_random_emoji()} {user.display_name}'s Score**\n\n"
-                    f"Total score: `{get_record_index(history, 'all_time')}`"
+                    f"**{get_random_emoji()} {user.display_name}'s Statistics**\n\n"
+                    f"Total: `{get_record_index(history, 'all_time')}`"
                 ),
             )
             .add_field(
@@ -300,12 +299,12 @@ class TrackedDiscordHistory(BaseExtension):
 
             embed.add_field(
                 name=f"#{i}. {user.display_name}",
-                value=f"Counting Score: `{math.floor(row['count'] / 3)}`",
+                value=f"Count: `{math.floor(row['count'] / 3)}`",
                 inline=False,
             )
 
         if not embed.fields:
-            embed.description = "> No one has counted yet."
+            embed.description = "> No one counter entries yet."
 
         await ctx.safe_send(embed=embed)
 
@@ -418,6 +417,12 @@ class TrackedDiscordHistory(BaseExtension):
                 - datetime.timedelta(days=query_days),
             )
 
+            if not history:
+                raise UserFeedbackExceptionFactory.create(
+                    "No presence history found for this user.",
+                    level=ExceptionLevel.INFO,
+                )
+
             record_dict = {
                 record["changed_at"]: [
                     record["status"],
@@ -524,7 +529,7 @@ class TrackedDiscordHistory(BaseExtension):
                 del basepen
                 pie_layer.putalpha(mask)
 
-        font = ImageFont.truetype("static/fonts/Arial.ttf", 15)
+        font = ImageFont.truetype("static/fonts/Arial.ttf", 14)
         by = {'Online': 60, 'Idle': 110, 'Do Not Disturb': 160, 'Offline': 210}
 
         base_layer.paste(pie_layer, None, pie_layer)
@@ -544,6 +549,12 @@ class TrackedDiscordHistory(BaseExtension):
             )
 
         del basepen
+
+        # enhance the image quality
+        base_layer = base_layer.resize(
+            (base_layer.width * 2, base_layer.height * 2),
+            resample=Image.BICUBIC,
+        )
 
         buffer = BytesIO()
         base_layer.save(buffer, format="PNG")
