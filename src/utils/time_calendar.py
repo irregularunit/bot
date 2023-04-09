@@ -32,7 +32,8 @@ RANGES_SHORT = {
 
 
 class TimeConverter(commands.Converter[str]):
-    async def convert(self, ctx: commands.Context, argument: str) -> str:
+    @staticmethod
+    async def convert(ctx: commands.Context, argument: str) -> str:
         for time in RANGES_SHORT:
             if argument.lower() == time:
                 return time
@@ -59,7 +60,8 @@ class CountingCalender:
             start_date, end_date = self.get_end_date(time)
             self.time_mapping[time] = start_date, end_date
 
-    def get_end_date(self, time: str) -> tuple[float, float]:
+    @staticmethod
+    def get_end_date(time: str) -> tuple[float, float]:
         # Our day starts at 8am until 8am the next day.
         # So if its before 8am, we want to start at 8am yesterday.
         now = datetime.datetime.now(tz=zoneinfo.ZoneInfo("UTC")).replace(

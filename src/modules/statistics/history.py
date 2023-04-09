@@ -467,8 +467,9 @@ class TrackedDiscordHistory(BaseExtension):
                 file=canvas,
             )
 
+    @staticmethod
     def create_presence_pie(
-        self, user: bytes, status_time: dict[str, float]
+        user: bytes, status_time: dict[str, float]
     ) -> discord.File:
         total = 86_400
         stat_degrees = {k: (v / total) * 360 for k, v in status_time.items()}

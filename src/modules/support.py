@@ -56,7 +56,8 @@ class SupportServer(BaseExtension):
         self.cached_welcome_channel: Optional[discord.TextChannel] = None
         self.cached_pit_queue_channel: Optional[discord.TextChannel] = None
 
-    async def cog_check(self, ctx: Context) -> bool:
+    @staticmethod
+    async def cog_check(ctx: Context) -> bool:
         checks = [
             commands.guild_only(),
             is_support_server(),
