@@ -11,7 +11,6 @@ import asyncio
 import logging
 import logging.handlers
 import os
-import sys
 from logging import Logger, getLogger
 from typing import TYPE_CHECKING
 

@@ -5,8 +5,6 @@
  * For more information, see README.md and LICENSE
 """
 
-import bisect
-
 __all__: tuple[str, ...] = ("check_owo_command", "owo_command_set")
 
 owo_commands: tuple[str, ...] = (

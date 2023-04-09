@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 import datetime
-import re
 from logging import Logger, getLogger
 from typing import TYPE_CHECKING, Any, Dict, Optional, Type, Union
 
@@ -20,7 +19,6 @@ from exceptions import (
     UserFeedbackException,
     UserFeedbackExceptionFactory,
 )
-from models import EmbedBuilder
 from utils import BaseExtension
 
 if TYPE_CHECKING:
