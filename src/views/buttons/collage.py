@@ -22,7 +22,8 @@ class CollageAvatarButton(discord.ui.Button):
         super().__init__(**kwargs)
         self.disabled = False
 
-    def compute_grid_size(self, amount: int) -> int:
+    @staticmethod
+    def compute_grid_size(amount: int) -> int:
         return (
             int(amount**0.5) + 1 if amount**0.5 % 1 else int(amount**0.5)
         )

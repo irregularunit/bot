@@ -59,7 +59,8 @@ class Transparency(BaseExtension):
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
 
-    async def cog_check(self, ctx: Context) -> bool:
+    @staticmethod
+    async def cog_check(ctx: Context) -> bool:
         checks = [commands.guild_only()]
         return await async_all(check(ctx) for check in checks)
 

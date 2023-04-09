@@ -281,7 +281,8 @@ class Bot(commands.Bot):
         for i in range(0, len(item), size):
             yield item[i : i + size]
 
-    def iter_extensions(self) -> Iterator[str]:
+    @staticmethod
+    def iter_extensions() -> Iterator[str]:
         extension: list[str] = [
             file
             for file in os.listdir("src/modules")
@@ -290,7 +291,8 @@ class Bot(commands.Bot):
         for file in extension:
             yield f"modules.{file[:-3] if file.endswith('.py') else file}"
 
-    def iter_schemas(self) -> Iterator[pathlib.Path]:
+    @staticmethod
+    def iter_schemas() -> Iterator[pathlib.Path]:
         root: pathlib.Path = pathlib.Path("src/schemas")
         for schema in root.glob("*.sql"):
             # Ignore nasty hidden files
