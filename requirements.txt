@@ -10,7 +10,7 @@ git+https://github.com/gorialis/jishaku
 
 # Enhancments and Utilities
 bson==0.5.10
-orjson==3.6.4
+orjson==3.8.10
 uvloop==0.17.0; sys_platform != "win32"
 numpy==1.24.2
 
