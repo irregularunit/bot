@@ -16,7 +16,7 @@ numpy==1.24.2
 
 # Useful and Cosmetic
 aiofiles==0.7.0
-emoji==1.7.0
+emoji==2.2.0
 coloredlogs==15.0.1
 python-magic==0.4.24
 python-magic-bin==0.4.14; os_name == "nt"
