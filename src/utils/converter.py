@@ -16,7 +16,7 @@ from discord.ext import commands
 from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
 
 if TYPE_CHECKING:
-    from bot import Bot, BotT
+    from bot import Bot
     from utils import Context
 
 __all__: tuple[str, ...] = ("MemberConverter", "EmojiConverter")
@@ -36,6 +36,22 @@ def get_from_guilds(bot: Bot, getter: str, argument: Any) -> Any:
 
 
 class MemberConverter(commands.Converter[discord.Member]):
+    """Converter that converts to discord.Member.
+
+    All lookups are via the local guild. If in a DM context, then the lookup
+    is done by the global cache.
+
+    The lookup strategy is as follows (in order):
+
+    1. Lookup by ID.
+    2. Lookup by mention.
+    3. Lookup by name#discrim
+    4. Lookup by name
+    5. Lookup by nickname
+
+    If the lookup fails, then a UserFeedbackException is raised.
+    """
+
     @staticmethod
     def get_id_match(argument):
         return _ID_REGEX.match(argument)
@@ -95,7 +111,7 @@ class MemberConverter(commands.Converter[discord.Member]):
         user_id = None
 
         if match is None:
-            # not a mention...
+            # Not a mention...
             if guild:
                 result = guild.get_member_named(argument)
             else:

@@ -119,7 +119,9 @@ class SupportServer(BaseExtension):
             await self.cached_welcome_channel.send(embed=embed)
         else:
             DRONES_ROLE_ID: int = 1094280797604814868
-            drones_role: discord.Role | None = member.guild.get_role(DRONES_ROLE_ID)
+            drones_role: discord.Role | None = member.guild.get_role(
+                DRONES_ROLE_ID
+            )
 
             if drones_role is None:
                 raise RuntimeError("Drones role not found")
@@ -162,7 +164,7 @@ class SupportServer(BaseExtension):
                 embed = EmbedBuilder(
                     title="Bot Approved",
                     description=(
-                        f"""**ℹ️ |** {member.name} has been approved and granted access to the server.
+                        f"""**ℹ️ |** - {member.name} has been approved and granted access to the server.
 
                         > **Reason:** {res["reason"]}
                         > **Requestor:** <@{res["uuid"]}>
@@ -195,7 +197,7 @@ class SupportServer(BaseExtension):
                 )
 
             await self.cached_pit_queue_channel.send(
-                f"**ℹ️ |** {member.name} has been removed from the server."
+                f"**ℹ️ |** - {member.name} has been removed from the server.\n"
             )
 
     @commands.group(
@@ -322,7 +324,44 @@ class SupportServer(BaseExtension):
             )
 
         await self.cached_pit_queue_channel.send(
-            f"**ℹ️ |** {bot.name} has been approved."
+            f"**ℹ️ |** - {bot.name} has been approved."
+        )
+        await ctx.message.add_reaction("✅")
+
+    @commands.has_guild_permissions(manage_guild=True)
+    @commands.command(name="deny")
+    async def deny(self, ctx: Context, bot: discord.User) -> None:
+        if not bot.bot:
+            raise UserFeedbackExceptionFactory.create(
+                "The specified user is not a bot.",
+                ExceptionLevel.INFO,
+            )
+
+        async with self.bot.pool.acquire() as conn:
+            result = await conn.fetchrow(
+                "SELECT * FROM bot_pits WHERE appid = $1 AND pending = TRUE",
+                bot.id,
+            )
+
+        if result is None:
+            raise UserFeedbackExceptionFactory.create(
+                "The specified bot is not pending approval.",
+                ExceptionLevel.INFO,
+            )
+
+        async with self.bot.pool.acquire() as conn:
+            await conn.execute(
+                "DELETE FROM bot_pits WHERE appid = $1",
+                bot.id,
+            )
+
+        if self.cached_pit_queue_channel is None:
+            self.cached_pit_queue_channel = await self.cache_channel(
+                "pit_queue"
+            )
+
+        await self.cached_pit_queue_channel.send(
+            f"**ℹ️ |** - {bot.name} has been denied."
         )
         await ctx.message.add_reaction("✅")
 

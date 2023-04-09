@@ -11,7 +11,8 @@ git+https://github.com/gorialis/jishaku
 # Enhancments and Utilities
 bson==0.5.10
 orjson==3.6.4
-uvloop==0.16.0; sys_platform != "win32"
+uvloop==0.17.0; sys_platform != "win32"
+numpy==1.24.2
 
 # Useful and Cosmetic
 aiofiles==0.7.0

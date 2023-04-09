@@ -7,16 +7,20 @@
 
 from __future__ import annotations
 
+import datetime
 import inspect
 import math
-import os
 import sys
 import time
+from io import BytesIO
+from math import ceil, cos, radians, sin
+from os import path
 from typing import TYPE_CHECKING, Any, Optional
 
 import discord
 from discord.ext import commands
 from discord.ui import Button, View, button
+from PIL import Image, ImageDraw, ImageFont
 
 from models import EmbedBuilder
 from utils import (
@@ -88,7 +92,9 @@ class TrackedDiscordHistory(BaseExtension):
             default=None, converter=MemberConverter(), displayed_default="You"
         ),
     ) -> None:
-        await AvatarHistoryView(ctx, member=member or ctx.author).start()
+        await AvatarHistoryView(
+            ctx, member=member or ctx.referenced_user or ctx.author
+        ).start()
 
     @commands.command(name="info", aliases=("about",))
     async def info_command(self, ctx: Context) -> None:
@@ -191,7 +197,7 @@ class TrackedDiscordHistory(BaseExtension):
             ) = inspect.getsourcelines(src)
             end = start + len(lines) - 1
             loc = (
-                os.path.realpath(filename).replace("\\", "/").split("/bot/")[1]
+                path.realpath(filename).replace("\\", "/").split("/bot/")[1]
             )
             view = InfoView(
                 f"{GITHUB_URL}/blob/{BRANCH}/{loc}#L{start}-L{end}",
@@ -209,7 +215,7 @@ class TrackedDiscordHistory(BaseExtension):
             default=None, converter=MemberConverter(), displayed_default="You"
         ),
     ) -> Optional[discord.Message]:
-        user: discord.Member = member or ctx.author
+        user: discord.Member = member or ctx.referenced_user or ctx.author
         query = "SELECT * FROM get_counting_score($1, $2)"
 
         async with self.bot.pool.acquire() as connection:
@@ -312,7 +318,7 @@ class TrackedDiscordHistory(BaseExtension):
             default=None, converter=MemberConverter(), displayed_default="You"
         ),
     ) -> Optional[discord.Message]:
-        user: discord.Member = member or ctx.author
+        user: discord.Member = member or ctx.referenced_user or ctx.author
         joined_at = user.joined_at or discord.utils.utcnow()
 
         view = PluginView(ctx, member=user)
@@ -387,3 +393,160 @@ class TrackedDiscordHistory(BaseExtension):
 
         view = Paginator(self.bot, *items)
         await ctx.safe_send(view=view, embed=items[0].embed)
+
+    @commands.command(name="presence", aliases=("ps",))
+    async def presence_command(
+        self,
+        ctx: Context,
+        days: Optional[int] = 1,
+        *,
+        member: discord.Member = commands.param(
+            default=None, converter=MemberConverter(), displayed_default="You"
+        ),
+    ) -> Optional[discord.Message]:
+        query_days = min(days if days else 1, 30)
+        user: discord.Member = member or ctx.referenced_user or ctx.author
+
+        async with self.bot.pool.acquire() as connection:
+            history = await connection.fetch(
+                """
+                SELECT status, status_before, changed_at FROM presence_history
+                WHERE uuid = $1 AND changed_at >= $2 ORDER BY changed_at DESC
+                """,
+                user.id,
+                datetime.datetime.utcnow()
+                - datetime.timedelta(days=query_days),
+            )
+
+            record_dict = {
+                record["changed_at"]: [
+                    record["status"],
+                    record["status_before"],
+                ]
+                for record in history
+            }
+
+            status_time: dict[str, float] = {}
+            sorted_presences = sorted(record_dict.items())
+
+            for i in range(len(sorted_presences) - 1):
+                curr_datetime, curr_status = sorted_presences[i]
+                next_datetime, next_status = sorted_presences[i + 1]
+                curr_status = curr_status[1]  # old status
+                next_status = next_status[0]  # new status
+                time_diff = (next_datetime - curr_datetime).total_seconds()
+
+                if curr_status == next_status:
+                    if curr_status in status_time:
+                        status_time[curr_status] += time_diff
+                    else:
+                        status_time[curr_status] = time_diff
+                else:
+                    if next_status in status_time:
+                        status_time[next_status] += time_diff
+                    else:
+                        status_time[next_status] = time_diff
+
+            status_time[sorted_presences[0][1][1]] += 86_400 - sum(
+                status_time.values()
+            )
+
+            canvas: discord.File = await self.bot.to_thread(
+                self.create_presence_pie,
+                await user.display_avatar.read(),
+                status_time,
+            )
+            await ctx.maybe_reply(
+                content=f"Presence pie chart for {user.display_name} since "
+                f"{(datetime.datetime.utcnow() - datetime.timedelta(days=query_days)).strftime('%b %d, %Y')}",
+                file=canvas,
+            )
+
+    def create_presence_pie(
+        self, user: bytes, status_time: dict[str, float]
+    ) -> discord.File:
+        total = 86_400
+        stat_degrees = {k: (v / total) * 360 for k, v in status_time.items()}
+
+        angles = dict()
+        starting = -90
+
+        for k, v in stat_degrees.items():
+            angles[k] = starting + v
+            starting += v
+
+        base_layer = Image.new("RGBA", size=(400, 300), color=(0, 0, 0, 0))
+        pie_layer = Image.new("RGBA", size=(400, 300), color=(0, 0, 0, 0))
+
+        status = {
+            'Online': (59, 165, 93),
+            'Idle': (250, 168, 26),
+            'Do Not Disturb': (237, 66, 69),
+            'Offline': (116, 127, 141),
+        }
+        neutral = (188, 188, 188)
+
+        with Image.open(BytesIO(user)).resize(
+            (200, 200), resample=Image.BICUBIC
+        ).convert('RGBA') as canvas:
+            with Image.open("static/images/piechart.png").convert("L") as mask:
+                base_layer.paste(canvas, (50, 50), canvas)
+
+                basepen = ImageDraw.Draw(pie_layer)
+
+                for k, v in angles.items():
+                    if starting == v:
+                        continue
+                    else:
+                        basepen.pieslice(
+                            ((-5, -5), (305, 305)), starting, v, fill=status[k]
+                        )
+                        starting = v
+
+                if not 360 in stat_degrees:
+                    mult = 1000
+                    offset = 150
+                    for k, v in angles.items():
+                        x = (
+                            offset
+                            + ceil(offset * mult * cos(radians(v))) / mult
+                        )
+                        y = (
+                            offset
+                            + ceil(offset * mult * sin(radians(v))) / mult
+                        )
+                        basepen.line(
+                            ((offset, offset), (x, y)),
+                            fill=(255, 255, 255, 255),
+                            width=1,
+                        )
+
+                del basepen
+                pie_layer.putalpha(mask)
+
+        font = ImageFont.truetype("static/fonts/Arial.ttf", 15)
+        by = {'Online': 60, 'Idle': 110, 'Do Not Disturb': 160, 'Offline': 210}
+
+        base_layer.paste(pie_layer, None, pie_layer)
+        basepen = ImageDraw.Draw(base_layer)
+
+        for k, v in status_time.items():
+            basepen.rectangle(
+                ((310, by[k]), (310 + 30, by[k] + 30)),
+                fill=status[k],
+                outline=(255, 255, 255, 255),
+            )
+            basepen.text(
+                (310 + 40, by[k] + 8),
+                f'{(v/total)*100:.2f}%',
+                fill=neutral,
+                font=font,
+            )
+
+        del basepen
+
+        buffer = BytesIO()
+        base_layer.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        return discord.File(buffer, filename="presence.png")

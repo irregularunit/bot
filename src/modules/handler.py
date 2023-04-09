@@ -52,8 +52,10 @@ class Error:
         return f"<Error {self.exception.__name__} {self.level.name} {self.message} {self.kwargs}>"
 
     def to_string(self) -> str:
-        partial_exception = UserFeedbackExceptionFactory.create(
-            message=self.message, level=self.level
+        partial_exception: UserFeedbackException = (
+            UserFeedbackExceptionFactory.create(
+                message=self.message, level=self.level
+            )
         )
         return partial_exception.to_string()
 
@@ -160,7 +162,7 @@ class DiscordErrorHandler(BaseExtension):
                 ctx.command.full_parent_name + ctx.command.qualified_name
             )
 
-            partial_exception = UserFeedbackExceptionFactory.create(
+            partial_exception: UserFeedbackException = UserFeedbackExceptionFactory.create(
                 message=(
                     f"Missing required argument `{arg}`.\n"
                     f"{self.bot.config.blank_emote} **|** Usage: `{ctx.prefix}{full_qualified_signature} {signature}`"
@@ -215,6 +217,7 @@ class DiscordErrorHandler(BaseExtension):
             f"Unhandled exception in command {ctx.command.qualified_name}",
             exc_info=exc,
         )
+        return await ctx.safe_send(content="An unexpected error occurred.")
 
 
 async def setup(bot: Bot) -> None:
