@@ -9,7 +9,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, LiteralString
 
-from discord import ButtonStyle, Guild, Interaction, Member, PartialEmoji
+from discord import (
+    ButtonStyle,
+    Guild,
+    HTTPException,
+    Interaction,
+    Member,
+    PartialEmoji,
+)
 from discord.ui import Button, View, button
 
 from models import EmbedBuilder, User
@@ -65,7 +72,7 @@ class EmoteView(View):
 
     @button(label="<", style=ButtonStyle.secondary)
     async def back(
-        self, interaction: Interaction[Bot], button: Button[EmoteView]
+        self, interaction: Interaction[Bot], btn: Button[EmoteView]
     ) -> None:
         self.previous_page()
         await interaction.response.edit_message(
@@ -74,7 +81,7 @@ class EmoteView(View):
 
     @button(label=">", style=ButtonStyle.secondary)
     async def next(
-        self, interaction: Interaction[Bot], button: Button[EmoteView]
+        self, interaction: Interaction[Bot], btn: Button[EmoteView]
     ) -> None:
         self.next_page()
         await interaction.response.edit_message(
@@ -98,7 +105,8 @@ class StealEmoteButton(Button[EmoteView]):
         self.steals: dict[int, int] = {}
 
     async def read_emote(self, unit: EmoteUnit) -> bytes | None:
-        assert self.view is not None
+        if self.view is None:
+            raise AssertionError
         session = self.view.bot.session
 
         async with session.get(unit.emote.url + "?size=64") as resp:
@@ -109,7 +117,8 @@ class StealEmoteButton(Button[EmoteView]):
     async def can_add_emoji(
         self, interaction: Interaction
     ) -> tuple[str, bool]:
-        assert self.view is not None
+        if self.view is None:
+            raise AssertionError
         bot: Bot = self.view.bot
 
         user_id: int = interaction.user.id
@@ -154,7 +163,8 @@ class StealEmoteButton(Button[EmoteView]):
         self.steals[page] = self.steals.get(page, 0) + 1
 
     def generate_embed(self, page: int) -> EmbedBuilder:
-        assert self.view is not None
+        if self.view is None:
+            raise AssertionError
         items = self.view.items
 
         emoji: EmoteUnit = items[page - 1]
@@ -171,13 +181,15 @@ class StealEmoteButton(Button[EmoteView]):
     async def add_emoji(
         self, interaction: Interaction, unit: EmoteUnit
     ) -> None:
-        assert self.view is not None
+        if self.view is None:
+            raise AssertionError
         bot: Bot = self.view.bot
 
         user_id: int = interaction.user.id
         user: User = bot.cached_users[user_id]
         emoji_server: Guild | None = bot.get_guild(user.emoji_server)
-        assert emoji_server is not None
+        if emoji_server is None:
+            raise AssertionError
 
         emote: bytes | None = await self.read_emote(unit)
         if not emote:
@@ -187,9 +199,9 @@ class StealEmoteButton(Button[EmoteView]):
 
         try:
             await emoji_server.create_custom_emoji(name=unit.name, image=emote)
-        except Exception as e:
+        except HTTPException as exc:
             await interaction.response.send_message(
-                f"Couldn't add emote: `{e}`", ephemeral=True
+                f"Couldn't add emote: `{exc}`", ephemeral=True
             )
         else:
             self.updated_stealcounter(self.view.page)
@@ -198,7 +210,8 @@ class StealEmoteButton(Button[EmoteView]):
             )
 
     async def callback(self, interaction: Interaction[Bot]) -> None:
-        assert self.view is not None
+        if self.view is None:
+            raise AssertionError
         items = self.view.items
 
         reason, can_add = await self.can_add_emoji(interaction)

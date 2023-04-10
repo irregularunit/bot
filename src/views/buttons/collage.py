@@ -16,6 +16,8 @@ from PIL import Image
 
 from models import EmbedBuilder
 
+__all__: tuple[str, ...] = ("CollageAvatarButton",)
+
 
 class CollageAvatarButton(discord.ui.Button):
     def __init__(self, **kwargs: Any) -> None:
@@ -62,7 +64,8 @@ class CollageAvatarButton(discord.ui.Button):
     async def get_member_collage(
         self, member: discord.Member | discord.User
     ) -> Optional[discord.File]:
-        assert self.view is not None
+        if self.view is None:
+            raise AssertionError
 
         results = await self.view.bot.pool.fetch(
             "SELECT * FROM avatar_history WHERE uuid = $1 ORDER BY changed_at DESC",
@@ -82,7 +85,8 @@ class CollageAvatarButton(discord.ui.Button):
         return discord.File(buffer, filename="collage.webp")
 
     async def callback(self, interaction: discord.Interaction) -> None:
-        assert self.view is not None
+        if self.view is None:
+            raise AssertionError
 
         view = self.view
         self.disabled = True

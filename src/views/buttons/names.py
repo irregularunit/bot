@@ -13,6 +13,8 @@ import discord
 
 from models import EmbedBuilder
 
+__all__: tuple[str, ...] = ("NameHistoryButton",)
+
 
 class NameHistoryButton(discord.ui.Button):
     def __init__(self, **kwargs: Any) -> None:
@@ -20,7 +22,8 @@ class NameHistoryButton(discord.ui.Button):
         self.disabled = False
 
     async def fetch_name_history(self, user_id: int) -> list[dict[str, Any]]:
-        assert self.view is not None
+        if self.view is None:
+            raise AssertionError
 
         results = await self.view.bot.pool.fetch(
             """
@@ -44,7 +47,8 @@ class NameHistoryButton(discord.ui.Button):
         return ret
 
     async def callback(self, interaction: discord.Interaction) -> None:
-        assert self.view is not None
+        if self.view is None:
+            raise AssertionError
 
         self.disabled = True
         await interaction.response.edit_message(view=self.view)

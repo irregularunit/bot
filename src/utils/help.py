@@ -34,9 +34,9 @@ class MinimalisticHelpCommand(MinimalHelpCommand):
     @override
     def get_ending_note(self) -> str:
         return (
-            "Type `{0}{1} <command>` for more info on a command.\n"
-            "You can also type `{0}{1} <category>` for more info on a category."
-        ).format(self.context.clean_prefix, self.invoked_with)
+            f"Type `{self.context.clean_prefix}{self.invoked_with} <command>` for more info on a command.\n"
+            f"You can also type `{self.context.clean_prefix}{self.invoked_with} <category>` for more info on a category."
+        )
 
     @override
     async def send_pages(self) -> None:

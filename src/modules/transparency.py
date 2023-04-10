@@ -34,7 +34,7 @@ class SafetyPrompt(View):
         self.confirmed: bool = False
 
     @button(label="Yes", style=ButtonStyle.green)
-    async def yes(self, interaction: Interaction, button: Button) -> None:
+    async def yes(self, interaction: Interaction, btn: Button) -> None:
         self.confirmed = True
         await interaction.response.send_message(
             "Thank you for confirming this action. Your request will be processed shortly.",
@@ -43,7 +43,7 @@ class SafetyPrompt(View):
         self.stop()
 
     @button(label="No", style=ButtonStyle.red)
-    async def no(self, interaction: Interaction, button: Button) -> None:
+    async def no(self, interaction: Interaction, btn: Button) -> None:
         await interaction.response.send_message(
             "Action has been cancelled. No changes have been made.",
             ephemeral=True,
@@ -59,8 +59,7 @@ class Transparency(BaseExtension):
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
 
-    @staticmethod
-    async def cog_check(ctx: Context) -> bool:
+    async def cog_check(self, ctx: Context) -> bool:  # skipcq: PYL-R0201
         checks = [commands.guild_only()]
         return await async_all(check(ctx) for check in checks)
 
