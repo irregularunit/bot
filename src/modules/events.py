@@ -389,7 +389,8 @@ class DiscordEventListener(BaseExtension):
             await message.add_reaction(self.bot.config.owo_emote)
         except (
             discord.HTTPException,
-            discord.Forbidden,
+            # HTTPException is an ancestor of Forbidden,
+            # so we don't need to catch it separately.
         ) as exc:
             _log: Logger = log.getChild("manage_prefix_change")
             _log.warning("Failed to add reaction to prefixed message: %s", exc)

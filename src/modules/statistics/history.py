@@ -11,7 +11,7 @@ import datetime
 import inspect
 import math
 import sys
-import time
+import time as _time
 from io import BytesIO
 from math import ceil, cos, radians, sin
 from os import path
@@ -70,7 +70,7 @@ class InfoView(View):
 
     @button(label="Close", style=discord.ButtonStyle.danger)
     async def close_button(
-        self, interaction: discord.Interaction, button: Button
+        self, interaction: discord.Interaction, btn: Button
     ) -> None:
         await interaction.response.defer()
         await interaction.delete_original_response()
@@ -107,9 +107,9 @@ class TrackedDiscordHistory(BaseExtension):
             psql_version_query = await connection.fetchval("SELECT version()")
             psql_version = psql_version_query.split(" ")[1]
 
-            now = time.perf_counter()
+            now = _time.perf_counter()
             await connection.fetchval("SELECT 1")
-            psql_latency = (time.perf_counter() - now) * 1000
+            psql_latency = (_time.perf_counter() - now) * 1000
 
         fields = (
             ("Python", python_version, True),
@@ -550,12 +550,6 @@ class TrackedDiscordHistory(BaseExtension):
             )
 
         del basepen
-
-        # enhance the image quality
-        base_layer = base_layer.resize(
-            (base_layer.width * 2, base_layer.height * 2),
-            resample=Image.BICUBIC,
-        )
 
         buffer = BytesIO()
         base_layer.save(buffer, format="PNG")

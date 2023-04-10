@@ -214,12 +214,11 @@ class Bot(commands.Bot):
                 )
                 continue
             except (
-                OSError,
+                OSError,  # This inclused (TimeoutError)
                 discord.HTTPException,
                 discord.GatewayNotFound,
                 discord.ConnectionClosed,
                 ClientError,
-                asyncio.TimeoutError,
             ) as exc:
                 self.dispatch("disconnect")
                 if not reconnect:
