@@ -12,10 +12,10 @@ from typing import TYPE_CHECKING, LiteralString
 from discord import (
     ButtonStyle,
     Guild,
+    HTTPException,
     Interaction,
     Member,
     PartialEmoji,
-    HTTPException,
 )
 from discord.ui import Button, View, button
 
