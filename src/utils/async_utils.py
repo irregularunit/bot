@@ -142,9 +142,7 @@ class Task:
 
 
 class AsyncABCMeta(ABCMeta):
-    """
-    This metaclass ensures that the ``__ainit__`` method is a coroutine.
-    """
+    """This metaclass ensures that the ``__ainit__`` method is a coroutine."""
 
     def __new__(
         cls,

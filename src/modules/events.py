@@ -279,7 +279,8 @@ class DiscordEventListener(BaseExtension):
             # The user is most likely spamming to increase their score.
             return
 
-        assert message.guild is not None
+        if message.guild is None:
+            raise AssertionError
         await self.bot.redis.client.setex(f"{word}:{uid}", 60, time)
 
         _log: Logger = log.getChild("insert_counting")
@@ -322,13 +323,15 @@ class DiscordEventListener(BaseExtension):
                 .lower()
             )
 
-            if not maybe_safe:
-                if not any(
-                    content.startswith(prefix)
-                    for prefix in self.__owo_std_commands
-                ):
-                    # Custom prefix only message
-                    return
+            if (
+                not maybe_safe
+                and not any(
+                content.startswith(prefix)
+                for prefix in self.__owo_std_commands
+            )
+            ):
+                # Custom prefix only message
+                return
 
         elif any(
             content.startswith(prefix) for prefix in self.__owo_std_commands

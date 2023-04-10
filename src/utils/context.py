@@ -40,7 +40,8 @@ class Context(commands.Context["Bot"]):
         repl: str = f"@{self.me.display_name}".replace("\\", r"\\")
         pattern: re.Pattern[str] = re.compile(rf" < @!?{self.me.id}>")
 
-        assert self.prefix is not None
+        if self.prefix is None:
+            raise AssertionError
         return pattern.sub(repl, self.prefix)
 
     @property

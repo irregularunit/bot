@@ -144,29 +144,28 @@ class Jishaku(BaseExtension, *STANDARD_FEATURES, *OPTIONAL_FEATURES):
 
         try:
             async with ReplResponseReactor(ctx.message):
-                with self.submit(ctx):  # type: ignore
-                    with contextlib.redirect_stdout(printed):
-                        executor = AsyncCodeExecutor(
-                            argument.content, scope, arg_dict=arg_dict
-                        )
-                        start = time.perf_counter()
+                with self.submit(ctx), contextlib.redirect_stdout(printed):
+                    executor = AsyncCodeExecutor(
+                        argument.content, scope, arg_dict=arg_dict
+                    )
+                    start = time.perf_counter()
 
-                        # Absolutely a garbage lib jesus christ. I hate it.
-                        # I hate it so much. I hate it so much. I hate it so much.
-                        async for send, result in AsyncSender(executor):  # type: ignore
-                            self.last_result = result
+                    # Absolutely a garbage lib jesus christ. I hate it.
+                    # I hate it so much. I hate it so much. I hate it so much.
+                    async for send, result in AsyncSender(executor):  # type: ignore
+                        self.last_result = result
 
-                            value = printed.getvalue()
-                            send(
-                                await self.jsk_python_result_handling(
-                                    ctx,
-                                    result,
-                                    start_time=start,
-                                    redirect_stdout=None
-                                    if value == ""
-                                    else value,
-                                )
+                        value = printed.getvalue()
+                        send(
+                            await self.jsk_python_result_handling(
+                                ctx,
+                                result,
+                                start_time=start,
+                                redirect_stdout=None
+                                if value == ""
+                                else value,
                             )
+                        )
         finally:
             scope.clear_intersection(arg_dict)
 

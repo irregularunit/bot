@@ -178,8 +178,8 @@ class Bot(commands.Bot):
         async def init(connection: Connection[Any]) -> None:
             await connection.set_type_codec(
                 "jsonb",
-                encoder=lambda obj: discord.utils._to_json(obj),
-                decoder=lambda data: discord.utils._from_json(data),
+                encoder=discord.utils._to_json,
+                decoder=discord.utils._from_json,
                 schema="pg_catalog",
                 format="text",
             )

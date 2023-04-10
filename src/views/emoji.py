@@ -98,7 +98,8 @@ class StealEmoteButton(Button[EmoteView]):
         self.steals: dict[int, int] = {}
 
     async def read_emote(self, unit: EmoteUnit) -> bytes | None:
-        assert self.view is not None
+        if self.view is None:
+            raise AssertionError
         session = self.view.bot.session
 
         async with session.get(unit.emote.url + "?size=64") as resp:
@@ -109,7 +110,8 @@ class StealEmoteButton(Button[EmoteView]):
     async def can_add_emoji(
         self, interaction: Interaction
     ) -> tuple[str, bool]:
-        assert self.view is not None
+        if self.view is None:
+            raise AssertionError
         bot: Bot = self.view.bot
 
         user_id: int = interaction.user.id
@@ -154,7 +156,8 @@ class StealEmoteButton(Button[EmoteView]):
         self.steals[page] = self.steals.get(page, 0) + 1
 
     def generate_embed(self, page: int) -> EmbedBuilder:
-        assert self.view is not None
+        if self.view is None:
+            raise AssertionError
         items = self.view.items
 
         emoji: EmoteUnit = items[page - 1]
@@ -171,13 +174,15 @@ class StealEmoteButton(Button[EmoteView]):
     async def add_emoji(
         self, interaction: Interaction, unit: EmoteUnit
     ) -> None:
-        assert self.view is not None
+        if self.view is None:
+            raise AssertionError
         bot: Bot = self.view.bot
 
         user_id: int = interaction.user.id
         user: User = bot.cached_users[user_id]
         emoji_server: Guild | None = bot.get_guild(user.emoji_server)
-        assert emoji_server is not None
+        if emoji_server is None:
+            raise AssertionError
 
         emote: bytes | None = await self.read_emote(unit)
         if not emote:
@@ -198,7 +203,8 @@ class StealEmoteButton(Button[EmoteView]):
             )
 
     async def callback(self, interaction: Interaction[Bot]) -> None:
-        assert self.view is not None
+        if self.view is None:
+            raise AssertionError
         items = self.view.items
 
         reason, can_add = await self.can_add_emoji(interaction)

@@ -494,41 +494,38 @@ class TrackedDiscordHistory(BaseExtension):
 
         with Image.open(BytesIO(user)).resize(
             (200, 200), resample=Image.BICUBIC
-        ).convert('RGBA') as canvas:
-            with Image.open("static/images/piechart.png").convert("L") as mask:
-                base_layer.paste(canvas, (50, 50), canvas)
+        ).convert('RGBA') as canvas, Image.open("static/images/piechart.png").convert("L") as mask:
+            base_layer.paste(canvas, (50, 50), canvas)
 
-                basepen = ImageDraw.Draw(pie_layer)
+            basepen = ImageDraw.Draw(pie_layer)
 
+            for k, v in angles.items():
+                if starting == v:
+                    continue
+
+                basepen.pieslice(
+                    ((-5, -5), (305, 305)), starting, v, fill=status[k]
+                )
+                starting = v
+
+            if 360 not in stat_degrees:
+                mult = 1000
+                offset = 150
                 for k, v in angles.items():
-                    if starting == v:
-                        continue
-
-                    basepen.pieslice(
-                        ((-5, -5), (305, 305)), starting, v, fill=status[k]
+                    x = (
+                        offset
+                        + ceil(offset * mult * cos(radians(v))) / mult
                     )
-                    starting = v
-
-                if 360 not in stat_degrees:
-                    mult = 1000
-                    offset = 150
-                    for k, v in angles.items():
-                        x = (
-                            offset
-                            + ceil(offset * mult * cos(radians(v))) / mult
-                        )
-                        y = (
-                            offset
-                            + ceil(offset * mult * sin(radians(v))) / mult
-                        )
-                        basepen.line(
-                            ((offset, offset), (x, y)),
-                            fill=(255, 255, 255, 255),
-                            width=1,
-                        )
-
-                del basepen
-                pie_layer.putalpha(mask)
+                    y = (
+                        offset
+                        + ceil(offset * mult * sin(radians(v))) / mult
+                    )
+                    basepen.line(
+                        ((offset, offset), (x, y)),
+                        fill=(255, 255, 255, 255),
+                        width=1,
+                    )
+            pie_layer.putalpha(mask)
 
         font = ImageFont.truetype("static/fonts/Arial.ttf", 14)
         by = {'Online': 60, 'Idle': 110, 'Do Not Disturb': 160, 'Offline': 210}
@@ -548,8 +545,6 @@ class TrackedDiscordHistory(BaseExtension):
                 fill=neutral,
                 font=font,
             )
-
-        del basepen
 
         buffer = BytesIO()
         base_layer.save(buffer, format="PNG")
