@@ -161,9 +161,7 @@ class Jishaku(BaseExtension, *STANDARD_FEATURES, *OPTIONAL_FEATURES):
                                 ctx,
                                 result,
                                 start_time=start,
-                                redirect_stdout=None
-                                if value == ""
-                                else value,
+                                redirect_stdout=None if value == "" else value,
                             )
                         )
         finally:

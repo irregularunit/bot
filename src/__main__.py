@@ -87,5 +87,7 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    with suppress(KeyboardInterrupt, asyncio.CancelledError, capture=False), asyncio.Runner() as runner:
+    with suppress(
+        KeyboardInterrupt, asyncio.CancelledError, capture=False
+    ), asyncio.Runner() as runner:
         runner.run(main())

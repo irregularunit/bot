@@ -494,7 +494,11 @@ class TrackedDiscordHistory(BaseExtension):
 
         with Image.open(BytesIO(user)).resize(
             (200, 200), resample=Image.BICUBIC
-        ).convert('RGBA') as canvas, Image.open("static/images/piechart.png").convert("L") as mask:
+        ).convert('RGBA') as canvas, Image.open(
+            "static/images/piechart.png"
+        ).convert(
+            "L"
+        ) as mask:
             base_layer.paste(canvas, (50, 50), canvas)
 
             basepen = ImageDraw.Draw(pie_layer)
@@ -512,14 +516,8 @@ class TrackedDiscordHistory(BaseExtension):
                 mult = 1000
                 offset = 150
                 for k, v in angles.items():
-                    x = (
-                        offset
-                        + ceil(offset * mult * cos(radians(v))) / mult
-                    )
-                    y = (
-                        offset
-                        + ceil(offset * mult * sin(radians(v))) / mult
-                    )
+                    x = offset + ceil(offset * mult * cos(radians(v))) / mult
+                    y = offset + ceil(offset * mult * sin(radians(v))) / mult
                     basepen.line(
                         ((offset, offset), (x, y)),
                         fill=(255, 255, 255, 255),

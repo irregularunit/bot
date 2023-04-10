@@ -100,12 +100,9 @@ class DiscordErrorHandler(BaseExtension):
         if not ctx.command:
             return
 
-        if (
-            ctx.cog
-            and (
+        if ctx.cog and (
             ctx.cog._get_overridden_method(ctx.cog.cog_command_error)
             is not None
-        )
         ):
             # The cog which the invoked command belongs to has a local error handler
             return

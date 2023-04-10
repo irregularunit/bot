@@ -323,12 +323,9 @@ class DiscordEventListener(BaseExtension):
                 .lower()
             )
 
-            if (
-                not maybe_safe
-                and not any(
+            if not maybe_safe and not any(
                 content.startswith(prefix)
                 for prefix in self.__owo_std_commands
-            )
             ):
                 # Custom prefix only message
                 return
