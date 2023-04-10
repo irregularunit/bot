@@ -59,7 +59,7 @@ class Transparency(BaseExtension):
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
 
-    async def cog_check(self, ctx: Context) -> bool:
+    async def cog_check(self, ctx: Context) -> bool:  # skipcq: PYL-R0201
         checks = [commands.guild_only()]
         return await async_all(check(ctx) for check in checks)
 

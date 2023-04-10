@@ -45,6 +45,7 @@ if TYPE_CHECKING:
 class Jishaku(BaseExtension, *STANDARD_FEATURES, *OPTIONAL_FEATURES):
     if TYPE_CHECKING:
         bot: Bot
+        last_result: Any
 
     __jsk_instance__: ClassVar[bool] = True
 
