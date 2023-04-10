@@ -56,8 +56,9 @@ class MemberConverter(commands.Converter[discord.Member]):
     def get_id_match(argument):
         return _ID_REGEX.match(argument)
 
+    @staticmethod
     async def query_member_named(
-        self, guild: discord.Guild, argument: str
+        guild: discord.Guild, argument: str
     ) -> Optional[discord.Member]:
         cache = guild._state.member_cache_flags.joined
         if len(argument) > 5 and argument[-5] == '#':
@@ -68,16 +69,15 @@ class MemberConverter(commands.Converter[discord.Member]):
             return discord.utils.get(
                 members, name=username, discriminator=discriminator
             )
-        else:
-            members = await guild.query_members(
-                argument, limit=100, cache=cache
-            )
-            return discord.utils.find(
-                lambda m: m.name == argument or m.nick == argument, members
-            )
 
+        members = await guild.query_members(argument, limit=100, cache=cache)
+        return discord.utils.find(
+            lambda m: argument in (m.name, m.nick), members
+        )
+
+    @staticmethod
     async def query_member_by_id(
-        self, bot: Bot, guild: discord.Guild, user_id: int
+        bot: Bot, guild: discord.Guild, user_id: int
     ) -> Optional[discord.Member]:
         ws = bot._get_websocket(shard_id=guild.shard_id)
         cache = guild._state.member_cache_flags.joined
@@ -149,8 +149,9 @@ class MemberConverter(commands.Converter[discord.Member]):
 class EmojiConverter(commands.Converter[discord.PartialEmoji]):
     """Partial emoji converter, that also checks views."""
 
+    @staticmethod
     async def from_message(
-        self, ctx: Context, message: discord.Message
+        ctx: Context, message: discord.Message
     ) -> Optional[list[discord.PartialEmoji]]:
         message_content: str = message.content
         for embed in message.embeds:

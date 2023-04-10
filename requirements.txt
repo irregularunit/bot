@@ -5,20 +5,20 @@
 
 # Discord Related
 aiohttp[speedup]>=3.7.4,<4
-discord.py==2.2.0
+discord.py==2.2.2
 git+https://github.com/gorialis/jishaku
 
 # Enhancments and Utilities
 bson==0.5.10
-orjson==3.6.4
+orjson==3.8.10
 uvloop==0.17.0; sys_platform != "win32"
 numpy==1.24.2
 
 # Useful and Cosmetic
-aiofiles==0.7.0
+aiofiles==23.1.0
 emoji==1.7.0
 coloredlogs==15.0.1
-python-magic==0.4.24
+python-magic==0.4.27
 python-magic-bin==0.4.14; os_name == "nt"
 Pillow==9.4.0
 

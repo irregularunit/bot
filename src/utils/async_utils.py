@@ -100,7 +100,7 @@ class Task:
                 continue
 
             future.set_exception(
-                exc or asyncio.CancelledError("Object %r closed" % self),
+                exc or asyncio.CancelledError(f"Object {self} closed"),
             )
 
         tasks: list[asyncio.Task[Any] | Coroutine[Any, Any, Any]] = []
@@ -142,9 +142,7 @@ class Task:
 
 
 class AsyncABCMeta(ABCMeta):
-    """
-    This metaclass ensures that the ``__ainit__`` method is a coroutine.
-    """
+    """This metaclass ensures that the ``__ainit__`` method is a coroutine."""
 
     def __new__(
         cls,
@@ -294,37 +292,3 @@ class AsyncInstance(AsyncInstanceType):
             raise TypeError(
                 f"{cls.__name__} cannot override __await__",
             )
-
-
-if __name__ == "__main__":
-
-    async def test_async_class():
-        class Test(AsyncInstance):
-            async def __ainit__(self, a: int, b: int) -> None:
-                self.a = a
-                self.b = b
-
-            async def __adel__(self) -> None:
-                print("closing")
-
-            def add(self) -> int:
-                return self.a + self.b
-
-            def sub(self) -> int:
-                return self.a - self.b
-
-            def __repr__(self) -> str:
-                return (
-                    f"{self.__class__.__name__}({self._args}, {self._kwargs})"
-                )
-
-        inst = await Test(1, 2)
-        print(inst)
-
-        inst.add()
-        inst.sub()
-
-        print(inst.__tasks__)
-        await inst.close()
-
-    asyncio.run(test_async_class())

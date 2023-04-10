@@ -11,7 +11,7 @@ from .converter import *
 from .emojis import *
 from .extension import *
 from .hashsets import *
+from .help import *
 from .protocols import *
 from .time_calendar import *
 from .useful import *
-from .help import *
