@@ -80,7 +80,7 @@ class Bot(commands.Bot):
             intents=intents,
             max_messages=2000,
             owner_ids=[380067729400528896],
-            help_command=MinimalisticHelpCommand()
+            help_command=MinimalisticHelpCommand(),
         )
         self.loop: asyncio.AbstractEventLoop = loop
         self.session: ClientSession = session
@@ -178,8 +178,8 @@ class Bot(commands.Bot):
         async def init(connection: Connection[Any]) -> None:
             await connection.set_type_codec(
                 "jsonb",
-                encoder=lambda obj: discord.utils._to_json(obj),
-                decoder=lambda data: discord.utils._from_json(data),
+                encoder=discord.utils._to_json,
+                decoder=discord.utils._from_json,
                 schema="pg_catalog",
                 format="text",
             )
@@ -214,12 +214,11 @@ class Bot(commands.Bot):
                 )
                 continue
             except (
-                OSError,
+                OSError,  # This inclused (TimeoutError)
                 discord.HTTPException,
                 discord.GatewayNotFound,
                 discord.ConnectionClosed,
                 ClientError,
-                asyncio.TimeoutError,
             ) as exc:
                 self.dispatch("disconnect")
                 if not reconnect:
@@ -281,7 +280,8 @@ class Bot(commands.Bot):
         for i in range(0, len(item), size):
             yield item[i : i + size]
 
-    def iter_extensions(self) -> Iterator[str]:
+    @staticmethod
+    def iter_extensions() -> Iterator[str]:
         extension: list[str] = [
             file
             for file in os.listdir("src/modules")
@@ -290,7 +290,8 @@ class Bot(commands.Bot):
         for file in extension:
             yield f"modules.{file[:-3] if file.endswith('.py') else file}"
 
-    def iter_schemas(self) -> Iterator[pathlib.Path]:
+    @staticmethod
+    def iter_schemas() -> Iterator[pathlib.Path]:
         root: pathlib.Path = pathlib.Path("src/schemas")
         for schema in root.glob("*.sql"):
             # Ignore nasty hidden files

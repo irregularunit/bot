@@ -121,12 +121,12 @@ class suppress(AbstractContextManager[None]):
     def __init__(
         self,
         *exceptions: Type[BaseException],
-        log: Optional[str] = None,
+        _log: Optional[str] = None,
         capture: bool = True,
         **kwargs: Any,
     ) -> None:
         self._exceptions: tuple[Type[BaseException], ...] = exceptions
-        self._log: str = log or "An exception was suppressed: %s"
+        self._log: str = _log or "An exception was suppressed: %s"
         self._capture: bool = capture
         self._kwargs: dict[str, Any] = kwargs
 
@@ -143,7 +143,7 @@ class suppress(AbstractContextManager[None]):
             exc_type, self._exceptions
         ):
             if self._capture:
-                log.info(self._log % self._kwargs)
+                log.info(self._log, self._kwargs)
 
         log.debug("Suppressing exception: %s", exc_type)
         return captured

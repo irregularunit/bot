@@ -56,7 +56,7 @@ class SupportServer(BaseExtension):
         self.cached_welcome_channel: Optional[discord.TextChannel] = None
         self.cached_pit_queue_channel: Optional[discord.TextChannel] = None
 
-    async def cog_check(self, ctx: Context) -> bool:
+    async def cog_check(self, ctx: Context) -> bool:  # skipcq: PYL-R0201
         checks = [
             commands.guild_only(),
             is_support_server(),
@@ -81,7 +81,7 @@ class SupportServer(BaseExtension):
             self.cached_welcome_channel = wchannel
             return self.cached_welcome_channel
 
-        elif which == "pit_queue":
+        if which == "pit_queue":
             pchannel = await self.bot.fetch_channel(PIT_QUEUE_CHANNEL_ID)
 
             if not isinstance(pchannel, discord.TextChannel):
@@ -89,8 +89,8 @@ class SupportServer(BaseExtension):
 
             self.cached_pit_queue_channel = pchannel
             return self.cached_pit_queue_channel
-        else:
-            raise ValueError("Invalid channel type")
+
+        raise ValueError("Invalid channel type")
 
     @commands.Cog.listener("on_member_join")
     async def on_member_join(self, member: discord.Member) -> None:
@@ -110,7 +110,7 @@ class SupportServer(BaseExtension):
                     Please read the rules and enjoy your stay!
                     > {get_random_emoji()} **Rules:** <#{RULE_CHANNEL_ID}>
                     > {get_random_emoji()} **Informaton:** <#{PIT_INFORMATION_CHANNEL_ID}>
-                    
+
                     You're our {join_position}{self.plural(join_position)} member!
                     """
                 ),
@@ -184,21 +184,21 @@ class SupportServer(BaseExtension):
 
         if not member.bot:
             return
-        else:
-            async with self.bot.pool.acquire() as conn:
-                await conn.execute(
-                    "DELETE FROM bot_pits WHERE appid = $1",
-                    member.id,
-                )
 
-            if self.cached_pit_queue_channel is None:
-                self.cached_pit_queue_channel = await self.cache_channel(
-                    "pit_queue"
-                )
-
-            await self.cached_pit_queue_channel.send(
-                f"**ℹ️ |** - {member.name} has been removed from the server.\n"
+        async with self.bot.pool.acquire() as conn:
+            await conn.execute(
+                "DELETE FROM bot_pits WHERE appid = $1",
+                member.id,
             )
+
+        if self.cached_pit_queue_channel is None:
+            self.cached_pit_queue_channel = await self.cache_channel(
+                "pit_queue"
+            )
+
+        await self.cached_pit_queue_channel.send(
+            f"**ℹ️ |** - {member.name} has been removed from the server.\n"
+        )
 
     @commands.group(
         name="add",

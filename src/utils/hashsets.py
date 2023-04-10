@@ -5,8 +5,6 @@
  * For more information, see README.md and LICENSE
 """
 
-import bisect
-
 __all__: tuple[str, ...] = ("check_owo_command", "owo_command_set")
 
 owo_commands: tuple[str, ...] = (
@@ -406,46 +404,3 @@ owo_command_set = set(owo_commands)
 
 def check_owo_command(command: str) -> bool:
     return command in owo_command_set
-
-
-if __name__ == "__main__":
-    import timeit
-
-    commands: list[str] = [
-        "owo",
-        "uwu",
-        "what",
-        "hunt",
-        "huntbot",
-        "PRAY",
-        "pray X",
-    ]
-    commands = list(map(str.lower, commands))
-    owo_commands_set = set(owo_commands)
-
-    for command in commands:
-        if " " in command:
-            command: str = command.split(" ")[0]
-
-        print("Bisect:")  # 0.102 on average (reliable)
-        print(
-            timeit.timeit(
-                "check_owo_command(command)", globals=globals(), number=1000000
-            )
-        )
-
-        print("Generic sorted:")  # 2.32 on average (worst)
-        print(
-            timeit.timeit(
-                "command in owo_commands", globals=globals(), number=1000000
-            )
-        )
-
-        print("Set:")  # 0.018 on average (best)
-        print(
-            timeit.timeit(
-                "command in owo_commands_set",
-                globals=globals(),
-                number=1000000,
-            )
-        )

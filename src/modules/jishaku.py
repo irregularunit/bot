@@ -45,6 +45,7 @@ if TYPE_CHECKING:
 class Jishaku(BaseExtension, *STANDARD_FEATURES, *OPTIONAL_FEATURES):
     if TYPE_CHECKING:
         bot: Bot
+        last_result: Any
 
     __jsk_instance__: ClassVar[bool] = True
 
@@ -59,21 +60,17 @@ class Jishaku(BaseExtension, *STANDARD_FEATURES, *OPTIONAL_FEATURES):
         if isinstance(result, discord.Message):
             return await ctx.send(f"<Message <{result.jump_url}>>")
 
-        elif isinstance(result, discord.File) or isinstance(
-            result, io.BytesIO
-        ):
+        if isinstance(result, (discord.File, io.BytesIO)):
             return await ctx.send(
                 file=result
                 if isinstance(result, discord.File)
                 else discord.File(result, filename="output.png")
             )
 
-        elif isinstance(result, PaginatorInterface):
+        if isinstance(result, PaginatorInterface):
             return await result.send_to(ctx)
 
-        elif isinstance(result, discord.Embed) or isinstance(
-            result, EmbedBuilder
-        ):
+        if isinstance(result, (discord.Embed, EmbedBuilder)):
             return await ctx.send(embed=result)
 
         if not isinstance(result, str):
@@ -148,29 +145,26 @@ class Jishaku(BaseExtension, *STANDARD_FEATURES, *OPTIONAL_FEATURES):
 
         try:
             async with ReplResponseReactor(ctx.message):
-                with self.submit(ctx):  # type: ignore
-                    with contextlib.redirect_stdout(printed):
-                        executor = AsyncCodeExecutor(
-                            argument.content, scope, arg_dict=arg_dict
-                        )
-                        start = time.perf_counter()
+                with self.submit(ctx), contextlib.redirect_stdout(printed):
+                    executor = AsyncCodeExecutor(
+                        argument.content, scope, arg_dict=arg_dict
+                    )
+                    start = time.perf_counter()
 
-                        # Absolutely a garbage lib jesus christ. I hate it.
-                        # I hate it so much. I hate it so much. I hate it so much.
-                        async for send, result in AsyncSender(executor):  # type: ignore
-                            self.last_result = result
+                    # Absolutely a garbage lib jesus christ. I hate it.
+                    # I hate it so much. I hate it so much. I hate it so much.
+                    async for send, result in AsyncSender(executor):  # type: ignore
+                        self.last_result = result
 
-                            value = printed.getvalue()
-                            send(
-                                await self.jsk_python_result_handling(
-                                    ctx,
-                                    result,
-                                    start_time=start,
-                                    redirect_stdout=None
-                                    if value == ""
-                                    else value,
-                                )
+                        value = printed.getvalue()
+                        send(
+                            await self.jsk_python_result_handling(
+                                ctx,
+                                result,
+                                start_time=start,
+                                redirect_stdout=None if value == "" else value,
                             )
+                        )
         finally:
             scope.clear_intersection(arg_dict)
 

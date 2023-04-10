@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 import datetime
-import re
 from logging import Logger, getLogger
 from typing import TYPE_CHECKING, Any, Dict, Optional, Type, Union
 
@@ -20,7 +19,6 @@ from exceptions import (
     UserFeedbackException,
     UserFeedbackExceptionFactory,
 )
-from models import EmbedBuilder
 from utils import BaseExtension
 
 if TYPE_CHECKING:
@@ -87,7 +85,7 @@ class DiscordErrorHandler(BaseExtension):
         return instance
 
     def get_error(self, exception: Type[Exception]) -> Optional[Error]:
-        return self.flyweight.get(exception.__name__, None)
+        return self.flyweight.get(exception.__name__)
 
     @commands.Cog.listener("on_command_error")
     async def on_command_error(
@@ -102,13 +100,12 @@ class DiscordErrorHandler(BaseExtension):
         if not ctx.command:
             return
 
-        if ctx.cog:
-            if (
-                ctx.cog._get_overridden_method(ctx.cog.cog_command_error)
-                is not None
-            ):
-                # The cog which the invoked command belongs to has a local error handler
-                return
+        if ctx.cog and (
+            ctx.cog._get_overridden_method(ctx.cog.cog_command_error)
+            is not None
+        ):
+            # The cog which the invoked command belongs to has a local error handler
+            return
 
         # We handle custom exceptions first
         if isinstance(error, UserFeedbackException):

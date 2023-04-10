@@ -11,7 +11,7 @@ import datetime
 import inspect
 import math
 import sys
-import time
+import time as _time
 from io import BytesIO
 from math import ceil, cos, radians, sin
 from os import path
@@ -65,12 +65,12 @@ class InfoView(View):
             ),
         ]
 
-        for button in buttons:
-            self.add_item(button)
+        for item in buttons:
+            self.add_item(item)
 
     @button(label="Close", style=discord.ButtonStyle.danger)
     async def close_button(
-        self, interaction: discord.Interaction, button: Button
+        self, interaction: discord.Interaction, btn: Button
     ) -> None:
         await interaction.response.defer()
         await interaction.delete_original_response()
@@ -107,9 +107,9 @@ class TrackedDiscordHistory(BaseExtension):
             psql_version_query = await connection.fetchval("SELECT version()")
             psql_version = psql_version_query.split(" ")[1]
 
-            now = time.perf_counter()
+            now = _time.perf_counter()
             await connection.fetchval("SELECT 1")
-            psql_latency = (time.perf_counter() - now) * 1000
+            psql_latency = (_time.perf_counter() - now) * 1000
 
         fields = (
             ("Python", python_version, True),
@@ -175,35 +175,35 @@ class TrackedDiscordHistory(BaseExtension):
 
         if command is None or command == "help":
             return await ctx.safe_send("A ⭐ is much appreciated!", embed=embed)
-        else:
-            cmd = self.bot.get_command(command)
-            if cmd is None:
-                return await ctx.safe_send(
-                    f"{get_random_emoji()} The command you are looking for does not exist.",
-                    embed=embed,
-                )
 
-            src = getattr(cmd, "_original_callback", cmd.callback).__code__
-            filename = src.co_filename
-
-            if not filename:
-                return await ctx.safe_send(
-                    f"{get_random_emoji()} The command you are looking for cannot be found.",
-                    embed=embed,
-                )
-
-            (
-                lines,
-                start,
-            ) = inspect.getsourcelines(src)
-            end = start + len(lines) - 1
-            loc = path.realpath(filename).replace("\\", "/").split("/bot/")[1]
-            view = InfoView(
-                f"{GITHUB_URL}/blob/{BRANCH}/{loc}#L{start}-L{end}",
-                f"{cmd.name.title()}",
+        cmd = self.bot.get_command(command)
+        if cmd is None:
+            return await ctx.safe_send(
+                f"{get_random_emoji()} The command you are looking for does not exist.",
+                embed=embed,
             )
 
-            return await ctx.safe_send(embed=embed, view=view)
+        src = getattr(cmd, "_original_callback", cmd.callback).__code__
+        filename = src.co_filename
+
+        if not filename:
+            return await ctx.safe_send(
+                f"{get_random_emoji()} The command you are looking for cannot be found.",
+                embed=embed,
+            )
+
+        (
+            lines,
+            start,
+        ) = inspect.getsourcelines(src)
+        end = start + len(lines) - 1
+        loc = path.realpath(filename).replace("\\", "/").split("/bot/")[1]
+        view = InfoView(
+            f"{GITHUB_URL}/blob/{BRANCH}/{loc}#L{start}-L{end}",
+            f"{cmd.name.title()}",
+        )
+
+        return await ctx.safe_send(embed=embed, view=view)
 
     @commands.command(name="score", aliases=("sc",))
     async def score_command(
@@ -467,13 +467,14 @@ class TrackedDiscordHistory(BaseExtension):
                 file=canvas,
             )
 
+    @staticmethod
     def create_presence_pie(
-        self, user: bytes, status_time: dict[str, float]
+        user: bytes, status_time: dict[str, float]
     ) -> discord.File:
         total = 86_400
         stat_degrees = {k: (v / total) * 360 for k, v in status_time.items()}
 
-        angles = dict()
+        angles = {}
         starting = -90
 
         for k, v in stat_degrees.items():
@@ -493,41 +494,36 @@ class TrackedDiscordHistory(BaseExtension):
 
         with Image.open(BytesIO(user)).resize(
             (200, 200), resample=Image.BICUBIC
-        ).convert('RGBA') as canvas:
-            with Image.open("static/images/piechart.png").convert("L") as mask:
-                base_layer.paste(canvas, (50, 50), canvas)
+        ).convert('RGBA') as canvas, Image.open(
+            "static/images/piechart.png"
+        ).convert(
+            "L"
+        ) as mask:
+            base_layer.paste(canvas, (50, 50), canvas)
 
-                basepen = ImageDraw.Draw(pie_layer)
+            basepen = ImageDraw.Draw(pie_layer)
 
+            for k, v in angles.items():
+                if starting == v:
+                    continue
+
+                basepen.pieslice(
+                    ((-5, -5), (305, 305)), starting, v, fill=status[k]
+                )
+                starting = v
+
+            if 360 not in stat_degrees:
+                mult = 1000
+                offset = 150
                 for k, v in angles.items():
-                    if starting == v:
-                        continue
-                    else:
-                        basepen.pieslice(
-                            ((-5, -5), (305, 305)), starting, v, fill=status[k]
-                        )
-                        starting = v
-
-                if not 360 in stat_degrees:
-                    mult = 1000
-                    offset = 150
-                    for k, v in angles.items():
-                        x = (
-                            offset
-                            + ceil(offset * mult * cos(radians(v))) / mult
-                        )
-                        y = (
-                            offset
-                            + ceil(offset * mult * sin(radians(v))) / mult
-                        )
-                        basepen.line(
-                            ((offset, offset), (x, y)),
-                            fill=(255, 255, 255, 255),
-                            width=1,
-                        )
-
-                del basepen
-                pie_layer.putalpha(mask)
+                    x = offset + ceil(offset * mult * cos(radians(v))) / mult
+                    y = offset + ceil(offset * mult * sin(radians(v))) / mult
+                    basepen.line(
+                        ((offset, offset), (x, y)),
+                        fill=(255, 255, 255, 255),
+                        width=1,
+                    )
+            pie_layer.putalpha(mask)
 
         font = ImageFont.truetype("static/fonts/Arial.ttf", 14)
         by = {'Online': 60, 'Idle': 110, 'Do Not Disturb': 160, 'Offline': 210}
@@ -547,14 +543,6 @@ class TrackedDiscordHistory(BaseExtension):
                 fill=neutral,
                 font=font,
             )
-
-        del basepen
-
-        # enhance the image quality
-        base_layer = base_layer.resize(
-            (base_layer.width * 2, base_layer.height * 2),
-            resample=Image.BICUBIC,
-        )
 
         buffer = BytesIO()
         base_layer.save(buffer, format="PNG")

@@ -70,7 +70,7 @@ class DiscordEventListener(BaseExtension):
             if exc.status in (403, 404):
                 # Discord has forsaken us. Most likely due to an invalid avatar
                 return
-            elif exc.status >= 500:
+            if exc.status >= 500:
                 # Discord is having issues. Let's try again later
                 await asyncio.sleep(15.0)
                 await self._read_avatar(member)
@@ -105,7 +105,10 @@ class DiscordEventListener(BaseExtension):
                     filename=f"{uuid_lib.uuid4()}.{type_of(item.image)}",
                 ),
             )
-        except Exception as exc:
+        except (
+            discord.HTTPException,  # Forbidden inbound
+            ValueError,  # file is too large (shouldn't happen)
+        ) as exc:
             log.exception("Failed to send message to channel", exc_info=exc)
             self._send_queue.insert(0, item)
             self._is_running = False
@@ -155,7 +158,7 @@ class DiscordEventListener(BaseExtension):
                 if exc.status in (403, 404):
                     # Discord has forsaken us, most likely due to a invalid avatar
                     continue
-                elif exc.status >= 500:
+                if exc.status >= 500:
                     # We pass on this error, it's cause by discord
                     continue
                 log.info(
@@ -279,7 +282,8 @@ class DiscordEventListener(BaseExtension):
             # The user is most likely spamming to increase their score.
             return
 
-        assert message.guild is not None
+        if message.guild is None:
+            raise AssertionError
         await self.bot.redis.client.setex(f"{word}:{uid}", 60, time)
 
         _log: Logger = log.getChild("insert_counting")
@@ -322,13 +326,12 @@ class DiscordEventListener(BaseExtension):
                 .lower()
             )
 
-            if not maybe_safe:
-                if not any(
-                    content.startswith(prefix)
-                    for prefix in self.__owo_std_commands
-                ):
-                    # Custom prefix only message
-                    return
+            if not maybe_safe and not any(
+                content.startswith(prefix)
+                for prefix in self.__owo_std_commands
+            ):
+                # Custom prefix only message
+                return
 
         elif any(
             content.startswith(prefix) for prefix in self.__owo_std_commands
@@ -389,7 +392,8 @@ class DiscordEventListener(BaseExtension):
             await message.add_reaction(self.bot.config.owo_emote)
         except (
             discord.HTTPException,
-            discord.Forbidden,
+            # HTTPException is an ancestor of Forbidden,
+            # so we don't need to catch it separately.
         ) as exc:
             _log: Logger = log.getChild("manage_prefix_change")
             _log.warning("Failed to add reaction to prefixed message: %s", exc)
