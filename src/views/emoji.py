@@ -9,7 +9,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, LiteralString
 
-from discord import ButtonStyle, Guild, Interaction, Member, PartialEmoji
+from discord import (
+    ButtonStyle,
+    Guild,
+    Interaction,
+    Member,
+    PartialEmoji,
+    HTTPException,
+)
 from discord.ui import Button, View, button
 
 from models import EmbedBuilder, User
@@ -65,7 +72,7 @@ class EmoteView(View):
 
     @button(label="<", style=ButtonStyle.secondary)
     async def back(
-        self, interaction: Interaction[Bot], button: Button[EmoteView]
+        self, interaction: Interaction[Bot], btn: Button[EmoteView]
     ) -> None:
         self.previous_page()
         await interaction.response.edit_message(
@@ -74,7 +81,7 @@ class EmoteView(View):
 
     @button(label=">", style=ButtonStyle.secondary)
     async def next(
-        self, interaction: Interaction[Bot], button: Button[EmoteView]
+        self, interaction: Interaction[Bot], btn: Button[EmoteView]
     ) -> None:
         self.next_page()
         await interaction.response.edit_message(
@@ -192,9 +199,9 @@ class StealEmoteButton(Button[EmoteView]):
 
         try:
             await emoji_server.create_custom_emoji(name=unit.name, image=emote)
-        except Exception as e:
+        except HTTPException as exc:
             await interaction.response.send_message(
-                f"Couldn't add emote: `{e}`", ephemeral=True
+                f"Couldn't add emote: `{exc}`", ephemeral=True
             )
         else:
             self.updated_stealcounter(self.view.page)

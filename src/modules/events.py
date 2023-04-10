@@ -105,7 +105,10 @@ class DiscordEventListener(BaseExtension):
                     filename=f"{uuid_lib.uuid4()}.{type_of(item.image)}",
                 ),
             )
-        except Exception as exc:
+        except (
+            discord.HTTPException,  # Forbidden inbound
+            ValueError,  # file is too large (shouldn't happen)
+        ) as exc:
             log.exception("Failed to send message to channel", exc_info=exc)
             self._send_queue.insert(0, item)
             self._is_running = False
