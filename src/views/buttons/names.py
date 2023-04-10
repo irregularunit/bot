@@ -13,6 +13,8 @@ import discord
 
 from models import EmbedBuilder
 
+__all__: tuple[str, ...] = ("NameHistoryButton",)
+
 
 class NameHistoryButton(discord.ui.Button):
     def __init__(self, **kwargs: Any) -> None:

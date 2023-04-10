@@ -5,4 +5,5 @@
  * For more information, see README.md and LICENSE
 """
 
-__all__: tuple[str, ...] = ("CollageAvatarButton", "NameHistoryButton")
+from .collage import *
+from .names import *

@@ -65,8 +65,8 @@ class InfoView(View):
             ),
         ]
 
-        for button in buttons:
-            self.add_item(button)
+        for item in buttons:
+            self.add_item(item)
 
     @button(label="Close", style=discord.ButtonStyle.danger)
     async def close_button(
@@ -175,35 +175,35 @@ class TrackedDiscordHistory(BaseExtension):
 
         if command is None or command == "help":
             return await ctx.safe_send("A ⭐ is much appreciated!", embed=embed)
-        else:
-            cmd = self.bot.get_command(command)
-            if cmd is None:
-                return await ctx.safe_send(
-                    f"{get_random_emoji()} The command you are looking for does not exist.",
-                    embed=embed,
-                )
 
-            src = getattr(cmd, "_original_callback", cmd.callback).__code__
-            filename = src.co_filename
-
-            if not filename:
-                return await ctx.safe_send(
-                    f"{get_random_emoji()} The command you are looking for cannot be found.",
-                    embed=embed,
-                )
-
-            (
-                lines,
-                start,
-            ) = inspect.getsourcelines(src)
-            end = start + len(lines) - 1
-            loc = path.realpath(filename).replace("\\", "/").split("/bot/")[1]
-            view = InfoView(
-                f"{GITHUB_URL}/blob/{BRANCH}/{loc}#L{start}-L{end}",
-                f"{cmd.name.title()}",
+        cmd = self.bot.get_command(command)
+        if cmd is None:
+            return await ctx.safe_send(
+                f"{get_random_emoji()} The command you are looking for does not exist.",
+                embed=embed,
             )
 
-            return await ctx.safe_send(embed=embed, view=view)
+        src = getattr(cmd, "_original_callback", cmd.callback).__code__
+        filename = src.co_filename
+
+        if not filename:
+            return await ctx.safe_send(
+                f"{get_random_emoji()} The command you are looking for cannot be found.",
+                embed=embed,
+            )
+
+        (
+            lines,
+            start,
+        ) = inspect.getsourcelines(src)
+        end = start + len(lines) - 1
+        loc = path.realpath(filename).replace("\\", "/").split("/bot/")[1]
+        view = InfoView(
+            f"{GITHUB_URL}/blob/{BRANCH}/{loc}#L{start}-L{end}",
+            f"{cmd.name.title()}",
+        )
+
+        return await ctx.safe_send(embed=embed, view=view)
 
     @commands.command(name="score", aliases=("sc",))
     async def score_command(
@@ -474,7 +474,7 @@ class TrackedDiscordHistory(BaseExtension):
         total = 86_400
         stat_degrees = {k: (v / total) * 360 for k, v in status_time.items()}
 
-        angles = dict()
+        angles = {}
         starting = -90
 
         for k, v in stat_degrees.items():
@@ -503,13 +503,13 @@ class TrackedDiscordHistory(BaseExtension):
                 for k, v in angles.items():
                     if starting == v:
                         continue
-                    else:
-                        basepen.pieslice(
-                            ((-5, -5), (305, 305)), starting, v, fill=status[k]
-                        )
-                        starting = v
+                    
+                    basepen.pieslice(
+                        ((-5, -5), (305, 305)), starting, v, fill=status[k]
+                    )
+                    starting = v
 
-                if not 360 in stat_degrees:
+                if 360 not in stat_degrees:
                     mult = 1000
                     offset = 150
                     for k, v in angles.items():

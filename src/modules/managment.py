@@ -39,8 +39,7 @@ class Managment(BaseExtension):
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
 
-    @staticmethod
-    async def cog_check(ctx: Context) -> bool:
+    async def cog_check(self, ctx: Context) -> bool:
         checks = [commands.guild_only()]
         return await async_all(check(ctx) for check in checks)
 

@@ -70,7 +70,7 @@ class DiscordEventListener(BaseExtension):
             if exc.status in (403, 404):
                 # Discord has forsaken us. Most likely due to an invalid avatar
                 return
-            elif exc.status >= 500:
+            if exc.status >= 500:
                 # Discord is having issues. Let's try again later
                 await asyncio.sleep(15.0)
                 await self._read_avatar(member)
@@ -155,7 +155,7 @@ class DiscordEventListener(BaseExtension):
                 if exc.status in (403, 404):
                     # Discord has forsaken us, most likely due to a invalid avatar
                     continue
-                elif exc.status >= 500:
+                if exc.status >= 500:
                     # We pass on this error, it's cause by discord
                     continue
                 log.info(

@@ -59,21 +59,17 @@ class Jishaku(BaseExtension, *STANDARD_FEATURES, *OPTIONAL_FEATURES):
         if isinstance(result, discord.Message):
             return await ctx.send(f"<Message <{result.jump_url}>>")
 
-        elif isinstance(result, discord.File) or isinstance(
-            result, io.BytesIO
-        ):
+        if isinstance(result, (discord.File, io.BytesIO)):
             return await ctx.send(
                 file=result
                 if isinstance(result, discord.File)
                 else discord.File(result, filename="output.png")
             )
 
-        elif isinstance(result, PaginatorInterface):
+        if isinstance(result, PaginatorInterface):
             return await result.send_to(ctx)
 
-        elif isinstance(result, discord.Embed) or isinstance(
-            result, EmbedBuilder
-        ):
+        if isinstance(result, (discord.Embed, EmbedBuilder)):
             return await ctx.send(embed=result)
 
         if not isinstance(result, str):

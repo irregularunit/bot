@@ -16,6 +16,8 @@ from PIL import Image
 
 from models import EmbedBuilder
 
+__all__: tuple[str, ...] = ("CollageAvatarButton",)
+
 
 class CollageAvatarButton(discord.ui.Button):
     def __init__(self, **kwargs: Any) -> None:

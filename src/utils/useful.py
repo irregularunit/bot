@@ -143,7 +143,7 @@ class suppress(AbstractContextManager[None]):
             exc_type, self._exceptions
         ):
             if self._capture:
-                log.info(self._log % self._kwargs)
+                log.info(self._log, self._kwargs)
 
         log.debug("Suppressing exception: %s", exc_type)
         return captured
