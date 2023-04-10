@@ -70,9 +70,7 @@ class MemberConverter(commands.Converter[discord.Member]):
                 members, name=username, discriminator=discriminator
             )
 
-        members = await guild.query_members(
-            argument, limit=100, cache=cache
-        )
+        members = await guild.query_members(argument, limit=100, cache=cache)
         return discord.utils.find(
             lambda m: m.name == argument or m.nick == argument, members
         )

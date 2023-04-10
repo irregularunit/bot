@@ -503,7 +503,7 @@ class TrackedDiscordHistory(BaseExtension):
                 for k, v in angles.items():
                     if starting == v:
                         continue
-                    
+
                     basepen.pieslice(
                         ((-5, -5), (305, 305)), starting, v, fill=status[k]
                     )
