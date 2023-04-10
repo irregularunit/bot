@@ -100,7 +100,7 @@ class Task:
                 continue
 
             future.set_exception(
-                exc or asyncio.CancelledError("Object %r closed" % self),
+                exc or asyncio.CancelledError(f"Object {self} closed"),
             )
 
         tasks: list[asyncio.Task[Any] | Coroutine[Any, Any, Any]] = []
