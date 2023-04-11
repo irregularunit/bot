@@ -3,23 +3,19 @@ version = 1
 [[analyzers]]
 name = "python"
 runtime_version = "3.x.x"
-paths = ["src/", "tests/"]
 excludes = ["**/migrations/"]
     [analyzers.meta]
     flake8 = true
 
 [[analyzers]]
 name = "shell"
-paths = ["scripts/"]
 
 [[transformers]]
 name = "black"
-paths = ["src/"]
     [transformers.config]
     line-length = 88
 
 [[transformers]]
 name = "isort"
-paths = ["src/"]
     [transformers.config]
     profile = "black"
