@@ -123,7 +123,7 @@ class SupportServer(BaseExtension):
 
             if client_role is None:
                 raise RuntimeError("Client role not found")
-            
+
             if client_role not in member.roles:
                 await member.add_roles(client_role)
 
