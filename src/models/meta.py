@@ -212,7 +212,7 @@ class ModelManager:
 
         instance: Guild = Guild(
             id=record["gid"],
-            prefixes=["pls", "pls "],
+            prefixes=["s.", "s!"],
             owo_prefix=record["owo_prefix"],
             owo_counting=record["owo_counting"],
             created_at=record["created_at"],
@@ -287,7 +287,7 @@ class ModelManager:
                 "That prefix already exists", ExceptionLevel.WARNING
             )
 
-        if prefix == f"<@!{BOT_ID}>" or prefix == f"<@{BOT_ID}>":
+        if prefix in [f"<@!{BOT_ID}>", f"<@{BOT_ID}>"]:
             raise UserFeedbackExceptionFactory.create(
                 "That prefix is already used and reserved",
                 ExceptionLevel.WARNING,
