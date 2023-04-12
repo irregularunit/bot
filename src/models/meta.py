@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 __all__: tuple[str, ...] = ("User", "Guild", "ModelManager")
 
 log: Logger = getLogger(__name__)
+BOT_ID: int = 1054123882384212078
 
 
 class Model:
@@ -284,6 +285,12 @@ class ModelManager:
         if prefix in guild.prefixes or len(prefix) > 5:
             raise UserFeedbackExceptionFactory.create(
                 "That prefix already exists", ExceptionLevel.WARNING
+            )
+
+        if prefix == f"<@!{BOT_ID}>" or prefix == f"<@{BOT_ID}>":
+            raise UserFeedbackExceptionFactory.create(
+                "That prefix is already used and reserved",
+                ExceptionLevel.WARNING,
             )
 
         query: str = "INSERT INTO guild_prefixes (gid, prefix) VALUES ($1, $2)"

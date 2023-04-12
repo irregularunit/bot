@@ -100,6 +100,53 @@ class Transparency(BaseExtension):
         else:
             await message.edit(content="Action has been cancelled.", view=None)
 
+    @delete.command(name="presence", aliases=("ps",))
+    async def delete_presence(self, ctx: Context) -> None:
+        user = await self.bot.manager.get_or_create_user(ctx.author.id)
+
+        prompt = SafetyPrompt(ctx.author)
+        message: Message | None = await ctx.safe_send(
+            "Are you sure you want to delete your presence? This action is irreversible.",
+            view=prompt,
+        )
+
+        if not message:
+            return
+
+        await prompt.wait()
+
+        if prompt.confirmed:
+            query = "DELETE FROM presence_history WHERE uuid = $1"
+            async with self.bot.pool.acquire() as conn:
+                await conn.execute(query, user.id)
+
+        await message.delete()
+
+    @delete.command(name="history", aliases=("h",))
+    async def delete_history(self, ctx: Context) -> None:
+        user = await self.bot.manager.get_or_create_user(ctx.author.id)
+
+        prompt = SafetyPrompt(ctx.author)
+        message: Message | None = await ctx.safe_send(
+            "Are you sure you want to delete your avatar? This action is irreversible.",
+            view=prompt,
+        )
+
+        if not message:
+            return
+
+        await prompt.wait()
+
+        if prompt.confirmed:
+            query_av = "DELETE FROM avatar_history WHERE uuid = $1"
+            query_item = "DELETE FROM item_history WHERE uuid = $1"
+
+            async with self.bot.pool.acquire() as conn:
+                await conn.execute(query_av, user.id)
+                await conn.execute(query_item, user.id)
+
+        await message.delete()
+
     @commands.command(name="suggest", aliases=("suggestion",))
     async def suggest(self, ctx: Context, *, suggestion: str) -> None:
         owner = self.bot.get_user(

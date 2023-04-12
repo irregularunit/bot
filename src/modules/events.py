@@ -63,7 +63,7 @@ class DiscordEventListener(BaseExtension):
     ) -> None:
         self._send_queue.append(SendQueueItem(user_id, name, image))
 
-    async def _read_avatar(self, member: discord.Member) -> Optional[bytes]:
+    async def _read_avatar(self, member: discord.Member | discord.User) -> Optional[bytes]:
         try:
             avatar: bytes = await member.display_avatar.read()
         except discord.HTTPException as exc:
@@ -243,6 +243,20 @@ class DiscordEventListener(BaseExtension):
                 await connection.execute(
                     query, after.id, "discriminator", after.discriminator
                 )
+
+        if before.avatar != after.avatar:
+            avatar: bytes | None = await self._read_avatar(after)
+            if avatar is None:
+                return
+            
+            scaled_avatar: BytesIO = await self.bot.to_thread(
+                resize_to_limit, BytesIO(avatar)
+            )
+            self.push_item(after.id, after.name, scaled_avatar.getvalue())
+
+            query: str = "SELECT insert_avatar_history_item($1, $2, $3)"
+            async with self.bot.pool.acquire() as connection:
+                await connection.execute(query, after.id, type_of(avatar), avatar)
 
     @commands.Cog.listener("on_guild_remove")
     async def manage_guild_leave(self, guild: discord.Guild) -> None:
