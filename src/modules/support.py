@@ -116,6 +116,17 @@ class SupportServer(BaseExtension):
                 ),
             ).set_thumbnail(url=member.guild.icon)
 
+            CLIENT_ROLE_ID: int = 1094280386537853019
+            client_role: discord.Role | None = member.guild.get_role(
+                CLIENT_ROLE_ID
+            )
+
+            if client_role is None:
+                raise RuntimeError("Client role not found")
+            
+            if client_role not in member.roles:
+                await member.add_roles(client_role)
+
             await self.cached_welcome_channel.send(embed=embed)
         else:
             DRONES_ROLE_ID: int = 1094280797604814868
