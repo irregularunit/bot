@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 from typing import TYPE_CHECKING, Any, Optional
+from typing_extensions import override
 
 import discord
 from discord.ext import commands
@@ -101,6 +102,7 @@ class MemberConverter(commands.Converter[discord.Member]):
             return None
         return members[0]
 
+    @override
     async def convert(self, ctx: Context, argument: str) -> discord.Member:
         bot = ctx.bot
         match = self.get_id_match(argument) or re.match(
@@ -184,15 +186,27 @@ class EmojiConverter(commands.Converter[discord.PartialEmoji]):
                 isinstance(component, discord.ui.Button)
                 and component.emoji is not None
             ):
+                if component.emoji.is_unicode_emoji():
+                    continue
+
                 emojis.append(component.emoji)
 
             if isinstance(component, discord.ui.Select):
                 for option in component.options:
                     if option.emoji is not None:
+                        if option.emoji.is_unicode_emoji():
+                            continue
+        
                         emojis.append(option.emoji)
+
+        for reaction in message.reactions:
+            if reaction.is_custom_emoji():
+                if isinstance(reaction.emoji, discord.PartialEmoji):
+                    emojis.append(reaction.emoji)
 
         return emojis
 
+    @override
     async def convert(
         self, ctx: Context, argument: Optional[str]
     ) -> Optional[list[discord.PartialEmoji]]:
