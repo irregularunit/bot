@@ -63,9 +63,7 @@ class Transparency(BaseExtension):
         checks = [commands.guild_only()]
         return await async_all(check(ctx) for check in checks)
 
-    @commands.group(
-        name="delete", aliases=("rm",), invoke_without_command=False
-    )
+    @commands.group(name="delete", aliases=("rm",), invoke_without_command=False)
     async def delete(self, ctx: Context) -> None:
         ...
 
@@ -90,9 +88,7 @@ class Transparency(BaseExtension):
             if (cached_user := self.bot.cached_users.get(user.id)) is not None:
                 self.bot.cached_users.pop(cached_user.id)
 
-            log.getChild("delete").info(
-                f"Deleted user {user.id} ({ctx.author.name})"
-            )
+            log.getChild("delete").info(f"Deleted user {user.id} ({ctx.author.name})")
             await message.edit(
                 content="Your data has been deleted. Thank you for using our services.",
                 view=None,

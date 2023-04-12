@@ -58,9 +58,7 @@ class DiscordEventListener(BaseExtension):
     def timestamp_to_tztime(timestamp: float) -> datetime:
         return datetime.fromtimestamp(timestamp, tz=timezone.utc)
 
-    def push_item(
-        self, user_id: int, name: str | None, image: bytes, /
-    ) -> None:
+    def push_item(self, user_id: int, name: str | None, image: bytes, /) -> None:
         self._send_queue.append(SendQueueItem(user_id, name, image))
 
     async def _read_avatar(
@@ -116,7 +114,9 @@ class DiscordEventListener(BaseExtension):
             self._is_running = False
             return
 
-        query: str = "INSERT INTO item_history (uuid, item_type, item_value) VALUES ($1, $2, $3)"
+        query: str = (
+            "INSERT INTO item_history (uuid, item_type, item_value) VALUES ($1, $2, $3)"
+        )
 
         async with self.bot.pool.acquire() as connection:
             await connection.execute(
@@ -135,9 +135,9 @@ class DiscordEventListener(BaseExtension):
         _log: Logger = log.getChild("manage_new_guild")
 
         _log.info("New guild joined: %s (%s)", guild.name, guild.id)
-        self.bot.cached_guilds[
+        self.bot.cached_guilds[guild.id] = await self.bot.manager.get_or_create_guild(
             guild.id
-        ] = await self.bot.manager.get_or_create_guild(guild.id)
+        )
 
         members: Sequence[discord.Member] | list[discord.Member] = (
             await guild.chunk() if guild.chunked else guild.members
@@ -258,9 +258,7 @@ class DiscordEventListener(BaseExtension):
 
             query: str = "SELECT insert_avatar_history_item($1, $2, $3)"
             async with self.bot.pool.acquire() as connection:
-                await connection.execute(
-                    query, after.id, type_of(avatar), avatar
-                )
+                await connection.execute(query, after.id, type_of(avatar), avatar)
 
     @commands.Cog.listener("on_guild_remove")
     async def manage_guild_leave(self, guild: discord.Guild) -> None:
@@ -338,22 +336,16 @@ class DiscordEventListener(BaseExtension):
 
         if content.startswith(current_guild.owo_prefix):
             maybe_safe: str = (
-                content[len(current_guild.owo_prefix) :]
-                .strip()
-                .split(" ")[0]
-                .lower()
+                content[len(current_guild.owo_prefix) :].strip().split(" ")[0].lower()
             )
 
             if not maybe_safe and not any(
-                content.startswith(prefix)
-                for prefix in self.__owo_std_commands
+                content.startswith(prefix) for prefix in self.__owo_std_commands
             ):
                 # Custom prefix only message
                 return
 
-        elif any(
-            content.startswith(prefix) for prefix in self.__owo_std_commands
-        ):
+        elif any(content.startswith(prefix) for prefix in self.__owo_std_commands):
             maybe_safe: str = content[3:].strip().split(" ")[0].lower()
         else:
             # Neither custom nor standard prefix
@@ -365,9 +357,7 @@ class DiscordEventListener(BaseExtension):
             await self.insert_counting(message.author.id, message, "hunt", 15)
 
         elif maybe_safe in self.__owo_battle_commands:
-            await self.insert_counting(
-                message.author.id, message, "battle", 15
-            )
+            await self.insert_counting(message.author.id, message, "battle", 15)
 
         elif maybe_safe in owo_command_set:
             # Returns True if the command exists in the hash map, False otherwise.
@@ -386,9 +376,7 @@ class DiscordEventListener(BaseExtension):
             "the current prefix is set to",
         )
 
-        if not any(
-            response in message.content for response in successfuly_responses
-        ):
+        if not any(response in message.content for response in successfuly_responses):
             return
 
         if not (match := re.search(r"`(.*?)`", message.content)):
@@ -397,13 +385,9 @@ class DiscordEventListener(BaseExtension):
         prefix = match.group(1)
 
         if not (guild := self.bot.cached_guilds.get(message.guild.id)):
-            guild = await self.bot.manager.get_or_create_guild(
-                message.guild.id
-            )
+            guild = await self.bot.manager.get_or_create_guild(message.guild.id)
 
-        new_guild: Guild = await self.bot.manager.set_guild_owo_prefix(
-            guild, prefix
-        )
+        new_guild: Guild = await self.bot.manager.set_guild_owo_prefix(guild, prefix)
         self.bot.cached_guilds[message.guild.id] = new_guild
 
         try:
