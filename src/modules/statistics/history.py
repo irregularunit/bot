@@ -452,9 +452,14 @@ class TrackedDiscordHistory(BaseExtension):
                     else:
                         status_time[next_status] = time_diff
 
-            status_time[sorted_presences[0][1][1]] += 86_400 - sum(
-                status_time.values()
-            )
+            try:
+                status_time[sorted_presences[0][1][1]] += 86_400 - sum(
+                    status_time.values()
+                )
+            except KeyError:
+                status_time[sorted_presences[0][1][1]] = 86_400 - sum(
+                    status_time.values()
+                )
 
             canvas: discord.File = await self.bot.to_thread(
                 self.create_presence_pie,
