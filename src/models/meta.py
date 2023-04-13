@@ -56,7 +56,7 @@ class User(Model):
             created_at=record["created_at"],
         )
 
-    async def delete(self, pool: Pool) -> None:
+    async def delete(self, pool: Pool[Record]) -> None:
         to_cascade = [
             "avatar_history",
             "item_history",
@@ -96,7 +96,7 @@ class Guild(Model):
 
 
 class ModelManager:
-    def __init__(self, pool: Pool) -> None:
+    def __init__(self, pool: Pool[Record]) -> None:
         self.pool = pool
 
     async def create_user(self, user_id: int) -> User:

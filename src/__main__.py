@@ -11,7 +11,6 @@ import asyncio
 import logging
 import logging.handlers
 import os
-import sys
 from logging import Logger, getLogger
 from typing import TYPE_CHECKING
 
@@ -31,7 +30,7 @@ try:
     import uvloop  # type: ignore
 
     if os.name in ("posix",):
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())  # type: ignore
 except ImportError:
     log.info("uvloop is not installed, using the default event loop policy.")
     pass

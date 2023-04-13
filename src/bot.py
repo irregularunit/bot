@@ -63,7 +63,7 @@ class Bot(commands.Bot):
         *,
         loop: asyncio.AbstractEventLoop,
         session: ClientSession,
-        pool: Pool,
+        pool: Pool[Record],
         redis: RedisBridge,
     ) -> None:
         intents: discord.Intents = discord.Intents(
@@ -84,7 +84,7 @@ class Bot(commands.Bot):
         )
         self.loop: asyncio.AbstractEventLoop = loop
         self.session: ClientSession = session
-        self.pool: Pool = pool
+        self.pool: Pool[Record] = pool
         self.redis: RedisBridge = redis
 
         self.config: Config = Config()  # type: ignore (my IDE doesn't get it)
@@ -93,7 +93,7 @@ class Bot(commands.Bot):
 
         self.cached_users: dict[int, User] = {}
         self.cached_guilds: dict[int, Guild] = {}
-        self.cached_prefixes: dict[int, re.Pattern] = {}
+        self.cached_prefixes: dict[int, re.Pattern[str]] = {}
 
         self.update_presence.start()
 
@@ -131,7 +131,7 @@ class Bot(commands.Bot):
 
     @override
     async def get_prefix(self, message: discord.Message) -> str | list[str]:
-        prefixes: list[str] = [f"<@!{self.user.id}> ", f"<@{self.user.id}> ", "uwu ", "uwu"]
+        prefixes: list[str] = [f"<@!{self.user.id}> ", f"<@{self.user.id}> ", "s.", "s!"]
         if message.guild is None:
             # No dm's :3
             raise commands.NoPrivateMessage()

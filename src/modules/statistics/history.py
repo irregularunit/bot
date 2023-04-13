@@ -46,7 +46,7 @@ class InfoView(View):
         super().__init__(timeout=timeout)
         self.inv: str = invite
 
-        buttons = [
+        buttons: list[Button["InfoView"]] = [
             Button(
                 label="GitHub",
                 url=GITHUB_URL,
@@ -63,7 +63,7 @@ class InfoView(View):
             self.add_item(button)
 
     @button(label="Close", style=discord.ButtonStyle.danger)
-    async def close_button(self, interaction: discord.Interaction, button: Button) -> None:
+    async def close_button(self, interaction: discord.Interaction, button: Button["InfoView"]) -> None:
         await interaction.response.defer()
         await interaction.delete_original_response()
 
