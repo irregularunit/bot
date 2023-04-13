@@ -33,7 +33,6 @@ try:
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())  # type: ignore
 except ImportError:
     log.info("uvloop is not installed, using the default event loop policy.")
-    pass
 
 os.environ["JISHAKU_NO_UNDERSCORE"] = "true"
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "true"
@@ -52,7 +51,9 @@ async def setup() -> tuple[Bot, Pool[Record], ClientSession]:
         maxBytes=32 * 1024 * 1024,
         backupCount=5,
     )
-    handler.setFormatter(logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s"))
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s")
+    )
 
     logger.addHandler(handler)
     loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
@@ -86,6 +87,7 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    with suppress(KeyboardInterrupt, asyncio.CancelledError, capture=False):
-        with asyncio.Runner() as runner:
-            runner.run(main())
+    with suppress(
+        KeyboardInterrupt, asyncio.CancelledError, capture=False
+    ), asyncio.Runner() as runner:
+        runner.run(main())

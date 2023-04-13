@@ -19,6 +19,7 @@ from typing import (
     Final,
     Iterable,
     Iterator,
+    Literal,
     Optional,
     Self,
     Sequence,
@@ -50,6 +51,7 @@ __all__: tuple[str, ...] = (
     "emote_to_num",
     "resize_to_limit",
     "for_all_callbacks",
+    "no_sentinel",
 )
 
 
@@ -117,10 +119,14 @@ class suppress(AbstractContextManager[None]):
     """
 
     def __init__(
-        self, *exceptions: Type[BaseException], log: Optional[str] = None, capture: bool = True, **kwargs: Any
+        self,
+        *exceptions: Type[BaseException],
+        _log: Optional[str] = None,
+        capture: bool = True,
+        **kwargs: Any,
     ) -> None:
         self._exceptions: tuple[Type[BaseException], ...] = exceptions
-        self._log: str = log or "An exception was suppressed: %s"
+        self._log: str = _log or "An exception was suppressed: %s"
         self._capture: bool = capture
         self._kwargs: dict[str, Any] = kwargs
 
@@ -133,9 +139,11 @@ class suppress(AbstractContextManager[None]):
         exc_value: Optional[BaseException] = None,
         traceback: Optional[TracebackType] = None,
     ) -> Optional[bool]:
-        if captured := exc_type is not None and issubclass(exc_type, self._exceptions):
+        if captured := exc_type is not None and issubclass(
+            exc_type, self._exceptions
+        ):
             if self._capture:
-                log.info(self._log % self._kwargs)
+                log.info(self._log, self._kwargs)
 
         log.debug("Suppressing exception: %s", exc_type)
         return captured
@@ -179,7 +187,7 @@ def type_of(image: bytes) -> Optional[str]:
     def validate_mime(mime: str) -> bool:
         return mime in ("image/png", "image/jpeg", "image/webp", "image/gif")
 
-    mime = magic.from_buffer(image, mime=True)
+    mime: str = magic.from_buffer(image, mime=True)
     if not validate_mime(mime):
         return None
 
@@ -233,7 +241,12 @@ def resize_to_limit(image: BytesIO, limit: int = 8_000_000) -> BytesIO:
                 durations, frames = [], []
                 for frame in ImageSequence.Iterator(canvas):
                     durations.append(frame.info.get("duration", 0))
-                    frames.append(frame.resize([i // 2 for i in frame.size], resample=Image.BICUBIC))
+                    frames.append(
+                        frame.resize(
+                            [i // 2 for i in frame.size],
+                            resample=Image.BICUBIC,
+                        )
+                    )
 
                 frames[0].save(
                     image,
@@ -264,3 +277,14 @@ def for_all_callbacks(decorator: Any) -> Callable[[Type[T]], Type[T]]:
         return cls
 
     return decorate
+
+
+class NoSentinel:
+    __slots__: tuple[()] = ()
+    __eq__: Callable[..., Literal[False]] = lambda self, _: False
+    __bool__: Callable[..., Literal[False]] = lambda self: False
+    __hash__: Callable[..., Literal[0]] = lambda self: 0
+    __repr__: Callable[..., Literal["..."]] = lambda self: '...'
+
+
+no_sentinel: Any = NoSentinel()

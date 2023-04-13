@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 __all__: tuple[str, ...] = ("DiscordEventListener",)
 
 log: Logger = getLogger(__name__)
+AVATAR_CHANNEL_ID: int = 1094282348469702677
 
 
 class SendQueueItem(NamedTuple):
@@ -60,19 +61,23 @@ class DiscordEventListener(BaseExtension):
     def push_item(self, user_id: int, name: str | None, image: bytes, /) -> None:
         self._send_queue.append(SendQueueItem(user_id, name, image))
 
-    async def _read_avatar(self, member: discord.Member) -> Optional[bytes]:
+    async def _read_avatar(
+        self, member: discord.Member | discord.User
+    ) -> Optional[bytes]:
         try:
             avatar: bytes = await member.display_avatar.read()
         except discord.HTTPException as exc:
             if exc.status in (403, 404):
                 # Discord has forsaken us. Most likely due to an invalid avatar
                 return
-            elif exc.status >= 500:
+            if exc.status >= 500:
                 # Discord is having issues. Let's try again later
                 await asyncio.sleep(15.0)
                 await self._read_avatar(member)
             return log.exception(
-                "Unhandled Discord HTTPException while getting avatar for %s (%s)", member.name, member.id
+                "Unhandled Discord HTTPException while getting avatar for %s (%s)",
+                member.name,
+                member.id,
             )
 
         return avatar
@@ -82,26 +87,41 @@ class DiscordEventListener(BaseExtension):
         if not self._send_queue or self._is_running:
             return
 
-        self.cached_channel = self.cached_channel or await self.bot.fetch_channel(1086710517323804924)  # type: ignore
-        assert isinstance(self.cached_channel, discord.TextChannel)
+        avatar_channel = self.cached_channel or await self.bot.fetch_channel(
+            AVATAR_CHANNEL_ID
+        )
+        if not isinstance(avatar_channel, discord.TextChannel):
+            raise RuntimeError("Avatar channel is not a text channel")
+
+        self.cached_channel = avatar_channel
 
         self._is_running = True
         item: SendQueueItem = self._send_queue.pop(0)
         try:
             message: discord.Message = await self.cached_channel.send(
-                content=f"{item.name} ({item.user_id})",
-                file=discord.File(BytesIO(item.image), filename=f"{uuid_lib.uuid4()}.{type_of(item.image)}"),
+                content=f"`{item.name}` `({item.user_id})`",
+                file=discord.File(
+                    BytesIO(item.image),
+                    filename=f"{uuid_lib.uuid4()}.{type_of(item.image)}",
+                ),
             )
-        except Exception as exc:
+        except (
+            discord.HTTPException,  # Forbidden inbound
+            ValueError,  # file is too large (shouldn't happen)
+        ) as exc:
             log.exception("Failed to send message to channel", exc_info=exc)
             self._send_queue.insert(0, item)
             self._is_running = False
             return
 
-        query: str = "INSERT INTO item_history (uuid, item_type, item_value) VALUES ($1, $2, $3)"
+        query: str = (
+            "INSERT INTO item_history (uuid, item_type, item_value) VALUES ($1, $2, $3)"
+        )
 
         async with self.bot.pool.acquire() as connection:
-            await connection.execute(query, item.user_id, "avatar", message.attachments[0].url)
+            await connection.execute(
+                query, item.user_id, "avatar", message.attachments[0].url
+            )
 
         self._is_running = False
         log.info("Succesfully sent item %s to channel", message.content)
@@ -115,7 +135,9 @@ class DiscordEventListener(BaseExtension):
         _log: Logger = log.getChild("manage_new_guild")
 
         _log.info("New guild joined: %s (%s)", guild.name, guild.id)
-        self.bot.cached_guilds[guild.id] = await self.bot.manager.get_or_create_guild(guild.id)
+        self.bot.cached_guilds[guild.id] = await self.bot.manager.get_or_create_guild(
+            guild.id
+        )
 
         members: Sequence[discord.Member] | list[discord.Member] = (
             await guild.chunk() if guild.chunked else guild.members
@@ -126,7 +148,11 @@ class DiscordEventListener(BaseExtension):
                 if len(member.mutual_guilds) > 1:
                     continue
             except AttributeError:
-                _log.debug("Skipping member %s (%s) due to AttributeError", member.name, member.id)
+                _log.debug(
+                    "Skipping member %s (%s) due to AttributeError",
+                    member.name,
+                    member.id,
+                )
                 continue
             try:
                 avatar: bytes = await member.display_avatar.read()
@@ -134,14 +160,22 @@ class DiscordEventListener(BaseExtension):
                 if exc.status in (403, 404):
                     # Discord has forsaken us, most likely due to a invalid avatar
                     continue
-                elif exc.status >= 500:
+                if exc.status >= 500:
                     # We pass on this error, it's cause by discord
                     continue
-                log.info("Unhandled Discord HTTPException while getting avatar for %s (%s)", member.name, member.id)
+                log.info(
+                    "Unhandled Discord HTTPException while getting avatar for %s (%s)",
+                    member.name,
+                    member.id,
+                )
                 continue
 
-            scaled_avatar: BytesIO = await self.bot.to_thread(resize_to_limit, BytesIO(avatar))
-            inst: SendQueueItem = SendQueueItem(member.id, member.name, scaled_avatar.getvalue())
+            scaled_avatar: BytesIO = await self.bot.to_thread(
+                resize_to_limit, BytesIO(avatar)
+            )
+            inst: SendQueueItem = SendQueueItem(
+                member.id, member.name, scaled_avatar.getvalue()
+            )
 
             self._send_queue.append(inst)
             to_queue.append(inst)
@@ -150,7 +184,9 @@ class DiscordEventListener(BaseExtension):
         created_at: datetime = discord.utils.utcnow()
 
         async with self.bot.pool.acquire() as connection:
-            await connection.executemany(member_query, [(member.id, created_at) for member in members])
+            await connection.executemany(
+                member_query, [(member.id, created_at) for member in members]
+            )
             await connection.executemany(self._push_items, to_queue)
 
     @commands.Cog.listener("on_member_join")
@@ -165,7 +201,9 @@ class DiscordEventListener(BaseExtension):
         if avatar is None:
             return
 
-        scaled_avatar: BytesIO = await self.bot.to_thread(resize_to_limit, BytesIO(avatar))
+        scaled_avatar: BytesIO = await self.bot.to_thread(
+            resize_to_limit, BytesIO(avatar)
+        )
         self.push_item(member.id, member.name, scaled_avatar.getvalue())
 
         query: str = "INSERT INTO users (uid, created_at) VALUES ($1, $2) ON CONFLICT DO NOTHING;"
@@ -174,7 +212,9 @@ class DiscordEventListener(BaseExtension):
             await connection.execute(query, member.id, discord.utils.utcnow())
 
     @commands.Cog.listener("on_member_update")
-    async def manage_member_update(self, before: discord.Member, after: discord.Member) -> None:
+    async def manage_member_update(
+        self, before: discord.Member, after: discord.Member
+    ) -> None:
         if before.bot:
             return
 
@@ -183,11 +223,15 @@ class DiscordEventListener(BaseExtension):
             if avatar is None:
                 return
 
-            scaled_avatar: BytesIO = await self.bot.to_thread(resize_to_limit, BytesIO(avatar))
+            scaled_avatar: BytesIO = await self.bot.to_thread(
+                resize_to_limit, BytesIO(avatar)
+            )
             self.push_item(after.id, after.name, scaled_avatar.getvalue())
 
     @commands.Cog.listener("on_user_update")
-    async def manage_user_update(self, before: discord.User, after: discord.User) -> None:
+    async def manage_user_update(
+        self, before: discord.User, after: discord.User
+    ) -> None:
         if before.name != after.name:
             query = "INSERT INTO item_history (uuid, item_type, item_value) VALUES ($1, $2, $3)"
 
@@ -198,7 +242,23 @@ class DiscordEventListener(BaseExtension):
             query = "INSERT INTO item_history (uuid, item_type, item_value) VALUES ($1, $2, $3)"
 
             async with self.bot.pool.acquire() as connection:
-                await connection.execute(query, after.id, "discriminator", after.discriminator)
+                await connection.execute(
+                    query, after.id, "discriminator", after.discriminator
+                )
+
+        if before.avatar != after.avatar:
+            avatar: bytes | None = await self._read_avatar(after)
+            if avatar is None:
+                return
+
+            scaled_avatar: BytesIO = await self.bot.to_thread(
+                resize_to_limit, BytesIO(avatar)
+            )
+            self.push_item(after.id, after.name, scaled_avatar.getvalue())
+
+            query: str = "SELECT insert_avatar_history_item($1, $2, $3)"
+            async with self.bot.pool.acquire() as connection:
+                await connection.execute(query, after.id, type_of(avatar), avatar)
 
     @commands.Cog.listener("on_guild_remove")
     async def manage_guild_leave(self, guild: discord.Guild) -> None:
@@ -208,7 +268,9 @@ class DiscordEventListener(BaseExtension):
             await connection.execute(query, guild.id)
 
     @commands.Cog.listener("on_presence_update")
-    async def manage_presence_update(self, before: discord.Member, after: discord.Member) -> None:
+    async def manage_presence_update(
+        self, before: discord.Member, after: discord.Member
+    ) -> None:
         if before.bot:
             return
 
@@ -229,16 +291,24 @@ class DiscordEventListener(BaseExtension):
                     self._presence_map.get(before.status, "Offline"),
                 )
 
-    async def insert_counting(self, uid: int, message: discord.Message, word: str, time: int) -> None:
+    async def insert_counting(
+        self, uid: int, message: discord.Message, word: str, time: int
+    ) -> None:
         if await self.bot.redis.client.get(f"{word}:{uid}"):
             # The user is most likely spamming to increase their score.
             return
 
-        assert message.guild is not None
+        if message.guild is None:
+            raise AssertionError
         await self.bot.redis.client.setex(f"{word}:{uid}", 60, time)
 
         _log: Logger = log.getChild("insert_counting")
-        _log.debug("Inserting %s for %s at %s", word, uid, message.created_at.timestamp())
+        _log.debug(
+            "Inserting %s for %s at %s",
+            word,
+            uid,
+            message.created_at.timestamp(),
+        )
 
         async with self.bot.pool.acquire() as connection:
             await connection.execute(
@@ -254,19 +324,26 @@ class DiscordEventListener(BaseExtension):
         if not message.guild or message.author.bot:
             return
 
-        if not (current_guild := await self.bot.manager.get_or_create_guild(message.guild.id)).owo_counting:
+        if not (
+            current_guild := await self.bot.manager.get_or_create_guild(
+                message.guild.id
+            )
+        ).owo_counting:
             return
 
         content: str = message.content.lower()
         maybe_safe: str = ""
 
         if content.startswith(current_guild.owo_prefix):
-            maybe_safe: str = content[len(current_guild.owo_prefix) :].strip().split(" ")[0].lower()
+            maybe_safe: str = (
+                content[len(current_guild.owo_prefix) :].strip().split(" ")[0].lower()
+            )
 
-            if not maybe_safe:
-                if not any(content.startswith(prefix) for prefix in self.__owo_std_commands):
-                    # Custom prefix only message
-                    return
+            if not maybe_safe and not any(
+                content.startswith(prefix) for prefix in self.__owo_std_commands
+            ):
+                # Custom prefix only message
+                return
 
         elif any(content.startswith(prefix) for prefix in self.__owo_std_commands):
             maybe_safe: str = content[3:].strip().split(" ")[0].lower()
@@ -317,7 +394,8 @@ class DiscordEventListener(BaseExtension):
             await message.add_reaction(self.bot.config.owo_emote)
         except (
             discord.HTTPException,
-            discord.Forbidden,
+            # HTTPException is an ancestor of Forbidden,
+            # so we don't need to catch it separately.
         ) as exc:
             _log: Logger = log.getChild("manage_prefix_change")
             _log.warning("Failed to add reaction to prefixed message: %s", exc)

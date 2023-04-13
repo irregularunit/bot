@@ -40,7 +40,8 @@ class Context(commands.Context["Bot"]):
         repl: str = f"@{self.me.display_name}".replace("\\", r"\\")
         pattern: re.Pattern[str] = re.compile(rf" < @!?{self.me.id}>")
 
-        assert self.prefix is not None
+        if self.prefix is None:
+            raise AssertionError
         return pattern.sub(repl, self.prefix)
 
     @property
@@ -49,21 +50,30 @@ class Context(commands.Context["Bot"]):
         return isinstance(message, discord.Message) and message or None
 
     @property
-    def referenced_user(self) -> discord.Member | discord.User | Literal[False]:
-        return isinstance(self.reference, discord.Message) and self.reference.author
+    def referenced_user(
+        self,
+    ) -> discord.Member | discord.User | Literal[False]:
+        return (
+            isinstance(self.reference, discord.Message)
+            and self.reference.author
+        )
 
     @property
     def session(self) -> ClientSession:
         return self.bot.session
 
     @override
-    async def send_help(self, command: Optional[commands.Command | str] = None) -> None:
+    async def send_help(
+        self, command: Optional[commands.Command | str] = None
+    ) -> None:
         # Opinionated choice that the help should default to the current command
         # why discord.py doesn't do this is beyond me
         command = command or self.command
         await super().send_help(command)
 
-    async def safe_send(self, content: str = "", **kwargs: Any) -> Optional[discord.Message]:
+    async def safe_send(
+        self, content: str = "", **kwargs: Any
+    ) -> Optional[discord.Message]:
         if kwargs.pop("file", None):
             # Could add the `resize_to_limit` method here, but I don't think it's worth it
             raise RuntimeError("Files are incompatible with safe_send.")
@@ -72,10 +82,15 @@ class Context(commands.Context["Bot"]):
             return await self.send(content, **kwargs)
 
         fp = io.BytesIO(content.encode("utf-8"))
-        return await self.send(file=discord.File(fp, filename="response.txt"), **kwargs)
+        return await self.send(
+            file=discord.File(fp, filename="response.txt"), **kwargs
+        )
 
     async def maybe_reply(
-        self, content: Optional[str] = None, mention_author: bool = False, **kwargs: Any
+        self,
+        content: Optional[str] = None,
+        mention_author: bool = False,
+        **kwargs: Any,
     ) -> Optional[discord.Message]:
         resolved_message: discord.Message | discord.DeletedReferencedMessage | None = (
             self.message.reference and self.message.reference.resolved
@@ -84,9 +99,9 @@ class Context(commands.Context["Bot"]):
             # *pat pat* :>
             resolved_message = None
         try:
-            return await (resolved_message.reply if resolved_message else self.send)(
-                content=content or "", mention_author=mention_author, **kwargs
-            )
+            return await (
+                resolved_message.reply if resolved_message else self.send
+            )(content=content or "", mention_author=mention_author, **kwargs)
         except discord.HTTPException:
             return None
 

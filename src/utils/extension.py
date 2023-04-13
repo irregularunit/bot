@@ -23,8 +23,10 @@ class BaseExtension(commands.Cog):
     def __init__(self, bot: Bot, *args: Any, **kwargs: Any) -> None:
         self.bot: Bot = bot
 
-        pop_mro = next(iter(self.__class__.__mro__))
-        if issubclass(pop_mro, self.__class__) or hasattr(pop_mro, "__jsk_instance__"):
+        pop_mro: type = next(iter(self.__class__.__mro__))
+        if issubclass(pop_mro, self.__class__) or hasattr(
+            pop_mro, "__jsk_instance__"
+        ):
             kwargs["bot"] = bot
 
         super().__init__(*args, **kwargs)
