@@ -15,29 +15,6 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 
-CREATE 
-OR REPLACE FUNCTION limit_presence_history() RETURNS TRIGGER AS $$ BEGIN 
-DELETE FROM 
-  presence_history 
-WHERE 
-  uuid = NEW.uuid 
-  AND changed_at < (
-    SELECT 
-      changed_at 
-    FROM 
-      presence_history 
-    WHERE 
-      uuid = NEW.uuid 
-    ORDER BY 
-      changed_at DESC OFFSET 1 
-    LIMIT 
-      1
-  );
-RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-
 CREATE TABLE IF NOT EXISTS item_history (
   id BIGSERIAL PRIMARY KEY NOT NULL, 
   uuid BIGINT NOT NULL, 
@@ -331,3 +308,26 @@ CREATE TABLE IF NOT EXISTS presence_history (
   status_before TEXT NOT NULL, 
   changed_at TIMESTAMP WITH TIME ZONE DEFAULT (now() AT TIME ZONE 'UTC') NOT NULL
 );
+
+
+CREATE 
+OR REPLACE FUNCTION limit_presence_history() RETURNS TRIGGER AS $$ BEGIN 
+DELETE FROM 
+  presence_history 
+WHERE 
+  uuid = NEW.uuid 
+  AND changed_at < (
+    SELECT 
+      changed_at 
+    FROM 
+      presence_history 
+    WHERE 
+      uuid = NEW.uuid 
+    ORDER BY 
+      changed_at DESC OFFSET 1 
+    LIMIT 
+      1
+  );
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;

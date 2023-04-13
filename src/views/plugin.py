@@ -50,13 +50,9 @@ class PluginView(View):
         if self.message is not None:
             await self.message.edit(view=self)
 
-    async def interaction_check(
-        self, interaction: discord.Interaction
-    ) -> bool:
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user and interaction.user.id == self.ctx.author.id:
             return True
 
-        await interaction.response.send_message(
-            "You cannot use this, sorry. :(", ephemeral=True
-        )
+        await interaction.response.send_message("You cannot use this, sorry. :(", ephemeral=True)
         return False

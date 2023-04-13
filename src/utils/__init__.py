@@ -14,4 +14,5 @@ from .hashsets import *
 from .help import *
 from .protocols import *
 from .time_calendar import *
+from .timer import *
 from .useful import *

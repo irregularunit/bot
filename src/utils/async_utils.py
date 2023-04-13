@@ -11,16 +11,7 @@ import asyncio
 import logging
 from abc import ABCMeta
 from contextlib import suppress
-from typing import (
-    Any,
-    Callable,
-    Coroutine,
-    Generator,
-    MutableSet,
-    Optional,
-    Self,
-    overload,
-)
+from typing import Any, Callable, Coroutine, Generator, MutableSet, Optional, Self, overload
 from weakref import WeakSet
 
 __all__: tuple[str, ...] = ("AsyncInstance",)
@@ -52,7 +43,7 @@ class Task:
         Whether or not this store is closed.
     """
 
-    def __init__(self, loop: asyncio.AbstractEventLoop):
+    def __init__(self, loop: asyncio.AbstractEventLoop) -> None:
         self.tasks: MutableSet[asyncio.Task[Any]] = WeakSet()
         self.futures: MutableSet[asyncio.Future[Any]] = WeakSet()
         self.children: MutableSet[Task] = WeakSet()
@@ -122,9 +113,7 @@ class Task:
                 )
                 continue
 
-            if asyncio.iscoroutine(result) or isinstance(
-                result, asyncio.Future
-            ):
+            if asyncio.iscoroutine(result) or isinstance(result, asyncio.Future):
                 # Simply add our coros to the list of tasks to wait on.
                 tasks.append(result)  # type: ignore
 

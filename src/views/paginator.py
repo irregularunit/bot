@@ -69,27 +69,17 @@ class Paginator(View):
         )
 
     @button()
-    async def first(
-        self, interaction: Interaction, btn: Button[Paginator]
-    ) -> None:
+    async def first(self, interaction: Interaction, btn: Button[Paginator]) -> None:
         await self.edit(interaction, page=0)
 
     @button()
-    async def back(
-        self, interaction: Interaction, btn: Button[Paginator]
-    ) -> None:
+    async def back(self, interaction: Interaction, btn: Button[Paginator]) -> None:
         await self.edit(interaction, page=max(self.page - 1, 0))
 
     @button()
-    async def next(
-        self, interaction: Interaction, btn: Button[Paginator]
-    ) -> None:
-        await self.edit(
-            interaction, page=min(self.page + 1, len(self.items) - 1)
-        )
+    async def next(self, interaction: Interaction, btn: Button[Paginator]) -> None:
+        await self.edit(interaction, page=min(self.page + 1, len(self.items) - 1))
 
     @button()
-    async def skip(
-        self, interaction: Interaction, btn: Button[Paginator]
-    ) -> None:
+    async def skip(self, interaction: Interaction, btn: Button[Paginator]) -> None:
         await self.edit(interaction, page=len(self.items) - 1)

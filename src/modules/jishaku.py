@@ -20,11 +20,7 @@ from jishaku.features.baseclass import Feature
 from jishaku.features.python import PythonFeature
 from jishaku.flags import Flags
 from jishaku.functools import AsyncSender
-from jishaku.paginators import (
-    PaginatorInterface,
-    WrappedPaginator,
-    use_file_check,
-)
+from jishaku.paginators import PaginatorInterface, WrappedPaginator, use_file_check
 from jishaku.repl import AsyncCodeExecutor
 from jishaku.repl.repl_builtins import get_var_dict_from_ctx
 
@@ -88,9 +84,7 @@ class Jishaku(BaseExtension, *STANDARD_FEATURES, *OPTIONAL_FEATURES):
             if redirect_stdout:
                 result = f"{stripper.format(redirect_stdout)}\n{result}"
 
-            return await ctx.send(
-                result.replace(self.bot.http.token or "", "[token omitted]")
-            )
+            return await ctx.send(result.replace(self.bot.http.token or "", "[token omitted]"))
 
         if use_file_check(ctx, len(result)):
             # Discord's desktop and web client now supports an interactive file content
@@ -99,14 +93,10 @@ class Jishaku(BaseExtension, *STANDARD_FEATURES, *OPTIONAL_FEATURES):
             # long results, it will now be prioritized over PaginatorInterface if the
             # resultant content is below the filesize threshold
             return await ctx.send(
-                file=discord.File(
-                    filename="output.py", fp=io.BytesIO(result.encode("utf-8"))
-                )
+                file=discord.File(filename="output.py", fp=io.BytesIO(result.encode("utf-8")))
             )
 
-        paginator = WrappedPaginator(
-            prefix="```py", suffix="```", max_size=1985
-        )
+        paginator = WrappedPaginator(prefix="```py", suffix="```", max_size=1985)
 
         if redirect_stdout:
             for chunk in self.bot.chunker(
@@ -146,9 +136,7 @@ class Jishaku(BaseExtension, *STANDARD_FEATURES, *OPTIONAL_FEATURES):
         try:
             async with ReplResponseReactor(ctx.message):
                 with self.submit(ctx), contextlib.redirect_stdout(printed):
-                    executor = AsyncCodeExecutor(
-                        argument.content, scope, arg_dict=arg_dict
-                    )
+                    executor = AsyncCodeExecutor(argument.content, scope, arg_dict=arg_dict)
                     start = time.perf_counter()
 
                     # Absolutely a garbage lib jesus christ. I hate it.

@@ -64,9 +64,7 @@ class EmbedBuilder(Embed):
         instance = cls(**kwargs)
 
         instance.description = message.content
-        instance.set_author(
-            name=author.display_name, icon_url=author.display_avatar
-        )
+        instance.set_author(name=author.display_name, icon_url=author.display_avatar)
 
         if (
             message.attachments
@@ -78,9 +76,7 @@ class EmbedBuilder(Embed):
         return instance
 
     @classmethod
-    def from_action(
-        cls: Type[Self], *, title: str, gif: str, footer: Optional[str] = None
-    ) -> Self:
+    def from_action(cls: Type[Self], *, title: str, gif: str, footer: Optional[str] = None) -> Self:
         instance: Self = cls(title=title).set_image(url=gif)
         if footer:
             instance.set_footer(text=footer)
