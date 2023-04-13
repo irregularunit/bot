@@ -99,9 +99,7 @@ class Bot(commands.Bot):
 
     @staticmethod
     @discord.utils.copy_doc(asyncio.to_thread)
-    async def to_thread(
-        func: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs
-    ) -> T:
+    async def to_thread(func: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs) -> T:
         return await asyncio.to_thread(func, *args, **kwargs)
 
     @override
@@ -160,9 +158,7 @@ class Bot(commands.Bot):
 
     @classmethod
     @discord.utils.copy_doc(asyncpg.create_pool)
-    async def create_pool(
-        cls: Type[BotT], *, dsn: str, **kwargs: Any
-    ) -> Optional[Pool[Record]]:
+    async def create_pool(cls: Type[BotT], *, dsn: str, **kwargs: Any) -> Optional[Pool[Record]]:
         prep_init: Any | None = kwargs.pop("init", None)
 
         async def init(connection: Connection[Any]) -> None:
@@ -333,9 +329,7 @@ class Bot(commands.Bot):
         }
 
         activity_type, message = random.choice(list(presences.items()))
-        await self.change_presence(
-            activity=discord.Activity(type=activity_type, name=message)
-        )
+        await self.change_presence(activity=discord.Activity(type=activity_type, name=message))
 
     @update_presence.before_loop
     async def before_presence(self) -> None:

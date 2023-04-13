@@ -44,9 +44,7 @@ class RedisBridge:
         uri: str,
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
-        self._loop: asyncio.AbstractEventLoop = (
-            loop or asyncio.get_event_loop()
-        )
+        self._loop: asyncio.AbstractEventLoop = loop or asyncio.get_event_loop()
         self._pool: ConnectionPool = ConnectionPool.from_url(uri)
         self._redis: Redis = Redis(connection_pool=self._pool)
 
@@ -80,9 +78,7 @@ class RedisBridge:
                 log.info("Successfully established connection to Redis")
                 break
             except RedisError:
-                log.warning(
-                    "Redis connection failed, retrying in 5 seconds..."
-                )
+                log.warning("Redis connection failed, retrying in 5 seconds...")
                 await asyncio.sleep(5.0)
 
     @classmethod

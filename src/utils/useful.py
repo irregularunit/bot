@@ -139,9 +139,7 @@ class suppress(AbstractContextManager[None]):
         exc_value: Optional[BaseException] = None,
         traceback: Optional[TracebackType] = None,
     ) -> Optional[bool]:
-        if captured := exc_type is not None and issubclass(
-            exc_type, self._exceptions
-        ):
+        if captured := exc_type is not None and issubclass(exc_type, self._exceptions):
             if self._capture:
                 log.info(self._log, self._kwargs)
 

@@ -46,14 +46,11 @@ class MinimalisticHelpCommand(MinimalHelpCommand):
 
         if not self.context.bot.user:
             raise RuntimeError(
-                "Bot hasn't been logged in yet. "
-                "Shouldn't be possible to get here."
+                "Bot hasn't been logged in yet. " "Shouldn't be possible to get here."
             )
 
         for page in self.paginator.pages:
             embed: EmbedBuilder = EmbedBuilder.factory(
                 cast(Context, self.context), description=page
-            ).set_author(
-                name="Help Menu", icon_url=self.context.bot.user.display_avatar
-            )
+            ).set_author(name="Help Menu", icon_url=self.context.bot.user.display_avatar)
             await destination.send(embed=embed)

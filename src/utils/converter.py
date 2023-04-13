@@ -58,16 +58,12 @@ class MemberConverter(commands.Converter[discord.Member]):
         return _ID_REGEX.match(argument)
 
     @staticmethod
-    async def query_member_named(
-        guild: discord.Guild, argument: str
-    ) -> Optional[discord.Member]:
+    async def query_member_named(guild: discord.Guild, argument: str) -> Optional[discord.Member]:
         cache = guild._state.member_cache_flags.joined
         if len(argument) > 5 and argument[-5] == '#':
             username, _, discriminator = argument.rpartition('#')
             members = await guild.query_members(username, limit=100, cache=cache)
-            return discord.utils.get(
-                members, name=username, discriminator=discriminator
-            )
+            return discord.utils.get(members, name=username, discriminator=discriminator)
 
         members = await guild.query_members(argument, limit=100, cache=cache)
         return discord.utils.find(lambda m: argument in (m.name, m.nick), members)
@@ -99,9 +95,7 @@ class MemberConverter(commands.Converter[discord.Member]):
     @override
     async def convert(self, ctx: Context, argument: str) -> discord.Member:
         bot = ctx.bot
-        match = self.get_id_match(argument) or re.match(
-            r'<@!?([0-9]{15,20})>$', argument
-        )
+        match = self.get_id_match(argument) or re.match(r'<@!?([0-9]{15,20})>$', argument)
         guild = ctx.guild
         result = None
         user_id = None
@@ -156,9 +150,9 @@ class EmojiConverter(commands.Converter[discord.PartialEmoji]):
 
             message_content += f"{embed.title} {embed.description}"
 
-        message_emojis: Optional[
-            list[tuple[str, str, str]]
-        ] = _CUSTOM_EMOJI_REGEX.findall(message_content)
+        message_emojis: Optional[list[tuple[str, str, str]]] = _CUSTOM_EMOJI_REGEX.findall(
+            message_content
+        )
 
         if not message_emojis:
             return None
@@ -218,9 +212,9 @@ class EmojiConverter(commands.Converter[discord.PartialEmoji]):
 
         if not emojis:
             async for message in ctx.channel.history(limit=10):
-                maybe_found: list[
-                    discord.PartialEmoji
-                ] | None = await self.from_message(ctx, message)
+                maybe_found: list[discord.PartialEmoji] | None = await self.from_message(
+                    ctx, message
+                )
                 if maybe_found:
                     emojis.extend(maybe_found)
 

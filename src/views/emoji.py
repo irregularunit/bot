@@ -9,14 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, LiteralString
 
-from discord import (
-    ButtonStyle,
-    Guild,
-    HTTPException,
-    Interaction,
-    Member,
-    PartialEmoji,
-)
+from discord import ButtonStyle, Guild, HTTPException, Interaction, Member, PartialEmoji
 from discord.ui import Button, View, button
 
 from models import EmbedBuilder, User
@@ -71,37 +64,23 @@ class EmoteView(View):
         self.page = (self.page - 1) % len(self.items)
 
     @button(label="<", style=ButtonStyle.secondary)
-    async def back(
-        self, interaction: Interaction[Bot], btn: Button[EmoteView]
-    ) -> None:
+    async def back(self, interaction: Interaction[Bot], btn: Button[EmoteView]) -> None:
         self.previous_page()
-        await interaction.response.edit_message(
-            embed=self.generate_page(self.items[self.page])
-        )
+        await interaction.response.edit_message(embed=self.generate_page(self.items[self.page]))
 
     @button(label=">", style=ButtonStyle.secondary)
-    async def next(
-        self, interaction: Interaction[Bot], btn: Button[EmoteView]
-    ) -> None:
+    async def next(self, interaction: Interaction[Bot], btn: Button[EmoteView]) -> None:
         self.next_page()
-        await interaction.response.edit_message(
-            embed=self.generate_page(self.items[self.page])
-        )
+        await interaction.response.edit_message(embed=self.generate_page(self.items[self.page]))
 
     async def send_to_ctx(self, ctx: Context) -> None:
-        self.add_item(
-            StealEmoteButton(label="Steal", style=ButtonStyle.primary)
-        )
-        await ctx.send(
-            embed=self.generate_page(self.items[self.page]), view=self
-        )
+        self.add_item(StealEmoteButton(label="Steal", style=ButtonStyle.primary))
+        await ctx.send(embed=self.generate_page(self.items[self.page]), view=self)
 
 
 class StealEmoteButton(Button[EmoteView]):
     def __init__(self, label: str, style: ButtonStyle) -> None:
-        super().__init__(
-            label=label, style=style, emoji="🕵", custom_id="steal"
-        )
+        super().__init__(label=label, style=style, emoji="🕵", custom_id="steal")
         self.steals: dict[int, int] = {}
 
     async def read_emote(self, unit: EmoteUnit) -> bytes | None:
@@ -114,9 +93,7 @@ class StealEmoteButton(Button[EmoteView]):
                 return await resp.read()
             return None
 
-    async def can_add_emoji(
-        self, interaction: Interaction
-    ) -> tuple[str, bool]:
+    async def can_add_emoji(self, interaction: Interaction) -> tuple[str, bool]:
         if self.view is None:
             raise AssertionError
         bot: Bot = self.view.bot
@@ -178,9 +155,7 @@ class StealEmoteButton(Button[EmoteView]):
             )
         )
 
-    async def add_emoji(
-        self, interaction: Interaction, unit: EmoteUnit
-    ) -> None:
+    async def add_emoji(self, interaction: Interaction, unit: EmoteUnit) -> None:
         if self.view is None:
             raise AssertionError
         bot: Bot = self.view.bot
@@ -193,21 +168,15 @@ class StealEmoteButton(Button[EmoteView]):
 
         emote: bytes | None = await self.read_emote(unit)
         if not emote:
-            return await interaction.response.send_message(
-                "Couldn't read emote...", ephemeral=True
-            )
+            return await interaction.response.send_message("Couldn't read emote...", ephemeral=True)
 
         try:
             await emoji_server.create_custom_emoji(name=unit.name, image=emote)
         except HTTPException as exc:
-            await interaction.response.send_message(
-                f"Couldn't add emote: `{exc}`", ephemeral=True
-            )
+            await interaction.response.send_message(f"Couldn't add emote: `{exc}`", ephemeral=True)
         else:
             self.updated_stealcounter(self.view.page)
-            await interaction.response.edit_message(
-                embed=self.generate_embed(self.view.page)
-            )
+            await interaction.response.edit_message(embed=self.generate_embed(self.view.page))
 
     async def callback(self, interaction: Interaction[Bot]) -> None:
         if self.view is None:
@@ -216,8 +185,6 @@ class StealEmoteButton(Button[EmoteView]):
 
         reason, can_add = await self.can_add_emoji(interaction)
         if not can_add:
-            return await interaction.response.send_message(
-                reason, ephemeral=True
-            )
+            return await interaction.response.send_message(reason, ephemeral=True)
 
         await self.add_emoji(interaction, items[self.view.page])

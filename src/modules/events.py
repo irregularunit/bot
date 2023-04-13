@@ -61,9 +61,7 @@ class DiscordEventListener(BaseExtension):
     def push_item(self, user_id: int, name: str | None, image: bytes, /) -> None:
         self._send_queue.append(SendQueueItem(user_id, name, image))
 
-    async def _read_avatar(
-        self, member: discord.Member | discord.User
-    ) -> Optional[bytes]:
+    async def _read_avatar(self, member: discord.Member | discord.User) -> Optional[bytes]:
         try:
             avatar: bytes = await member.display_avatar.read()
         except discord.HTTPException as exc:
@@ -87,9 +85,7 @@ class DiscordEventListener(BaseExtension):
         if not self._send_queue or self._is_running:
             return
 
-        avatar_channel = self.cached_channel or await self.bot.fetch_channel(
-            AVATAR_CHANNEL_ID
-        )
+        avatar_channel = self.cached_channel or await self.bot.fetch_channel(AVATAR_CHANNEL_ID)
         if not isinstance(avatar_channel, discord.TextChannel):
             raise RuntimeError("Avatar channel is not a text channel")
 
@@ -114,14 +110,10 @@ class DiscordEventListener(BaseExtension):
             self._is_running = False
             return
 
-        query: str = (
-            "INSERT INTO item_history (uuid, item_type, item_value) VALUES ($1, $2, $3)"
-        )
+        query: str = "INSERT INTO item_history (uuid, item_type, item_value) VALUES ($1, $2, $3)"
 
         async with self.bot.pool.acquire() as connection:
-            await connection.execute(
-                query, item.user_id, "avatar", message.attachments[0].url
-            )
+            await connection.execute(query, item.user_id, "avatar", message.attachments[0].url)
 
         self._is_running = False
         log.info("Succesfully sent item %s to channel", message.content)
@@ -135,9 +127,7 @@ class DiscordEventListener(BaseExtension):
         _log: Logger = log.getChild("manage_new_guild")
 
         _log.info("New guild joined: %s (%s)", guild.name, guild.id)
-        self.bot.cached_guilds[guild.id] = await self.bot.manager.get_or_create_guild(
-            guild.id
-        )
+        self.bot.cached_guilds[guild.id] = await self.bot.manager.get_or_create_guild(guild.id)
 
         members: Sequence[discord.Member] | list[discord.Member] = (
             await guild.chunk() if guild.chunked else guild.members
@@ -170,17 +160,15 @@ class DiscordEventListener(BaseExtension):
                 )
                 continue
 
-            scaled_avatar: BytesIO = await self.bot.to_thread(
-                resize_to_limit, BytesIO(avatar)
-            )
-            inst: SendQueueItem = SendQueueItem(
-                member.id, member.name, scaled_avatar.getvalue()
-            )
+            scaled_avatar: BytesIO = await self.bot.to_thread(resize_to_limit, BytesIO(avatar))
+            inst: SendQueueItem = SendQueueItem(member.id, member.name, scaled_avatar.getvalue())
 
             self._send_queue.append(inst)
             to_queue.append(inst)
 
-        member_query: str = "INSERT INTO users (uuid, created_at) VALUES ($1, $2) ON CONFLICT DO NOTHING;"
+        member_query: str = (
+            "INSERT INTO users (uuid, created_at) VALUES ($1, $2) ON CONFLICT DO NOTHING;"
+        )
         created_at: datetime = discord.utils.utcnow()
 
         async with self.bot.pool.acquire() as connection:
@@ -201,9 +189,7 @@ class DiscordEventListener(BaseExtension):
         if avatar is None:
             return
 
-        scaled_avatar: BytesIO = await self.bot.to_thread(
-            resize_to_limit, BytesIO(avatar)
-        )
+        scaled_avatar: BytesIO = await self.bot.to_thread(resize_to_limit, BytesIO(avatar))
         self.push_item(member.id, member.name, scaled_avatar.getvalue())
 
         query: str = "INSERT INTO users (uid, created_at) VALUES ($1, $2) ON CONFLICT DO NOTHING;"
@@ -212,9 +198,7 @@ class DiscordEventListener(BaseExtension):
             await connection.execute(query, member.id, discord.utils.utcnow())
 
     @commands.Cog.listener("on_member_update")
-    async def manage_member_update(
-        self, before: discord.Member, after: discord.Member
-    ) -> None:
+    async def manage_member_update(self, before: discord.Member, after: discord.Member) -> None:
         if before.bot:
             return
 
@@ -223,15 +207,11 @@ class DiscordEventListener(BaseExtension):
             if avatar is None:
                 return
 
-            scaled_avatar: BytesIO = await self.bot.to_thread(
-                resize_to_limit, BytesIO(avatar)
-            )
+            scaled_avatar: BytesIO = await self.bot.to_thread(resize_to_limit, BytesIO(avatar))
             self.push_item(after.id, after.name, scaled_avatar.getvalue())
 
     @commands.Cog.listener("on_user_update")
-    async def manage_user_update(
-        self, before: discord.User, after: discord.User
-    ) -> None:
+    async def manage_user_update(self, before: discord.User, after: discord.User) -> None:
         if before.name != after.name:
             query = "INSERT INTO item_history (uuid, item_type, item_value) VALUES ($1, $2, $3)"
 
@@ -242,18 +222,14 @@ class DiscordEventListener(BaseExtension):
             query = "INSERT INTO item_history (uuid, item_type, item_value) VALUES ($1, $2, $3)"
 
             async with self.bot.pool.acquire() as connection:
-                await connection.execute(
-                    query, after.id, "discriminator", after.discriminator
-                )
+                await connection.execute(query, after.id, "discriminator", after.discriminator)
 
         if before.avatar != after.avatar:
             avatar: bytes | None = await self._read_avatar(after)
             if avatar is None:
                 return
 
-            scaled_avatar: BytesIO = await self.bot.to_thread(
-                resize_to_limit, BytesIO(avatar)
-            )
+            scaled_avatar: BytesIO = await self.bot.to_thread(resize_to_limit, BytesIO(avatar))
             self.push_item(after.id, after.name, scaled_avatar.getvalue())
 
             query: str = "SELECT insert_avatar_history_item($1, $2, $3)"
@@ -268,9 +244,7 @@ class DiscordEventListener(BaseExtension):
             await connection.execute(query, guild.id)
 
     @commands.Cog.listener("on_presence_update")
-    async def manage_presence_update(
-        self, before: discord.Member, after: discord.Member
-    ) -> None:
+    async def manage_presence_update(self, before: discord.Member, after: discord.Member) -> None:
         if before.bot:
             return
 
@@ -281,7 +255,9 @@ class DiscordEventListener(BaseExtension):
                 return
 
             await self.bot.redis.client.setex(f"status:{after.id}", 3, 0)
-            query: str = "INSERT INTO presence_history (uuid, status, status_before) VALUES ($1, $2, $3)"
+            query: str = (
+                "INSERT INTO presence_history (uuid, status, status_before) VALUES ($1, $2, $3)"
+            )
 
             async with self.bot.pool.acquire() as connection:
                 await connection.execute(
@@ -325,9 +301,7 @@ class DiscordEventListener(BaseExtension):
             return
 
         if not (
-            current_guild := await self.bot.manager.get_or_create_guild(
-                message.guild.id
-            )
+            current_guild := await self.bot.manager.get_or_create_guild(message.guild.id)
         ).owo_counting:
             return
 
@@ -335,9 +309,7 @@ class DiscordEventListener(BaseExtension):
         maybe_safe: str = ""
 
         if content.startswith(current_guild.owo_prefix):
-            maybe_safe: str = (
-                content[len(current_guild.owo_prefix) :].strip().split(" ")[0].lower()
-            )
+            maybe_safe: str = content[len(current_guild.owo_prefix) :].strip().split(" ")[0].lower()
 
             if not maybe_safe and not any(
                 content.startswith(prefix) for prefix in self.__owo_std_commands

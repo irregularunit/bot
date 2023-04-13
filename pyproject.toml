@@ -4,7 +4,7 @@
 # * For more information, see README.md and LICENSE
 
 [tool.black]
-line-length = 88
+line-length = 100
 skip-string-normalization = true
 force-exclude = "LICENSE|.+.sql|.+.json|.+.md|.+.yml|.+.env|.+.txt"
 
@@ -16,9 +16,8 @@ line_length = 100
 
 [tool.pyright]
 pythonVersion = "3.11"
-typeCheckingMode = "strict"
+typeCheckingMode = "basic"
 reportMissingImports = true
-reportMissingTypeStubs = true
 reportMissingModuleSource = true
 reportUnusedImport = true
 reportUnusedVariable = true

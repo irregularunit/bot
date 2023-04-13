@@ -73,15 +73,11 @@ class AvatarHistoryView(PluginView):
         )
         return embed
 
-    async def edit_to_current_index(
-        self, interaction: discord.Interaction
-    ) -> None:
+    async def edit_to_current_index(self, interaction: discord.Interaction) -> None:
         element: EmbedBuilder = self.setup_by_index(self.index)
 
         if isinstance(element, EmbedBuilder):
-            self.message = await interaction.response.edit_message(
-                embed=element, view=self
-            )
+            self.message = await interaction.response.edit_message(embed=element, view=self)
         else:
             raise TypeError(f"Expected EmbedBuilder, got {type(element)!r}")
 
@@ -101,11 +97,7 @@ class AvatarHistoryView(PluginView):
 
     async def start(self) -> Optional[discord.Message]:
         self.cached_avatars = await self.fetch_avatar_history_items()
-        self.add_item(
-            CollageAvatarButton(
-                label="Collage", style=discord.ButtonStyle.blurple
-            )
-        )
+        self.add_item(CollageAvatarButton(label="Collage", style=discord.ButtonStyle.blurple))
 
         if not self.cached_avatars:
             return await self.ctx.send(
