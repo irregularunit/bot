@@ -69,7 +69,9 @@ class InfoView(View):
             self.add_item(item)
 
     @button(label="Close", style=discord.ButtonStyle.danger)
-    async def close_button(self, interaction: discord.Interaction, btn: Button["InfoView"]) -> None:
+    async def close_button(
+        self, interaction: discord.Interaction, btn: Button["InfoView"]
+    ) -> None:
         await interaction.response.defer()
         await interaction.delete_original_response()
 
@@ -291,9 +293,7 @@ class TrackedDiscordHistory(BaseExtension):
 
         for i, row in enumerate(leaderboard, start=1):
             user_id = row["uuid"]
-            user = self.bot.get_user(user_id) or await self.bot.fetch_user(
-                user_id
-            )
+            user = self.bot.get_user(user_id) or await self.bot.fetch_user(user_id)
 
             embed.add_field(
                 name=f"#{i}. {user.display_name}",
@@ -355,9 +355,7 @@ class TrackedDiscordHistory(BaseExtension):
         await ctx.safe_send(embed=embed, view=view)
 
     @commands.command(name="joinlist", aliases=("jl",))
-    async def joinlist_command(
-        self, ctx: Context
-    ) -> Optional[discord.Message]:
+    async def joinlist_command(self, ctx: Context) -> Optional[discord.Message]:
         sorted_list: list[discord.Member] = sorted(
             ctx.guild.members,
             key=lambda m: m.joined_at or discord.utils.utcnow(),
@@ -375,9 +373,7 @@ class TrackedDiscordHistory(BaseExtension):
                     ),
                     color=discord.Color.blurple(),
                 )
-                .set_footer(
-                    text=f"Page {i + 1} of {math.ceil(len(sorted_list) / 10)}"
-                )
+                .set_footer(text=f"Page {i + 1} of {math.ceil(len(sorted_list) / 10)}")
                 .set_author(name=f"📜 Join List for {ctx.guild.name}")
                 .set_thumbnail(url=self.bot.user.display_avatar)
                 .set_footer(
@@ -411,8 +407,7 @@ class TrackedDiscordHistory(BaseExtension):
                 WHERE uuid = $1 AND changed_at >= $2 ORDER BY changed_at DESC
                 """,
                 user.id,
-                datetime.datetime.utcnow()
-                - datetime.timedelta(days=query_days),
+                datetime.datetime.utcnow() - datetime.timedelta(days=query_days),
             )
 
             if not history:
@@ -450,9 +445,7 @@ class TrackedDiscordHistory(BaseExtension):
                     else:
                         status_time[next_status] = time_diff
 
-            status_time[sorted_presences[0][1][1]] += 86_400 - sum(
-                status_time.values()
-            )
+            status_time[sorted_presences[0][1][1]] += 86_400 - sum(status_time.values())
 
             canvas: discord.File = await self.bot.to_thread(
                 self.create_presence_pie,
@@ -466,9 +459,7 @@ class TrackedDiscordHistory(BaseExtension):
             )
 
     @staticmethod
-    def create_presence_pie(
-        user: bytes, status_time: dict[str, float]
-    ) -> discord.File:
+    def create_presence_pie(user: bytes, status_time: dict[str, float]) -> discord.File:
         total = 86_400
         stat_degrees = {k: (v / total) * 360 for k, v in status_time.items()}
 
@@ -492,9 +483,7 @@ class TrackedDiscordHistory(BaseExtension):
 
         with Image.open(BytesIO(user)).resize(
             (200, 200), resample=Image.BICUBIC
-        ).convert('RGBA') as canvas, Image.open(
-            "static/images/piechart.png"
-        ).convert(
+        ).convert('RGBA') as canvas, Image.open("static/images/piechart.png").convert(
             "L"
         ) as mask:
             base_layer.paste(canvas, (50, 50), canvas)
@@ -505,9 +494,7 @@ class TrackedDiscordHistory(BaseExtension):
                 if starting == v:
                     continue
 
-                basepen.pieslice(
-                    ((-5, -5), (305, 305)), starting, v, fill=status[k]
-                )
+                basepen.pieslice(((-5, -5), (305, 305)), starting, v, fill=status[k])
                 starting = v
 
             if 360 not in stat_degrees:
