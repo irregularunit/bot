@@ -4,7 +4,7 @@
 # * For more information, see README.md and LICENSE
 
 [tool.black]
-line-length = 79
+line-length = 88
 skip-string-normalization = true
 force-exclude = "LICENSE|.+.sql|.+.json|.+.md|.+.yml|.+.env|.+.txt"
 
@@ -12,10 +12,18 @@ force-exclude = "LICENSE|.+.sql|.+.json|.+.md|.+.yml|.+.env|.+.txt"
 profile = "black"
 combine_as_imports = true
 combine_star = true
-line_length = 79
+line_length = 100
 
-[tool.pylance]
+[tool.pyright]
 pythonVersion = "3.11"
-typeCheckingMode = "basic"
+typeCheckingMode = "strict"
 reportMissingImports = true
+reportMissingTypeStubs = true
+reportMissingModuleSource = true
 reportUnusedImport = true
+reportUnusedVariable = true
+reportUnusedFunction = true
+reportUnusedClass = true
+reportUnusedMethod = true
+reportUnusedProperty = true
+reportUnusedParameter = true

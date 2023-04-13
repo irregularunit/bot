@@ -69,7 +69,7 @@ class User(Model):
             created_at=record["created_at"],
         )
 
-    async def delete(self, pool: Pool) -> None:
+    async def delete(self, pool: Pool[Record]) -> None:
         to_cascade = [
             "avatar_history",
             "item_history",
@@ -121,7 +121,7 @@ class Guild(Model):
 
 
 class ModelManager:
-    def __init__(self, pool: Pool) -> None:
+    def __init__(self, pool: Pool[Record]) -> None:
         self.pool = pool
 
     async def create_user(self, user_id: int) -> User:
@@ -151,9 +151,7 @@ class ModelManager:
             record: Record | None = await connection.fetchrow(query, user_id)
 
         if record is None:
-            log.getChild("get_user").debug(
-                "Failed to get user with id %s", user_id
-            )
+            log.getChild("get_user").debug("Failed to get user with id %s", user_id)
             return None
         return User.from_record(record)
 
@@ -169,9 +167,7 @@ class ModelManager:
         async with self.pool.acquire() as connection:
             await connection.execute(query, timezone, user_id)
 
-    async def set_user_emoji_server(
-        self, user: User, emoji_server: int
-    ) -> User:
+    async def set_user_emoji_server(self, user: User, emoji_server: int) -> User:
         query: str = "UPDATE users SET emoji_server = $1 WHERE uuid = $2"
 
         async with self.pool.acquire() as connection:
@@ -271,9 +267,7 @@ class ModelManager:
                 "That prefix does not exist", ExceptionLevel.WARNING
             )
 
-        query: str = (
-            "DELETE FROM guild_prefixes WHERE gid = $1 AND prefix = $2"
-        )
+        query: str = "DELETE FROM guild_prefixes WHERE gid = $1 AND prefix = $2"
 
         async with self.pool.acquire() as connection:
             await connection.execute(query, guild.id, prefix)
@@ -311,9 +305,7 @@ class ModelManager:
         return guild
 
     async def toggle_guild_owo_counting(self, guild: Guild) -> Guild:
-        query: str = (
-            "UPDATE guilds SET owo_counting = NOT owo_counting WHERE gid = $1"
-        )
+        query: str = "UPDATE guilds SET owo_counting = NOT owo_counting WHERE gid = $1"
 
         async with self.pool.acquire() as connection:
             await connection.execute(query, guild.id)

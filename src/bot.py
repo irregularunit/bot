@@ -63,7 +63,7 @@ class Bot(commands.Bot):
         *,
         loop: asyncio.AbstractEventLoop,
         session: ClientSession,
-        pool: Pool,
+        pool: Pool[Record],
         redis: RedisBridge,
     ) -> None:
         intents: discord.Intents = discord.Intents(
@@ -84,7 +84,7 @@ class Bot(commands.Bot):
         )
         self.loop: asyncio.AbstractEventLoop = loop
         self.session: ClientSession = session
-        self.pool: Pool = pool
+        self.pool: Pool[Record] = pool
         self.redis: RedisBridge = redis
 
         self.config: Config = Config()  # type: ignore (my IDE doesn't get it)
@@ -93,7 +93,7 @@ class Bot(commands.Bot):
 
         self.cached_users: dict[int, User] = {}
         self.cached_guilds: dict[int, Guild] = {}
-        self.cached_prefixes: dict[int, re.Pattern] = {}
+        self.cached_prefixes: dict[int, re.Pattern[str]] = {}
 
         self.update_presence.start()
 
@@ -108,9 +108,7 @@ class Bot(commands.Bot):
     async def get_context(
         self, message: discord.Message, *, cls: Type[ContextT] = Context
     ) -> Context:
-        return await super().get_context(
-            message, cls=cls or commands.Context["Bot"]
-        )
+        return await super().get_context(message, cls=cls or commands.Context["Bot"])
 
     async def process_commands(self, message: discord.Message, /) -> None:
         try:
@@ -129,9 +127,7 @@ class Bot(commands.Bot):
 
             if not ctx.channel.permissions_for(ctx.me).send_messages:  # type: ignore
                 if await self.is_owner(ctx.author):
-                    await ctx.send(
-                        f"I cannot send messages in {ctx.channel.name}."
-                    )
+                    await ctx.send(f"I cannot send messages in {ctx.channel.name}.")
 
                 return
 
@@ -148,21 +144,15 @@ class Bot(commands.Bot):
             raise commands.NoPrivateMessage()
 
         if message.guild.id not in self.cached_prefixes:
-            guild: Guild = await self.manager.get_or_create_guild(
-                message.guild.id
-            )
+            guild: Guild = await self.manager.get_or_create_guild(message.guild.id)
             pattern: re.Pattern[str] = re.compile(
-                r"|".join(
-                    re.escape(prefix) + r"\s*" for prefix in guild.prefixes
-                ),
+                r"|".join(re.escape(prefix) + r"\s*" for prefix in guild.prefixes),
                 re.IGNORECASE,
             )
 
             self.cached_prefixes[message.guild.id] = pattern
 
-        if match := self.cached_prefixes[message.guild.id].match(
-            message.content
-        ):
+        if match := self.cached_prefixes[message.guild.id].match(message.content):
             return match.group()
 
         # Fallback, but it shouldn't be needed
@@ -223,10 +213,7 @@ class Bot(commands.Bot):
                 self.dispatch("disconnect")
                 if not reconnect:
                     await self.close()
-                    if (
-                        isinstance(exc, discord.ConnectionClosed)
-                        and exc.code == 1000
-                    ):
+                    if isinstance(exc, discord.ConnectionClosed) and exc.code == 1000:
                         # Clean close, don't re-raise this
                         return
                     raise
@@ -250,17 +237,13 @@ class Bot(commands.Bot):
                 # regardless and rely on is_closed instead
                 if isinstance(exc, discord.ConnectionClosed):
                     if exc.code == 4014:
-                        raise discord.PrivilegedIntentsRequired(
-                            exc.shard_id
-                        ) from None
+                        raise discord.PrivilegedIntentsRequired(exc.shard_id) from None
                     if exc.code != 1000:
                         await self.close()
                         raise
 
                 retry: float = backoff.delay()
-                self.logger.exception(
-                    "Attempting a reconnect in %.2fs.", retry
-                )
+                self.logger.exception("Attempting a reconnect in %.2fs.", retry)
                 await asyncio.sleep(retry)
                 # Always try to RESUME the connection
                 # If the connection is not RESUME-able then the gateway will invalidate the session.
@@ -283,9 +266,7 @@ class Bot(commands.Bot):
     @staticmethod
     def iter_extensions() -> Iterator[str]:
         extension: list[str] = [
-            file
-            for file in os.listdir("src/modules")
-            if not file.startswith("_")
+            file for file in os.listdir("src/modules") if not file.startswith("_")
         ]
         for file in extension:
             yield f"modules.{file[:-3] if file.endswith('.py') else file}"
@@ -309,25 +290,18 @@ class Bot(commands.Bot):
 
         errors = await asyncio.gather(
             *[self.load_extension(ext) for ext in initial_exts],
-            *[
-                self.pool.execute(schema.read_text())
-                for schema in initial_schemas
-            ],
+            *[self.pool.execute(schema.read_text()) for schema in initial_schemas],
         )
 
         for ext, error in zip(initial_exts, errors):
             if error:
-                _log.exception(
-                    f"Failed to load extension {ext!r}", exc_info=error
-                )
+                _log.exception(f"Failed to load extension {ext!r}", exc_info=error)
             else:
                 _log.info(f"Loaded extension {ext!r}")
 
         for schema, error in zip(initial_schemas, errors):
             if error:
-                _log.exception(
-                    f"Failed to load schema {schema!r}", exc_info=error
-                )
+                _log.exception(f"Failed to load schema {schema!r}", exc_info=error)
             else:
                 _log.info(f"Loaded schema {schema!r}")
 

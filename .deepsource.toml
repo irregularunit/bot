@@ -1,16 +1,21 @@
 version = 1
 
 [[analyzers]]
-name = "shell"
+name = "python"
+runtime_version = "3.x.x"
+excludes = ["**/migrations/"]
+    [analyzers.meta]
+    flake8 = true
 
 [[analyzers]]
-name = "python"
-
-  [analyzers.meta]
-  runtime_version = "3.x.x"
+name = "shell"
 
 [[transformers]]
 name = "black"
+    [transformers.config]
+    line-length = 88
 
 [[transformers]]
 name = "isort"
+    [transformers.config]
+    profile = "black"
