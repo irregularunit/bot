@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 import discord
 from discord.ext import commands
+from typing_extensions import override
 
 from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
 
@@ -63,17 +64,13 @@ class MemberConverter(commands.Converter[discord.Member]):
         cache = guild._state.member_cache_flags.joined
         if len(argument) > 5 and argument[-5] == '#':
             username, _, discriminator = argument.rpartition('#')
-            members = await guild.query_members(
-                username, limit=100, cache=cache
-            )
+            members = await guild.query_members(username, limit=100, cache=cache)
             return discord.utils.get(
                 members, name=username, discriminator=discriminator
             )
 
         members = await guild.query_members(argument, limit=100, cache=cache)
-        return discord.utils.find(
-            lambda m: argument in (m.name, m.nick), members
-        )
+        return discord.utils.find(lambda m: argument in (m.name, m.nick), members)
 
     @staticmethod
     async def query_member_by_id(
@@ -94,13 +91,12 @@ class MemberConverter(commands.Converter[discord.Member]):
             return member
 
         # If we're not being rate limited then we can use the websocket to actually query
-        members = await guild.query_members(
-            limit=1, user_ids=[user_id], cache=cache
-        )
+        members = await guild.query_members(limit=1, user_ids=[user_id], cache=cache)
         if not members:
             return None
         return members[0]
 
+    @override
     async def convert(self, ctx: Context, argument: str) -> discord.Member:
         bot = ctx.bot
         match = self.get_id_match(argument) or re.match(
@@ -180,19 +176,28 @@ class EmojiConverter(commands.Converter[discord.PartialEmoji]):
                 continue
 
         for component in message.components:
-            if (
-                isinstance(component, discord.ui.Button)
-                and component.emoji is not None
-            ):
+            if isinstance(component, discord.ui.Button) and component.emoji is not None:
+                if component.emoji.is_unicode_emoji():
+                    continue
+
                 emojis.append(component.emoji)
 
             if isinstance(component, discord.ui.Select):
                 for option in component.options:
                     if option.emoji is not None:
+                        if option.emoji.is_unicode_emoji():
+                            continue
+
                         emojis.append(option.emoji)
+
+        for reaction in message.reactions:
+            if reaction.is_custom_emoji():
+                if isinstance(reaction.emoji, discord.PartialEmoji):
+                    emojis.append(reaction.emoji)
 
         return emojis
 
+    @override
     async def convert(
         self, ctx: Context, argument: Optional[str]
     ) -> Optional[list[discord.PartialEmoji]]:
@@ -205,9 +210,7 @@ class EmojiConverter(commands.Converter[discord.PartialEmoji]):
             for emoji in argument.split():
                 try:
                     partial_emoji: discord.PartialEmoji = (
-                        await commands.PartialEmojiConverter().convert(
-                            ctx, emoji
-                        )
+                        await commands.PartialEmojiConverter().convert(ctx, emoji)
                     )
                     emojis.append(partial_emoji)
                 except commands.PartialEmojiConversionFailure:

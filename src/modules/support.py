@@ -116,12 +116,19 @@ class SupportServer(BaseExtension):
                 ),
             ).set_thumbnail(url=member.guild.icon)
 
+            CLIENT_ROLE_ID: int = 1094280386537853019
+            client_role: discord.Role | None = member.guild.get_role(CLIENT_ROLE_ID)
+
+            if client_role is None:
+                raise RuntimeError("Client role not found")
+
+            if client_role not in member.roles:
+                await member.add_roles(client_role)
+
             await self.cached_welcome_channel.send(embed=embed)
         else:
             DRONES_ROLE_ID: int = 1094280797604814868
-            drones_role: discord.Role | None = member.guild.get_role(
-                DRONES_ROLE_ID
-            )
+            drones_role: discord.Role | None = member.guild.get_role(DRONES_ROLE_ID)
 
             if drones_role is None:
                 raise RuntimeError("Drones role not found")
@@ -136,9 +143,7 @@ class SupportServer(BaseExtension):
                 await member.add_roles(drones_role)
 
             if self.cached_pit_queue_channel is None:
-                self.cached_pit_queue_channel = await self.cache_channel(
-                    "pit_queue"
-                )
+                self.cached_pit_queue_channel = await self.cache_channel("pit_queue")
 
             async with self.bot.pool.acquire() as conn:
                 result = await conn.fetchrow(
@@ -156,9 +161,7 @@ class SupportServer(BaseExtension):
                     )
 
                     if not res:
-                        await member.kick(
-                            reason="Bot never applied for approval"
-                        )
+                        await member.kick(reason="Bot never applied for approval")
                         return
 
                 embed = EmbedBuilder(
@@ -192,9 +195,7 @@ class SupportServer(BaseExtension):
             )
 
         if self.cached_pit_queue_channel is None:
-            self.cached_pit_queue_channel = await self.cache_channel(
-                "pit_queue"
-            )
+            self.cached_pit_queue_channel = await self.cache_channel("pit_queue")
 
         await self.cached_pit_queue_channel.send(
             f"**ℹ️ |** - {member.name} has been removed from the server.\n"
@@ -263,9 +264,7 @@ class SupportServer(BaseExtension):
                 )
 
             if self.cached_pit_queue_channel is None:
-                self.cached_pit_queue_channel = await self.cache_channel(
-                    "pit_queue"
-                )
+                self.cached_pit_queue_channel = await self.cache_channel("pit_queue")
 
             invite: str = discord.utils.oauth_url(
                 bot.id,
@@ -319,9 +318,7 @@ class SupportServer(BaseExtension):
             )
 
         if self.cached_pit_queue_channel is None:
-            self.cached_pit_queue_channel = await self.cache_channel(
-                "pit_queue"
-            )
+            self.cached_pit_queue_channel = await self.cache_channel("pit_queue")
 
         await self.cached_pit_queue_channel.send(
             f"**ℹ️ |** - {bot.name} has been approved."
@@ -356,9 +353,7 @@ class SupportServer(BaseExtension):
             )
 
         if self.cached_pit_queue_channel is None:
-            self.cached_pit_queue_channel = await self.cache_channel(
-                "pit_queue"
-            )
+            self.cached_pit_queue_channel = await self.cache_channel("pit_queue")
 
         await self.cached_pit_queue_channel.send(
             f"**ℹ️ |** - {bot.name} has been denied."
