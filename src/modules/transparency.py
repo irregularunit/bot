@@ -63,9 +63,7 @@ class Transparency(BaseExtension):
         checks = [commands.guild_only()]
         return await async_all(check(ctx) for check in checks)
 
-    @commands.group(
-        name="delete", aliases=("rm", "del"), invoke_without_command=False
-    )
+    @commands.group(name="delete", aliases=("rm", "del"), invoke_without_command=False)
     async def delete(self, ctx: Context) -> None:
         await ctx.send_help()
 
