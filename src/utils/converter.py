@@ -9,10 +9,10 @@ from __future__ import annotations
 
 import re
 from typing import TYPE_CHECKING, Any, Optional
-from typing_extensions import override
 
 import discord
 from discord.ext import commands
+from typing_extensions import override
 
 from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
 
@@ -196,7 +196,7 @@ class EmojiConverter(commands.Converter[discord.PartialEmoji]):
                     if option.emoji is not None:
                         if option.emoji.is_unicode_emoji():
                             continue
-        
+
                         emojis.append(option.emoji)
 
         for reaction in message.reactions:
