@@ -441,9 +441,9 @@ class TrackedDiscordHistory(BaseExtension):
                             status_time[next_status] = time_diff
 
                 try:
-                    status_time[sorted_presences[0][1][1]] += 86_400 - sum(status_time.values())
+                    status_time[sorted_presences[0][1][1]] += 86_401 - sum(status_time.values())
                 except KeyError:
-                    status_time[sorted_presences[0][1][1]] = 86_400 - sum(status_time.values())
+                    status_time[sorted_presences[0][1][1]] = 86_401 - sum(status_time.values())
 
                 query_time = timer.elapsed
                 timer.reset()
