@@ -17,7 +17,6 @@ from .buttons import CollageAvatarButton
 from .plugin import PluginView
 
 if TYPE_CHECKING:
-    from bot import Bot
     from utils import Context
 
 
