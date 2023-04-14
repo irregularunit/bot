@@ -80,7 +80,7 @@ class EmoteView(View):
 
 class StealEmoteButton(Button[EmoteView]):
     def __init__(self, label: str, style: ButtonStyle) -> None:
-        super().__init__(label=label, style=style, emoji="🕵", custom_id="steal")
+        super().__init__(label=label, style=style, emoji="🥷🏾", custom_id="steal")
         self.steals: dict[int, int] = {}
 
     async def read_emote(self, unit: EmoteUnit) -> bytes | None:
