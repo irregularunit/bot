@@ -13,6 +13,7 @@ import math
 import sys
 import time as _time
 from os import path
+from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Optional
 
 import discord
@@ -35,6 +36,8 @@ from views import AvatarHistoryView, Item, Paginator, PluginView
 from views.buttons import CollageAvatarButton, NameHistoryButton
 
 if TYPE_CHECKING:
+    from asyncpg import Record
+
     from bot import Bot
     from utils import Context
 
@@ -382,6 +385,17 @@ class TrackedDiscordHistory(BaseExtension):
         view = Paginator(self.bot, *items)
         await ctx.safe_send(view=view, embed=items[0].embed)
 
+    async def get_presence_history(self, user_id: int, query_days: int) -> list[Record]:
+        async with self.bot.pool.acquire() as connection:
+            return await connection.fetch(
+                """
+                SELECT status, status_before, changed_at FROM presence_history
+                WHERE uuid = $1 AND changed_at >= $2 ORDER BY changed_at DESC
+                """,
+                user_id,
+                datetime.datetime.utcnow() - datetime.timedelta(days=query_days),
+            )
+
     @commands.command(name="presence", aliases=("ps",))
     async def presence_command(
         self,
@@ -395,80 +409,67 @@ class TrackedDiscordHistory(BaseExtension):
         user: discord.Member = member or ctx.referenced_user or ctx.author
 
         with Timer() as timer:
-            async with self.bot.pool.acquire() as connection:
-                history = await connection.fetch(
-                    """
-                    SELECT status, status_before, changed_at FROM presence_history
-                    WHERE uuid = $1 AND changed_at >= $2 ORDER BY changed_at DESC
-                    """,
-                    user.id,
-                    datetime.datetime.utcnow() - datetime.timedelta(days=query_days),
-                )
+            history: list[Record] = await self.get_presence_history(user.id, query_days)
 
-                if not history:
-                    raise UserFeedbackExceptionFactory.create(
-                        "No presence history found for this user.",
-                        level=ExceptionLevel.INFO,
-                    )
+            if not history:
+                raise UserFeedbackExceptionFactory.create(
+                    "No presence history found for this user.",
+                    level=ExceptionLevel.INFO,
+                )   
 
-                record_dict = {
-                    record["changed_at"]: [
-                        record["status"],
-                        record["status_before"],
-                    ]
-                    for record in history
-                }
+            record_dict = {
+                record["changed_at"]: [
+                    record["status"],
+                    record["status_before"],
+                ]
+                for record in history
+            }
 
-                status_time: dict[str, float] = {}
-                sorted_presences = sorted(record_dict.items())
+            status_time: defaultdict[str, float] = defaultdict(float)
+            sorted_presences = sorted(record_dict.items())
 
-                for i in range(len(sorted_presences) - 1):
-                    curr_datetime, curr_status = sorted_presences[i]
-                    next_datetime, next_status = sorted_presences[i + 1]
-                    curr_status = curr_status[1]  # old status
-                    next_status = next_status[0]  # new status
-                    time_diff = (next_datetime - curr_datetime).total_seconds()
+            for i in range(len(sorted_presences) - 1):
+                curr_datetime, curr_status = sorted_presences[i]
+                next_datetime, next_status = sorted_presences[i + 1]
+                curr_status = curr_status[1]  # old status
+                next_status = next_status[0]  # new status
+                time_diff = (next_datetime - curr_datetime).total_seconds()
+                
+                if curr_status == next_status:
+                    status_time[curr_status] += time_diff
+                else:
+                    status_time[curr_status] += (60*60*24 - curr_datetime.second) - sum(status_time.values())
+                    status_time[next_status] += time_diff
 
-                    if curr_status == next_status:
-                        if curr_status in status_time:
-                            status_time[curr_status] += time_diff
-                        else:
-                            status_time[curr_status] = time_diff
-                    else:
-                        if next_status in status_time:
-                            status_time[next_status] += time_diff
-                        else:
-                            status_time[next_status] = time_diff
+            try:
+                status_time[sorted_presences[0][1][1]] += 86_401 - sum(status_time.values())
+            except KeyError:
+                # Didn't wanna use get, here so that's why this is here
+                status_time[sorted_presences[0][1][1]] = 86_401 - sum(status_time.values())
 
-                try:
-                    status_time[sorted_presences[0][1][1]] += 86_401 - sum(status_time.values())
-                except KeyError:
-                    status_time[sorted_presences[0][1][1]] = 86_401 - sum(status_time.values())
+            query_time = timer.elapsed
+            timer.reset()
 
-                query_time = timer.elapsed
-                timer.reset()
+            presence_data = PresenceType(
+                avatar=await user.display_avatar.read(),
+                labels=["idle", "online", "dnd", "offline"],
+                colors=["#fba31c", "#43b581", "#f04747", "#747f8d"],
+                values=[
+                    int(status_time.get("Idle", 0)),
+                    int(status_time.get("Online", 0)),
+                    int(status_time.get("Do Not Disturb", 0)),
+                    int(status_time.get("Offline", 0)),
+                ],
+            )
 
-                presence_data = PresenceType(
-                    avatar=await user.display_avatar.read(),
-                    labels=["idle", "online", "dnd", "offline"],
-                    colors=["#fba31c", "#43b581", "#f04747", "#747f8d"],
-                    values=[
-                        int(status_time.get("Idle", 0)),
-                        int(status_time.get("Online", 0)),
-                        int(status_time.get("Do Not Disturb", 0)),
-                        int(status_time.get("Offline", 0)),
-                    ],
-                )
+            presence_instance = PresenceChart(presence_data)
+            canvas: discord.File = await self.bot.to_thread(presence_instance.create)
 
-                presence_instance = PresenceChart(presence_data)
-                canvas: discord.File = await self.bot.to_thread(presence_instance.create)
-
-                canvas_time = timer.stop()
-                await ctx.maybe_reply(
-                    content=(
-                        f"Presence pie chart for {user.display_name} since "
-                        f"{(datetime.datetime.utcnow() - datetime.timedelta(days=query_days)).strftime('%b %d, %Y')}\n"
-                        f"Query time: `{query_time:.2f}s`\nCanvas time: `{canvas_time:.2f}s`"
-                    ),
-                    file=canvas,
-                )
+            await ctx.maybe_reply(
+                content=(
+                    f"Presence pie chart for {user.display_name} since "
+                    f"{(datetime.datetime.utcnow() - datetime.timedelta(days=query_days)).strftime('%b %d, %Y')}\n"
+                    f"Query time: `{query_time:.2f}s`\nCanvas time: `{timer.stop():.2f}s`"
+                ),
+                file=canvas,
+            )
