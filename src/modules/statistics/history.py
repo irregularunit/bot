@@ -12,8 +12,8 @@ import inspect
 import math
 import sys
 import time as _time
-from os import path
 from collections import defaultdict
+from os import path
 from typing import TYPE_CHECKING, Any, Optional
 
 import discord
@@ -415,7 +415,7 @@ class TrackedDiscordHistory(BaseExtension):
                 raise UserFeedbackExceptionFactory.create(
                     "No presence history found for this user.",
                     level=ExceptionLevel.INFO,
-                )   
+                )
 
             record_dict = {
                 record["changed_at"]: [
@@ -434,11 +434,13 @@ class TrackedDiscordHistory(BaseExtension):
                 curr_status = curr_status[1]  # old status
                 next_status = next_status[0]  # new status
                 time_diff = (next_datetime - curr_datetime).total_seconds()
-                
+
                 if curr_status == next_status:
                     status_time[curr_status] += time_diff
                 else:
-                    status_time[curr_status] += (60*60*24 - curr_datetime.second) - sum(status_time.values())
+                    status_time[curr_status] += (60 * 60 * 24 - curr_datetime.second) - sum(
+                        status_time.values()
+                    )
                     status_time[next_status] += time_diff
 
             try:
