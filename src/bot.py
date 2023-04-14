@@ -18,7 +18,6 @@ from typing import (
     Any,
     Callable,
     Generator,
-    Iterator,
     Mapping,
     Optional,
     ParamSpec,
@@ -101,6 +100,29 @@ class Bot(commands.Bot):
     @discord.utils.copy_doc(asyncio.to_thread)
     async def to_thread(func: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs) -> T:
         return await asyncio.to_thread(func, *args, **kwargs)
+
+    @staticmethod
+    def chunker(item: str, *, size: int = 2000) -> Generator[str, None, None]:
+        for i in range(0, len(item), size):
+            yield item[i : i + size]
+
+    @staticmethod
+    def iter_extensions() -> Generator[str, None, None]:
+        extension: list[str] = [
+            file for file in os.listdir("src/modules") if not file.startswith("_")
+        ]
+        for file in extension:
+            yield f"modules.{file[:-3] if file.endswith('.py') else file}"
+
+    @staticmethod
+    def iter_schemas() -> Generator[pathlib.Path, None, None]:
+        root: pathlib.Path = pathlib.Path("src/schemas")
+        for schema in root.glob("*.sql"):
+            # Ignore nasty hidden files
+            if schema.name.startswith("_"):
+                continue
+
+            yield schema  # Returns the PosixPath object (assuming we don't use Windows)
 
     @override
     async def get_context(
@@ -253,29 +275,6 @@ class Bot(commands.Bot):
     @override
     async def start(self, *args: Any, **kwargs: Any) -> None:
         await super().start(token=self.config.token, *args, **kwargs)
-
-    @staticmethod
-    def chunker(item: str, *, size: int = 2000) -> Generator[str, None, None]:
-        for i in range(0, len(item), size):
-            yield item[i : i + size]
-
-    @staticmethod
-    def iter_extensions() -> Iterator[str]:
-        extension: list[str] = [
-            file for file in os.listdir("src/modules") if not file.startswith("_")
-        ]
-        for file in extension:
-            yield f"modules.{file[:-3] if file.endswith('.py') else file}"
-
-    @staticmethod
-    def iter_schemas() -> Iterator[pathlib.Path]:
-        root: pathlib.Path = pathlib.Path("src/schemas")
-        for schema in root.glob("*.sql"):
-            # Ignore nasty hidden files
-            if schema.name.startswith("_"):
-                continue
-
-            yield schema  # Returns the PosixPath object (assuming we don't use Windows)
 
     @override
     async def setup_hook(self) -> None:

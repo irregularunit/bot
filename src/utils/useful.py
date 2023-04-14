@@ -168,7 +168,7 @@ def count_source_lines() -> int:
         if path.is_file():
             if path.suffix in (".py", ".sql", ".yml"):
                 with path.open('r', encoding='utf-8') as f:
-                    yield sum(1 for _ in f if _.strip())
+                    yield sum(1 for _ in f)
         elif path.is_dir():
             if path.name.startswith('__') or path.name.startswith('.venv'):
                 return

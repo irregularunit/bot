@@ -86,7 +86,7 @@ class StealEmoteButton(Button[EmoteView]):
     async def read_emote(self, unit: EmoteUnit) -> bytes | None:
         if self.view is None:
             raise AssertionError
-        session = self.view.bot.session
+        session: ClientSession = self.view.bot.session
 
         async with session.get(unit.emote.url + "?size=64") as resp:
             if resp.status == 200:
@@ -142,7 +142,7 @@ class StealEmoteButton(Button[EmoteView]):
     def generate_embed(self, page: int) -> EmbedBuilder:
         if self.view is None:
             raise AssertionError
-        items = self.view.items
+        items: tuple[EmoteUnit, ...] = self.view.items
 
         emoji: EmoteUnit = items[page - 1]
         tabs: LiteralString = '\t' * 6
@@ -181,7 +181,7 @@ class StealEmoteButton(Button[EmoteView]):
     async def callback(self, interaction: Interaction[Bot]) -> None:
         if self.view is None:
             raise AssertionError
-        items = self.view.items
+        items: tuple[EmoteUnit, ...] = self.view.items
 
         reason, can_add = await self.can_add_emoji(interaction)
         if not can_add:
