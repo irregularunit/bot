@@ -10,13 +10,15 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
+import uuid
 from typing import TYPE_CHECKING, TypedDict
 
+import discord
 from discord.ext import commands
 
 from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
 from models.embed import EmbedBuilder
-from utils import BaseExtension, async_all, for_all_callbacks, get_random_emoji
+from utils import HTTP_STATUS_CODES, BaseExtension, async_all, for_all_callbacks, get_random_emoji
 
 if TYPE_CHECKING:
     from bot import Bot
@@ -25,7 +27,6 @@ if TYPE_CHECKING:
 __all__: tuple[str, ...] = ("Utility",)
 
 log: logging.Logger = logging.getLogger(__name__)
-
 
 IP_LOOKUP_URL = "https://ipapi.co/{ip}/{format}/"
 IP_REGEX = re.compile(
@@ -133,6 +134,74 @@ class Utility(BaseExtension):
             )
 
             await ctx.send(embed=embed)
+
+    @commands.command(name="password", aliases=("pass",))
+    async def password(self, ctx: Context, *, length: int = 16) -> None:
+        if not 8 <= length <= 32:
+            raise UserFeedbackExceptionFactory.create(
+                "Please provide a length between 8 and 32.",
+                ExceptionLevel.INFO,
+            )
+
+        password: str = uuid.uuid4().hex[:length]
+
+        embed: EmbedBuilder = EmbedBuilder.factory(
+            ctx,
+            title=f"{get_random_emoji()} Password Generator",
+            description=f"Your password is: `{password}`",
+        )
+
+        await ctx.author.send(embed=embed)
+
+        try:
+            await ctx.message.add_reaction("✅")
+        except (discord.HTTPException,):
+            pass
+
+    @commands.command(name="httpstatus", aliases=("http",))
+    async def httpstatus(self, ctx: Context, *, status_code: int) -> None:
+        if status_code not in HTTP_STATUS_CODES:
+            status_code = 404
+
+        HTTP_CAT_URL: str = f"https://http.cat/{status_code}"
+
+        async with self.bot.session.get(HTTP_CAT_URL) as resp:
+            if resp.status != 200:
+                raise UserFeedbackExceptionFactory.create(
+                    "An error occurred while fetching the HTTP status code.",
+                    ExceptionLevel.WARNING,
+                )
+
+            embed: EmbedBuilder = EmbedBuilder.factory(
+                ctx,
+                title=f"{get_random_emoji()} HTTP Status Code",
+                description=f"Code ID - (`{status_code}`)",
+            )
+
+            embed.set_image(url=HTTP_CAT_URL)
+
+            await ctx.send(embed=embed)
+
+    @commands.command(name="nmap")
+    async def nmap(self, ctx: Context, host: str) -> None:
+        if not DOMAIN_REGEX.match(host):
+            raise UserFeedbackExceptionFactory.create(
+                "Please provide a valid domain name.",
+                ExceptionLevel.INFO,
+            )
+
+        process = await asyncio.create_subprocess_shell(
+            f"nmap {host}",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        stdout, stderr = await process.communicate()
+
+        if stdout:
+            await ctx.safe_send(f"```{stdout.decode()}```")
+        elif stderr:
+            await ctx.safe_send(f"```{stderr.decode()}```")
 
 
 async def setup(bot: Bot) -> None:

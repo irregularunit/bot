@@ -296,10 +296,11 @@ class DiscordEventListener(BaseExtension):
 
         if message.guild is None:
             raise AssertionError
+
         await self.bot.redis.client.setex(f"{word}:{uid}", 60, time)
 
         _log: Logger = log.getChild("insert_counting")
-        _log.debug(
+        _log.info(
             "Inserting %s for %s at %s",
             word,
             uid,
@@ -340,7 +341,6 @@ class DiscordEventListener(BaseExtension):
         elif any(content.startswith(prefix) for prefix in self.__owo_std_commands):
             maybe_safe: str = content[3:].strip().split(" ")[0].lower()
         else:
-            # Neither custom nor standard prefix
             return
 
         # We handle hunt and battle first, so we can drop all the others later without
@@ -348,10 +348,10 @@ class DiscordEventListener(BaseExtension):
         if maybe_safe in self.__owo_hunt_commands:
             await self.insert_counting(message.author.id, message, "hunt", 15)
 
-        elif maybe_safe in self.__owo_battle_commands:
+        if maybe_safe in self.__owo_battle_commands:
             await self.insert_counting(message.author.id, message, "battle", 15)
 
-        elif maybe_safe in owo_command_set:
+        if maybe_safe not in owo_command_set:
             # Returns True if the command exists in the hash map, False otherwise.
             await self.insert_counting(message.author.id, message, "owo", 10)
 

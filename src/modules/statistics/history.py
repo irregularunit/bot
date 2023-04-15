@@ -410,6 +410,8 @@ class TrackedDiscordHistory(BaseExtension):
 
         with Timer() as timer:
             history: list[Record] = await self.get_presence_history(user.id, query_days)
+            query_time = timer.elapsed
+            timer.reset()
 
             if not history:
                 raise UserFeedbackExceptionFactory.create(
@@ -449,7 +451,7 @@ class TrackedDiscordHistory(BaseExtension):
                 # Didn't wanna use get, here so that's why this is here
                 status_time[sorted_presences[0][1][1]] = 86_401 - sum(status_time.values())
 
-            query_time = timer.elapsed
+            analysis_time = timer.elapsed
             timer.reset()
 
             presence_data = PresenceType(
@@ -471,7 +473,9 @@ class TrackedDiscordHistory(BaseExtension):
                 content=(
                     f"Presence pie chart for {user.display_name} since "
                     f"{(datetime.datetime.utcnow() - datetime.timedelta(days=query_days)).strftime('%b %d, %Y')}\n"
-                    f"Query time: `{query_time:.2f}s`\nCanvas time: `{timer.stop():.2f}s`"
+                    f"`Query time:    ` `{query_time:.2f}s`\n"
+                    f"`Analysis time: ` `{analysis_time:.2f}s`\n"
+                    f"`Canvas time:   ` `{timer.stop():.2f}s`"
                 ),
                 file=canvas,
             )
