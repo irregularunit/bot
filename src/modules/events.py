@@ -17,12 +17,14 @@ from typing import TYPE_CHECKING, NamedTuple, Optional, Sequence
 
 import discord
 from discord.ext import commands, tasks
+from discord.ext.commands.converter import PartialMessageConverter
 
-from models import Guild
+from models import EmbedBuilder, Guild
 from utils import BaseExtension, owo_command_set, resize_to_limit, type_of
 
 if TYPE_CHECKING:
     from bot import Bot
+    from utils import Context
 
 __all__: tuple[str, ...] = ("DiscordEventListener",)
 
@@ -34,6 +36,24 @@ class SendQueueItem(NamedTuple):
     user_id: int
     name: str | None
     image: bytes
+
+
+class PartialMessageView(discord.ui.View):
+    def __init__(self, message: discord.Message, embed: EmbedBuilder) -> None:
+        super().__init__(timeout=60.0)
+        self.message: discord.Message = message
+        self.embed: EmbedBuilder = embed
+
+        self.add_item(
+            discord.ui.Button(
+                label="Jump to message",
+                style=discord.ButtonStyle.link,
+                url=message.jump_url,
+            )
+        )
+
+    async def send_to_ctx(self, ctx: Context) -> None:
+        await ctx.send(embed=self.embed, view=self)
 
 
 class DiscordEventListener(BaseExtension):
@@ -371,6 +391,25 @@ class DiscordEventListener(BaseExtension):
         ) as exc:
             _log: Logger = log.getChild("manage_prefix_change")
             _log.warning("Failed to add reaction to prefixed message: %s", exc)
+
+    @commands.Cog.listener("on_message")
+    async def partial_message_handler(self, message: discord.Message) -> None:
+        if message.author.bot or not message.guild:
+            return
+
+        try:
+            ctx = await self.bot.get_context(message)
+            partial_message = await PartialMessageConverter().convert(ctx, message.content)
+        except (commands.BadArgument, commands.CommandError):
+            return
+        else:
+            qualified_message = await message.channel.fetch_message(partial_message.id)
+            embed = EmbedBuilder.from_message(qualified_message)
+
+            view = PartialMessageView(qualified_message, embed)
+            await view.send_to_ctx(ctx)
+
+            await message.delete()
 
 
 async def setup(bot: Bot) -> None:

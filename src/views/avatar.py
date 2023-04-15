@@ -76,7 +76,11 @@ class AvatarHistoryView(PluginView):
         element: EmbedBuilder = self.setup_by_index(self.index)
 
         if isinstance(element, EmbedBuilder):
-            self.message = await interaction.response.edit_message(embed=element, view=self)
+            self.message = await interaction.response.edit_message(
+                embed=element,
+                view=self,
+                attachments=[],
+            )
         else:
             raise TypeError(f"Expected EmbedBuilder, got {type(element)!r}")
 

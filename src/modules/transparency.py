@@ -164,7 +164,7 @@ class Transparency(BaseExtension):
             await owner.send(
                 f"**{get_random_emoji()} New suggestion from {ctx.author} ({ctx.author.id}):**\n"
                 f"**Date:** {utils.format_dt(utils.utcnow(), style='F')}\n"
-                f">>> {suggestion}"
+                f">>> {suggestion[:1750]}"
             )
 
         await message.delete()
