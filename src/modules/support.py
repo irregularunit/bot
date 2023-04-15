@@ -37,12 +37,13 @@ PIT_QUEUE_CHANNEL_ID: int = 1094316098993803444
 
 def is_support_server():
     """Check that the command is being run in the support server.
-    
+
     Returns
     -------
     `Check[Context]`
         The check.
     """
+
     def predicate(ctx: Context) -> bool:
         """Check that the command is being run in the support server.
 
@@ -99,7 +100,7 @@ class SupportServer(BaseExtension):
         -------
         `bool`
             Whether the command is being run in the support server.
-        
+
         Raises
         ------
         `UserFeedbackException`
@@ -446,7 +447,7 @@ class SupportServer(BaseExtension):
 
 async def setup(bot: Bot) -> None:
     """Load the SupportServer cog.
-    
+
     Parameters
     ----------
     bot : `Bot`

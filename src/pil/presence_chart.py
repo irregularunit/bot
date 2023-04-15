@@ -40,6 +40,7 @@ class PresenceType(TypedDict):
     colors : `list[str]`
         The colors of the pie chart.
     """
+
     avatar: bytes
     labels: list[str]
     values: list[int]
@@ -81,6 +82,7 @@ class PresenceChart:
     draw : `PIL.ImageDraw.ImageDraw`
         The draw object of the chart.
     """
+
     def __init__(
         self,
         presence: PresenceType,

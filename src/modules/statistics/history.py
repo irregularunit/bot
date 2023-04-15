@@ -50,7 +50,7 @@ LICENSE = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
 
 class InfoView(View):
     """A view to display information about the bot.
-    
+
     Attributes
     ----------
     inv: `str`
@@ -98,7 +98,7 @@ class TrackedDiscordHistory(BaseExtension):
     @staticmethod
     def format_count(count: int) -> str:
         """Format a count to a string.
-        
+
         Parameters
         ----------
         count: `int`
@@ -249,7 +249,7 @@ class TrackedDiscordHistory(BaseExtension):
 
         def get_record_index(record: Any, pos: str, /) -> str:
             """Get the record index from the database.
-            
+
             Parameters
             ----------
             record : `Any`

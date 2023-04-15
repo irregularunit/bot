@@ -27,6 +27,7 @@ class VersionInfo(NamedTuple):
     serial: :class:`int`
         The serial number.
     """
+
     major: int
     minor: int
     micro: int

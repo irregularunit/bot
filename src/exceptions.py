@@ -22,7 +22,7 @@ __all__: tuple[str, ...] = (
 
 class ExceptionLevel(Enum):
     """Enum for the level of an exception.
-    
+
     Attributes
     ----------
     ERROR: `int`
@@ -32,6 +32,7 @@ class ExceptionLevel(Enum):
     INFO: `int`
         The info level.
     """
+
     ERROR = 1
     WARNING = 2
     INFO = 3
@@ -80,6 +81,7 @@ class UserFeedbackException(CommandError):
 
 class UserFeedbackEmojiStrategy(ABC):
     """An abstract class to represent a strategy for getting an emoji."""
+
     @abstractmethod
     def get_emoji(self) -> str:
         """Returns the emoji."""
@@ -88,36 +90,41 @@ class UserFeedbackEmojiStrategy(ABC):
 
 class DefaultUserFeedbackEmoji(UserFeedbackEmojiStrategy):
     """A class to represent the default emoji strategy."""
+
     def get_emoji(self) -> str:
         return "🔍"
 
 
 class ErrorUserFeedbackEmoji(UserFeedbackEmojiStrategy):
     """A class to represent the error emoji strategy."""
+
     def get_emoji(self) -> str:
         return "❌"
 
 
 class WarningUserFeedbackEmoji(UserFeedbackEmojiStrategy):
     """A class to represent the warning emoji strategy."""
+
     def get_emoji(self) -> str:
         return "⚠️"
 
 
 class InfoUserFeedbackEmoji(UserFeedbackEmojiStrategy):
     """A class to represent the info emoji strategy."""
+
     def get_emoji(self) -> str:
         return "📨"
 
 
 class UserFeedbackExceptionFactory:
     """A class to represent a factory for creating user feedback exceptions.
-    
+
     Attributes
     ----------
     EMOJI_STRATEGIES: `dict[ExceptionLevel, UserFeedbackEmojiStrategy]`
         A dictionary of emoji strategies.
     """
+
     EMOJI_STRATEGIES = {
         ExceptionLevel.ERROR: ErrorUserFeedbackEmoji(),
         ExceptionLevel.WARNING: WarningUserFeedbackEmoji(),

@@ -34,7 +34,7 @@ AVATAR_CHANNEL_ID: int = 1094282348469702677
 
 class SendQueueItem(NamedTuple):
     """Represents an item to be sent to the avatar history channel.
-    
+
     Attributes
     ----------
     user_id: `int`
@@ -44,6 +44,7 @@ class SendQueueItem(NamedTuple):
     image: `bytes`
         The image of the user's avatar.
     """
+
     user_id: int
     name: str | None
     image: bytes
@@ -67,7 +68,7 @@ class PartialMessageView(discord.ui.View):
 
     async def send_to_ctx(self, ctx: Context) -> None:
         """Sends the embed to the context.
-        
+
         Parameters
         ----------
         ctx: `Context`
@@ -326,7 +327,7 @@ class DiscordEventListener(BaseExtension):
         Handles the following updates:
         - Name
         - Discriminator
-        - Avatar    
+        - Avatar
         """
 
         if before.name != after.name:
@@ -583,7 +584,7 @@ class DiscordEventListener(BaseExtension):
 
 async def setup(bot: Bot) -> None:
     """Load the DiscordEventListener cog.
-    
+
     Parameters
     ----------
     bot: `Bot`

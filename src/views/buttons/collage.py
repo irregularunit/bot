@@ -21,7 +21,7 @@ __all__: tuple[str, ...] = ("CollageAvatarButton",)
 
 class CollageAvatarButton(discord.ui.Button):
     """A button that creates a collage of the user's avatars.
-    
+
     Parameters
     ----------
     **kwargs: `Any`

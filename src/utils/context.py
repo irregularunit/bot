@@ -40,7 +40,7 @@ class Context(commands.Context["Bot"]):
     @override
     def clean_prefix(self) -> str:
         """The prefix with the bot's name replaced with a mention.
-        
+
         Returns
         -------
         `str`

@@ -42,7 +42,7 @@ os.environ["JISHAKU_RETAIN"] = "true"
 
 async def setup() -> tuple[Bot, Pool[Record], ClientSession]:
     """Sets up the bot.
-    
+
     Returns
     -------
     `tuple[Bot, Pool[Record], ClientSession]`

@@ -25,7 +25,7 @@ __all__: tuple[str, ...] = ("EmoteUnit", "EmoteView")
 
 class EmoteUnit:
     """A unit of an emote.
-    
+
     Parameters
     ----------
     name: `str`
@@ -35,6 +35,7 @@ class EmoteUnit:
     emote: `PartialEmoji`
         The emote.
     """
+
     __slots__: tuple[str, ...] = ("name", "id", "emote")
 
     def __init__(
@@ -54,7 +55,7 @@ class EmoteUnit:
 
 class EmoteView(View):
     """Simple embed and file paginator view
-    
+
     Parameters
     ----------
     bot: `Bot`

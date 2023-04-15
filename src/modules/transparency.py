@@ -54,7 +54,7 @@ class SafetyPrompt(View):
 
     async def interaction_check(self, interaction: Interaction) -> bool:
         """Check that the interaction is from the user who invoked the command.
-        
+
         Parameters
         ----------
         interaction: `Interaction`
@@ -71,12 +71,13 @@ class SafetyPrompt(View):
 @for_all_callbacks(commands.cooldown(1, 3, commands.BucketType.user))
 class Transparency(BaseExtension):
     """Commands for transparency.
-    
+
     Attributes
     ----------
     bot: `Bot`
         The bot instance.
     """
+
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
 
@@ -205,7 +206,7 @@ class Transparency(BaseExtension):
 
 async def setup(bot: Bot) -> None:
     """Load the Transparency cog.
-    
+
     Parameters
     ----------
     bot: `Bot`

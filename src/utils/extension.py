@@ -31,6 +31,7 @@ class BaseExtension(commands.Cog):
     hidden: `bool`
         Whether the extension is hidden or not.
     """
+
     hidden: Optional[bool] = False
 
     def __init__(self, bot: Bot, *args: Any, **kwargs: Any) -> None:

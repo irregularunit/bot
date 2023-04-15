@@ -25,7 +25,7 @@ features = (TrackedDiscordHistory,)
 @for_all_callbacks(commands.cooldown(1, 3, commands.BucketType.user))
 class Statistics(*features):
     """Statistics and analytics for the bot.
-    
+
     Attributes
     ----------
     bot: `Bot`
@@ -37,7 +37,7 @@ class Statistics(*features):
 
     async def cog_check(self, ctx: Context) -> bool:  # skipcq: PYL-R0201
         """Check that the command is being run in a guild.
-        
+
         Parameters
         ----------
         ctx: `Context`
@@ -54,7 +54,7 @@ class Statistics(*features):
 
 async def setup(bot: Bot) -> None:
     """Load the Statistics cog.
-    
+
     Parameters
     ----------
     bot: `Bot`

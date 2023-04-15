@@ -61,7 +61,7 @@ class MemberConverter(commands.Converter[discord.Member]):
     @staticmethod
     async def query_member_named(guild: discord.Guild, argument: str) -> Optional[discord.Member]:
         """Queries a member by name and discriminator.
-        
+
         Parameters
         ----------
         guild: `discord.Guild`

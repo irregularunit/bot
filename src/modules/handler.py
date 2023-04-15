@@ -28,7 +28,7 @@ log: Logger = getLogger(__name__)
 
 class Error:
     """A class to represent an error.
-    
+
     Attributes
     ----------
     exception: `Type[Exception]`
@@ -45,6 +45,7 @@ class Error:
     `to_string()`
         Returns a string representation of the error.
     """
+
     __slots__: tuple[str, ...] = ("exception", "level", "message", "kwargs")
 
     def __init__(
@@ -89,7 +90,7 @@ class DiscordErrorHandler(BaseExtension):
     @staticmethod
     def to_discord_time_format(seconds: Union[int, float]) -> str:
         """Converts seconds to a Discord time format.
-        
+
         Parameters
         ----------
         seconds: `Union[int, float]`
@@ -111,7 +112,7 @@ class DiscordErrorHandler(BaseExtension):
         **kwargs: Any,
     ) -> Error:
         """Creates an error and adds it to the flyweight dictionary.
-        
+
         Parameters
         ----------
         exception: `Type[Exception]`

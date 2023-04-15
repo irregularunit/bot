@@ -31,7 +31,7 @@ log: logging.Logger = logging.getLogger(__name__)
 @for_all_callbacks(commands.cooldown(1, 3, commands.BucketType.user))
 class Managment(BaseExtension):
     """Managment commands for the bot.
-    
+
     Attributes
     ----------
     bot: `Bot`
@@ -43,7 +43,7 @@ class Managment(BaseExtension):
 
     async def cog_check(self, ctx: Context) -> bool:  # skipcq: PYL-R0201
         """Check that the command is being run in a guild.
-        
+
         Parameters
         ----------
         ctx: `Context`
@@ -59,7 +59,6 @@ class Managment(BaseExtension):
 
     @staticmethod
     def compile_prefixes(prefixes: list[str]) -> re.Pattern[str]:
-
         return re.compile(
             r"|".join(re.escape(prefix) + r"\s*" for prefix in prefixes),
             re.IGNORECASE,

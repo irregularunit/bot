@@ -1290,7 +1290,7 @@ emojis = [
 
 def get_random_emoji() -> str | list[str]:
     """Get a random emoji from the list of emojis.
-    
+
     Returns
     -------
     `str | list[str]`

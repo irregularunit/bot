@@ -17,8 +17,8 @@ from typing import (
     Awaitable,
     Callable,
     Final,
-    Iterable,
     Generator,
+    Iterable,
     Literal,
     Optional,
     Self,
@@ -70,7 +70,7 @@ PERIODS: Final[Sequence[tuple[str, str, int]]] = (
 
 def format_list(to_format: Sequence[str], /, *, comma: str = ",") -> str:
     """Formats a list of strings into a human readable string.
-    
+
     Parameters
     ----------
     to_format: `Sequence[str]`
@@ -207,7 +207,7 @@ async def async_all(
     check: Callable[[T | Awaitable[T]], TypeGuard[Awaitable[T]]] = isawaitable,
 ) -> bool:
     """Returns True if all elements in the iterable are truthy.
-    
+
     Parameters
     ----------
     gen: `Iterable[T | Awaitable[T]]`
@@ -230,7 +230,7 @@ async def async_all(
 
 def count_source_lines() -> int:
     """Counts the number of lines in the source code.
-    
+
     Returns
     -------
     `int`
@@ -239,7 +239,7 @@ def count_source_lines() -> int:
 
     def count_lines_recursive(path: Path) -> Generator[int, None, None]:
         """Counts the number of lines in a file or directory.
-        
+
         Parameters
         ----------
         path: `Path`
@@ -266,7 +266,7 @@ def count_source_lines() -> int:
 
 def type_of(image: bytes) -> Optional[str]:
     """Returns the raw mime type of an image buffer.
-    
+
     Parameters
     ----------
     image: `bytes`
@@ -290,7 +290,7 @@ def type_of(image: bytes) -> Optional[str]:
 
 def setup_logging(level: int | str) -> None:
     """Call this before doing anything else
-    
+
     Parameters
     ----------
     level: `Union[int, str]`
@@ -320,7 +320,7 @@ def setup_logging(level: int | str) -> None:
 
 def num_to_emote(num: int) -> str:
     """Converts a number to an emoji. range is 0-9.
-    
+
     Parameters
     ----------
     num: `int`
@@ -336,7 +336,7 @@ def num_to_emote(num: int) -> str:
 
 def emote_to_num(emote: str) -> int:
     """Converts an emoji to a number. range is 0-9.
-    
+
     Parameters
     ----------
     emote: `str`
@@ -404,7 +404,7 @@ def resize_to_limit(image: BytesIO, limit: int = 8_000_000) -> BytesIO:
 
 def for_all_callbacks(decorator: Any) -> Callable[[Type[T]], Type[T]]:
     """Decorates all function command callbacks in a class
-    
+
     Parameters
     ----------
     decorator: `Any`

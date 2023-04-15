@@ -40,7 +40,7 @@ DOMAIN_REGEX = re.compile(
 
 class IPResponse(TypedDict):
     """IP lookup response.
-    
+
     Attributes
     ----------
     ip: `str`
@@ -128,12 +128,13 @@ class IPResponse(TypedDict):
 @for_all_callbacks(commands.cooldown(1, 3, commands.BucketType.user))
 class Utility(BaseExtension):
     """Utility commands.
-    
+
     Attributes
     ----------
     bot: `Bot`
         The bot instance.
     """
+
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
 
@@ -283,7 +284,7 @@ class Utility(BaseExtension):
 
 async def setup(bot: Bot) -> None:
     """Load the Utility cog.
-    
+
     Parameters
     ----------
     bot: `Bot`

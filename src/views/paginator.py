@@ -23,7 +23,7 @@ __all__: tuple[str, ...] = ("Item", "Paginator")
 
 class Item:
     """A unit of an item for the paginator.
-    
+
     Parameters
     ----------
     content: `Optional[str]`
@@ -42,6 +42,7 @@ class Item:
     files: `list[File]`
         The files of the item.
     """
+
     __slots__ = ("content", "embed", "_files")
 
     def __init__(
@@ -63,7 +64,7 @@ class Item:
 
 class Paginator(View):
     """Simple embed and file paginator view
-    
+
     Parameters
     ----------
     bot: `Bot`

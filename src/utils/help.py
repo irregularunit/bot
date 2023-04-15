@@ -20,6 +20,7 @@ __all__: tuple[str, ...] = ("MinimalisticHelpCommand",)
 
 class MinimalisticHelpCommand(MinimalHelpCommand):
     """A minimalistic help command for the bot."""
+
     @override
     def __init__(self, **options) -> None:
         super().__init__(**options)
