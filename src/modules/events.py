@@ -403,7 +403,30 @@ class DiscordEventListener(BaseExtension):
         except (commands.BadArgument, commands.CommandError):
             return
         else:
-            qualified_message = await message.channel.fetch_message(partial_message.id)
+            guild = partial_message.guild
+            
+            if not guild:
+                return
+            
+            try:
+                channel = (
+                    guild.get_channel(partial_message.channel.id)
+                    or await guild.fetch_channel(partial_message.channel.id)
+                )
+            except discord.HTTPException:
+                return
+        
+            if isinstance(channel, (discord.ForumChannel, discord.CategoryChannel)):
+                return
+            
+            try:
+                qualified_message = await channel.fetch_message(partial_message.id)
+            except (
+                discord.NotFound,
+                discord.HTTPException,
+            ):
+                return
+    
             embed = EmbedBuilder.from_message(qualified_message)
 
             view = PartialMessageView(qualified_message, embed)

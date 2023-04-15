@@ -479,3 +479,81 @@ class TrackedDiscordHistory(BaseExtension):
                 ),
                 file=canvas,
             )
+
+    @commands.command(name="lastseen", aliases=("ls",))
+    async def lastseen_command(
+        self,
+        ctx: Context,
+        *,
+        member: discord.Member = commands.param(
+            default=None, converter=MemberConverter(), displayed_default="You"
+        ),
+    ) -> Optional[discord.Message]:
+        user: discord.Member = member or ctx.referenced_user or ctx.author
+
+        with Timer() as timer:
+            history: list[Record] = await self.get_presence_history(user.id, 100)
+            query_time = timer.elapsed
+            timer.reset()
+
+            if not history:
+                raise UserFeedbackExceptionFactory.create(
+                    "No presence history found for this user.",
+                    level=ExceptionLevel.INFO,
+                )
+
+            last_seen: datetime.datetime = history[0]["changed_at"]
+            last_seen_status: str = history[0]["status_before"]
+
+            await ctx.maybe_reply(
+                content=(
+                    f"**{user.display_name}** was last seen "
+                    f"{discord.utils.format_dt(last_seen, style='R')} "
+                    f"({discord.utils.format_dt(last_seen, style='F')}) "
+                    f"with status **{last_seen_status}**.\nWith a query time of "
+                    f"`{query_time:.2f}s` and an analysis time of `{timer.stop():.2f}s`." 
+                )
+            )
+
+    @commands.command(name="botstats", aliases=("bs",))
+    async def botstats_command(self, ctx: Context) -> Optional[discord.Message]:
+        async with self.bot.pool.acquire() as connection:
+            with Timer() as timer:
+                bot_stats = await connection.fetchrow(
+                    """
+                    SELECT
+                        (SELECT COUNT(*) FROM presence_history) AS presence_count,
+                        (SELECT COUNT(*) FROM guilds) AS guild_count,
+                        (SELECT COUNT(*) FROM users) AS user_count,
+                        (SELECT COUNT(*) FROM avatar_history) AS avatar_count,
+                        (SELECT COUNT(*) FROM item_history) AS item_count
+                    """
+                )
+                query_time = timer.stop()
+
+            if not bot_stats:
+                raise UserFeedbackExceptionFactory.create(
+                    "No bot stats found.",
+                    level=ExceptionLevel.INFO,
+                )
+            
+            bot_memory = sys.getsizeof(self.bot)
+            cached_users_memory = sys.getsizeof(self.bot.cached_users)
+            cached_guilds_memory = sys.getsizeof(self.bot.cached_guilds)
+
+
+            await ctx.maybe_reply(
+                content=(
+                    "```"
+                    f"Users:                    {bot_stats['user_count']}\n"
+                    f"Guilds:                   {bot_stats['guild_count']}\n"
+                    f"Presence history entries: {bot_stats['presence_count']}\n"
+                    f"Avatar history entries:   {bot_stats['avatar_count']}\n"
+                    f"Item history entries:     {bot_stats['item_count']}\n"
+                    f"Bot memory:               {bot_memory} bytes\n"
+                    f"Cached users memory:      {cached_users_memory} bytes\n"
+                    f"Cached guilds memory:     {cached_guilds_memory} bytes\n"
+                    f"Query time:               {query_time:.2f}s"
+                    "```"
+                )
+            )
