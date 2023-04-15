@@ -80,11 +80,11 @@ class Utility(BaseExtension):
         if not DOMAIN_REGEX.match(domain):
             raise UserFeedbackExceptionFactory.create(
                 "Please provide a valid domain name.",
-                ExceptionLevel.WARNING,
+                ExceptionLevel.INFO,
             )
 
         process = await asyncio.create_subprocess_shell(
-            f"nslookup {domain}",
+            f"nslookup -query=any {domain}",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -92,7 +92,7 @@ class Utility(BaseExtension):
         stdout, stderr = await process.communicate()
 
         if stdout:
-            await ctx.safe_send(f"```{stdout.decode()}```")
+            await ctx.safe_send(f"```{stdout.decode()[:len(stdout.decode()) - 43]}```")
         elif stderr:
             await ctx.safe_send(f"```{stderr.decode()}```")
 
@@ -101,7 +101,7 @@ class Utility(BaseExtension):
         if not IP_REGEX.match(ip):
             raise UserFeedbackExceptionFactory.create(
                 "Please provide a valid IP address.",
-                ExceptionLevel.WARNING,
+                ExceptionLevel.INFO,
             )
 
         async with self.bot.session.get(IP_LOOKUP_URL.format(ip=ip, format="json")) as resp:
@@ -113,31 +113,26 @@ class Utility(BaseExtension):
 
             js: IPResponse = await resp.json()
 
-        fields = (
-            ("IP", js["ip"], True),
-            ("Version", js["version"], True),
-            ("City", js["city"], True),
-            ("Region", js["region"], True),
-            ("Country Name", js["country_name"], True),
-            ("Country Code", js["country_code"], True),
-            ("Country Code (ISO3)", js["country_code_iso3"], True),
-            ("Country Capital", js["country_capital"], True),
-            ("Country TLD", js["country_tld"], True),
-            ("Country Calling Code", js["country_calling_code"], True),
-            ("Country Area", js["country_area"], True),
-            ("Country Population", js["country_population"], True),
-            ("Currency", js["currency"], True),
-            ("Currency Name", js["currency_name"], True),
-            ("Organization", js["org"], True),
-        )
+            embed: EmbedBuilder = EmbedBuilder.factory(
+                ctx,
+                title=f"{get_random_emoji()} IP Lookup Results",
+                fields=(
+                    ("IP", js["ip"], True),
+                    ("Version", js["version"], True),
+                    ("City", js["city"], True),
+                    ("Region", js["region"], True),
+                    ("Country Name", js["country_name"], True),
+                    ("Country Code (ISO3)", js["country_code_iso3"], True),
+                    ("Country TLD", js["country_tld"], True),
+                    ("Country Calling Code", js["country_calling_code"], True),
+                    ("Country Population", js["country_population"], True),
+                    ("Currency", js["currency"], True),
+                    ("Currency Name", js["currency_name"], True),
+                    ("Organization", js["org"], True),
+                ),
+            )
 
-        embed: EmbedBuilder = EmbedBuilder.factory(
-            ctx,
-            title=f"{get_random_emoji()} IP Lookup Results",
-            fields=fields,
-        )
-
-        await ctx.safe_send(embed=embed)
+            await ctx.send(embed=embed)
 
 
 async def setup(bot: Bot) -> None:

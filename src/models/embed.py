@@ -40,16 +40,10 @@ class EmbedBuilder(Embed):
 
     @classmethod
     def to_factory(cls: Type[Self], embed: Embed, **kwargs: Any) -> Self:
-        setattr(kwargs, "colour", config.color)
-        instance = cls(**kwargs)
+        copied_embed = copy.copy(embed)
+        copied_embed.color = config.color
 
-        for key, value in embed.to_dict().items():
-            if key in ("colour", "color"):
-                continue
-
-            setattr(instance, key, value)
-
-        return instance
+        return cls.from_dict(copied_embed.to_dict(), **kwargs)
 
     @classmethod
     def from_message(
