@@ -39,6 +39,64 @@ DOMAIN_REGEX = re.compile(
 
 
 class IPResponse(TypedDict):
+    """IP lookup response.
+
+    Attributes
+    ----------
+    ip: `str`
+        The IP address.
+    version: `str`
+        The IP version.
+    city: `str`
+        The city.
+    region: `str`
+        The region.
+    region_code: `str`
+        The region code.
+    country: `str`
+        The country.
+    country_name: `str`
+        The country name.
+    country_code: `str`
+        The country code.
+    country_code_iso3: `str`
+        The country code ISO3.
+    country_capital: `str`
+        The country capital.
+    country_tld: `str`
+        The country TLD.
+    continent_code: `str`
+        The continent code.
+    in_eu: `bool`
+        Whether the country is in the EU.
+    postal: `str`
+        The postal code.
+    latitude: `float`
+        The latitude.
+    longitude: `float`
+        The longitude.
+    timezone: `str`
+        The timezone.
+    utc_offset: `str`
+        The UTC offset.
+    country_calling_code: `str`
+        The country calling code.
+    currency: `str`
+        The currency.
+    currency_name: `str`
+        The currency name.
+    languages: `str`
+        The languages.
+    country_area: `float`
+        The country area.
+    country_population: `float`
+        The country population.
+    asn: `str`
+        The ASN.
+    org: `str`
+        The organization.
+    """
+
     ip: str
     version: str
     city: str
@@ -69,10 +127,30 @@ class IPResponse(TypedDict):
 
 @for_all_callbacks(commands.cooldown(1, 3, commands.BucketType.user))
 class Utility(BaseExtension):
+    """Utility commands.
+
+    Attributes
+    ----------
+    bot: `Bot`
+        The bot instance.
+    """
+
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
 
     async def cog_check(self, ctx: Context) -> bool:  # skipcq: PYL-R0201
+        """Check if the command is guild only.
+
+        Parameters
+        ----------
+        ctx: `Context`
+            The context of the command.
+
+        Returns
+        -------
+        `bool`
+            Whether the command is guild only.
+        """
         checks = [commands.guild_only()]
         return await async_all(check(ctx) for check in checks)
 
@@ -205,4 +283,11 @@ class Utility(BaseExtension):
 
 
 async def setup(bot: Bot) -> None:
+    """Load the Utility cog.
+
+    Parameters
+    ----------
+    bot: `Bot`
+        The bot instance.
+    """
     await bot.add_cog(Utility(bot))

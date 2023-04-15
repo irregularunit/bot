@@ -33,6 +33,7 @@ from typing_extensions import override
 
 from bridges import RedisBridge
 from gateway import Gateway
+from meta import __author__ as author, __license__ as license, __version__ as version
 from models import Guild, ModelManager, User
 from settings import Config
 from utils import Context, ContextT, GuildMessageable, MinimalisticHelpCommand
@@ -85,6 +86,10 @@ class Bot(commands.Bot):
         self.session: ClientSession = session
         self.pool: Pool[Record] = pool
         self.redis: RedisBridge = redis
+
+        self.version: str = version
+        self.author: str = author
+        self.license: str = license
 
         self.config: Config = Config()  # type: ignore (my IDE doesn't get it)
         self.logger: Logger = getLogger(__name__)

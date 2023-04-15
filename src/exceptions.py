@@ -21,14 +21,36 @@ __all__: tuple[str, ...] = (
 
 
 class ExceptionLevel(Enum):
+    """Enum for the level of an exception.
+
+    Attributes
+    ----------
+    ERROR: `int`
+        The error level.
+    WARNING: `int`
+        The warning level.
+    INFO: `int`
+        The info level.
+    """
+
     ERROR = 1
     WARNING = 2
     INFO = 3
 
 
 class UserFeedbackException(CommandError):
-    """
+    """A class to represent an exception that will be displayed to the user.
+
     Parameters
+    ----------
+    message: :class:`str`
+        The message to be displayed to the user.
+    emoji_strategy: :class:`UserFeedbackEmojiStrategy`
+        The emoji strategy to be used.
+    formatters: :class:`tuple[Callable[[str], str], ...]`
+        Can be a function or a list of lambda functions that will be applied to the message.
+
+    Attributes
     ----------
     message: :class:`str`
         The message to be displayed to the user.
@@ -50,6 +72,7 @@ class UserFeedbackException(CommandError):
         super().__init__(message)
 
     def to_string(self) -> str:
+        """Returns a string representation of the exception."""
         formatted_message: str = self.message
         for formatter in self.formatters:
             formatted_message = formatter(formatted_message)
@@ -57,32 +80,51 @@ class UserFeedbackException(CommandError):
 
 
 class UserFeedbackEmojiStrategy(ABC):
+    """An abstract class to represent a strategy for getting an emoji."""
+
     @abstractmethod
     def get_emoji(self) -> str:
+        """Returns the emoji."""
         pass
 
 
 class DefaultUserFeedbackEmoji(UserFeedbackEmojiStrategy):
+    """A class to represent the default emoji strategy."""
+
     def get_emoji(self) -> str:
         return "🔍"
 
 
 class ErrorUserFeedbackEmoji(UserFeedbackEmojiStrategy):
+    """A class to represent the error emoji strategy."""
+
     def get_emoji(self) -> str:
         return "❌"
 
 
 class WarningUserFeedbackEmoji(UserFeedbackEmojiStrategy):
+    """A class to represent the warning emoji strategy."""
+
     def get_emoji(self) -> str:
         return "⚠️"
 
 
 class InfoUserFeedbackEmoji(UserFeedbackEmojiStrategy):
+    """A class to represent the info emoji strategy."""
+
     def get_emoji(self) -> str:
         return "📨"
 
 
 class UserFeedbackExceptionFactory:
+    """A class to represent a factory for creating user feedback exceptions.
+
+    Attributes
+    ----------
+    EMOJI_STRATEGIES: `dict[ExceptionLevel, UserFeedbackEmojiStrategy]`
+        A dictionary of emoji strategies.
+    """
+
     EMOJI_STRATEGIES = {
         ExceptionLevel.ERROR: ErrorUserFeedbackEmoji(),
         ExceptionLevel.WARNING: WarningUserFeedbackEmoji(),
@@ -95,6 +137,22 @@ class UserFeedbackExceptionFactory:
         level: ExceptionLevel = ExceptionLevel.ERROR,
         formatters: tuple[Callable[[str], str], ...] = (),
     ) -> UserFeedbackException:
+        """Creates a user feedback exception.
+
+        Parameters
+        ----------
+        message: :class:`str`
+            The message to be displayed to the user.
+        level: :class:`ExceptionLevel`
+            The level of the exception.
+        formatters: :class:`tuple[Callable[[str], str], ...]`
+            Can be a function or a list of lambda functions that will be applied to the message.
+
+        Returns
+        -------
+        :class:`UserFeedbackException`
+            The user feedback exception.
+        """
         return UserFeedbackException(
             message,
             # Probably not the best idea to default to DefaultUserFeedbackEmoji

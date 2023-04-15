@@ -20,6 +20,18 @@ __all__: tuple[str, ...] = ("PluginView",)
 
 
 class PluginView(View):
+    """A view for the plugin command.
+
+    Parameters
+    ----------
+    ctx: `Context`
+        The context of the command.
+    member: `discord.Member | discord.User`
+        The member to be added to the plugin.
+    timeout: `Optional[float]`
+        The timeout of the view.
+    """
+
     def __init__(
         self,
         ctx: Context,
@@ -36,6 +48,7 @@ class PluginView(View):
         self.message: Optional[discord.Message] = None
 
     def disable_view(self) -> None:
+        """Disable the view."""
         for item in self.children:
             if isinstance(item, (discord.ui.Button, discord.ui.Select)):
                 # This check is purly done for type checking purposes
@@ -46,11 +59,24 @@ class PluginView(View):
                     setattr(item, "disabled", True)
 
     async def on_timeout(self) -> None:
+        """Called when the view times out."""
         self.disable_view()
         if self.message is not None:
             await self.message.edit(view=self)
 
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+    async def interaction_check(self, interaction: discord.Interaction[Bot]) -> bool:
+        """Check if the interaction is valid.
+
+        Parameters
+        ----------
+        interaction: `discord.Interaction[Bot]`
+            The interaction to check.
+
+        Returns
+        -------
+        `bool`
+            Whether the interaction is valid.
+        """
         if interaction.user and interaction.user.id == self.ctx.author.id:
             return True
 

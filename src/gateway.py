@@ -18,7 +18,13 @@ log: Logger = getLogger(__name__)
 
 
 class Gateway(discord.gateway.DiscordWebSocket):  # type: ignore
+    """A class to represent the gateway.
+
+    Custom gateway class to add additional functionality.
+    """
+
     async def identify(self) -> None:
+        """Identify with the gateway."""
         payload: dict[str, Any] = {
             "op": self.IDENTIFY,
             "d": {

@@ -49,6 +49,18 @@ LICENSE = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
 
 
 class InfoView(View):
+    """A view to display information about the bot.
+
+    Attributes
+    ----------
+    inv: `str`
+        The invite link for the bot.
+    what: `str`
+        What ever link to set as the button.
+    timeout: `float`
+        The timeout for the view.
+    """
+
     def __init__(self, inv: str, what: str, *, timeout: float = 60) -> None:
         super().__init__(timeout=timeout)
         self.inv: str = inv
@@ -72,16 +84,31 @@ class InfoView(View):
 
     @button(label="Close", style=discord.ButtonStyle.danger)
     async def close_button(self, interaction: discord.Interaction, btn: Button["InfoView"]) -> None:
+        """Close the view."""
         await interaction.response.defer()
         await interaction.delete_original_response()
 
 
 class TrackedDiscordHistory(BaseExtension):
+    """A class to track discord history."""
+
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
 
     @staticmethod
     def format_count(count: int) -> str:
+        """Format a count to a string.
+
+        Parameters
+        ----------
+        count: `int`
+            The count to format.
+
+        Returns
+        -------
+        `str`
+            The formatted count.
+        """
         return str(math.floor(count / 3))
 
     @commands.command(name="avatar", aliases=("av",))
@@ -221,6 +248,20 @@ class TrackedDiscordHistory(BaseExtension):
             history = await connection.fetchrow(query, user.id, ctx.guild.id)
 
         def get_record_index(record: Any, pos: str, /) -> str:
+            """Get the record index from the database.
+
+            Parameters
+            ----------
+            record : `Any`
+                The record to get the index from.
+            pos : `str`
+                The position of the index to get.
+
+            Returns
+            -------
+            `str`
+                The index from the record.
+            """
             return self.format_count(record[pos])
 
         embed: EmbedBuilder = (
@@ -478,4 +519,84 @@ class TrackedDiscordHistory(BaseExtension):
                     f"`Canvas time:   ` `{timer.stop():.2f}s`"
                 ),
                 file=canvas,
+            )
+
+    @commands.command(name="lastseen", aliases=("ls",))
+    async def lastseen_command(
+        self,
+        ctx: Context,
+        *,
+        member: discord.Member = commands.param(
+            default=None, converter=MemberConverter(), displayed_default="You"
+        ),
+    ) -> Optional[discord.Message]:
+        user: discord.Member = member or ctx.referenced_user or ctx.author
+
+        with Timer() as timer:
+            history: list[Record] = await self.get_presence_history(user.id, 100)
+            query_time = timer.elapsed
+            timer.reset()
+
+            if not history:
+                raise UserFeedbackExceptionFactory.create(
+                    "No presence history found for this user.",
+                    level=ExceptionLevel.INFO,
+                )
+
+            last_seen: datetime.datetime = history[0]["changed_at"]
+            last_seen_status: str = history[0]["status_before"]
+
+            await ctx.maybe_reply(
+                content=(
+                    f"**{user.display_name}** was last seen "
+                    f"{discord.utils.format_dt(last_seen, style='R')} "
+                    f"({discord.utils.format_dt(last_seen, style='F')}) "
+                    f"with status **{last_seen_status}**.\nWith a query time of "
+                    f"`{query_time:.2f}s` and an analysis time of `{timer.stop():.2f}s`."
+                )
+            )
+
+    @commands.command(name="botstats", aliases=("bs",))
+    async def botstats_command(self, ctx: Context) -> Optional[discord.Message]:
+        async with self.bot.pool.acquire() as connection:
+            with Timer() as timer:
+                bot_stats = await connection.fetchrow(
+                    """
+                    SELECT
+                        (SELECT COUNT(*) FROM presence_history) AS presence_count,
+                        (SELECT COUNT(*) FROM guilds) AS guild_count,
+                        (SELECT COUNT(*) FROM users) AS user_count,
+                        (SELECT COUNT(*) FROM avatar_history) AS avatar_count,
+                        (SELECT COUNT(*) FROM item_history) AS item_count
+                    """
+                )
+                query_time = timer.stop()
+
+            if not bot_stats:
+                raise UserFeedbackExceptionFactory.create(
+                    "No bot stats found.",
+                    level=ExceptionLevel.INFO,
+                )
+
+            bot_memory = sys.getsizeof(self.bot)
+            cached_users_memory = sys.getsizeof(self.bot.cached_users)
+            cached_guilds_memory = sys.getsizeof(self.bot.cached_guilds)
+
+            await ctx.maybe_reply(
+                content=(
+                    "```"
+                    f"Users:                    {bot_stats['user_count']}\n"
+                    f"Guilds:                   {bot_stats['guild_count']}\n"
+                    f"Presence history entries: {bot_stats['presence_count']}\n"
+                    f"Avatar history entries:   {bot_stats['avatar_count']}\n"
+                    f"Item history entries:     {bot_stats['item_count']}\n"
+                    f"Bot memory:               {bot_memory} bytes\n"
+                    f"Release version:          {self.bot.version}\n"
+                    f"Bound license:            {self.bot.license}\n"
+                    f"Creator Link:             {self.bot.author}\n"
+                    f"Cached users memory:      {cached_users_memory} bytes\n"
+                    f"Cached guilds memory:     {cached_guilds_memory} bytes\n"
+                    f"Query time:               {query_time:.2f}s"
+                    "```"
+                )
             )
