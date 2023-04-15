@@ -20,15 +20,52 @@ __all__: tuple[str, ...] = ("CollageAvatarButton",)
 
 
 class CollageAvatarButton(discord.ui.Button):
+    """A button that creates a collage of the user's avatars.
+    
+    Parameters
+    ----------
+    **kwargs: `Any`
+        The keyword arguments to pass to the super class.
+
+    Attributes
+    ----------
+    disabled: `bool`
+        Whether the button is disabled or not.
+    """
+
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.disabled = False
 
     @staticmethod
     def compute_grid_size(amount: int) -> int:
+        """Compute the grid size for the collage.
+
+        Parameters
+        ----------
+        amount: `int`
+            The amount of avatars to display.
+
+        Returns
+        -------
+        `int`
+            The grid size.
+        """
         return int(amount**0.5) + 1 if amount**0.5 % 1 else int(amount**0.5)
 
     def create_collage(self, images: list[Image.Image]) -> BytesIO:
+        """Create a collage of the user's avatars.
+
+        Parameters
+        ----------
+        images: `list[Image.Image]`
+            The images to use.
+
+        Returns
+        -------
+        `BytesIO`
+            The collage.
+        """
         grid_size = self.compute_grid_size(len(images))
         rows: int = math.ceil(math.sqrt(len(images)))
 
@@ -60,6 +97,18 @@ class CollageAvatarButton(discord.ui.Button):
     async def get_member_collage(
         self, member: discord.Member | discord.User
     ) -> Optional[discord.File]:
+        """Get the collage of the user's avatars.
+
+        Parameters
+        ----------
+        member: `Union[discord.Member, discord.User]`
+            The member to get the collage for.
+
+        Returns
+        -------
+        `Optional[discord.File]`
+            The collage.
+        """
         if self.view is None:
             raise AssertionError
 
@@ -79,6 +128,13 @@ class CollageAvatarButton(discord.ui.Button):
         return discord.File(buffer, filename="collage.webp")
 
     async def callback(self, interaction: discord.Interaction) -> None:
+        """The callback for the button.
+
+        Parameters
+        ----------
+        interaction: `discord.Interaction`
+            The interaction.
+        """
         if self.view is None:
             raise AssertionError
 

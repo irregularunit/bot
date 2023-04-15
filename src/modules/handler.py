@@ -27,6 +27,24 @@ log: Logger = getLogger(__name__)
 
 
 class Error:
+    """A class to represent an error.
+    
+    Attributes
+    ----------
+    exception: `Type[Exception]`
+        The exception that was raised.
+    level: `ExceptionLevel`
+        The level of the exception.
+    message: `str`
+        The message to display to the user.
+    kwargs: `Dict[str, Any]`
+        The keyword arguments to pass to the exception.
+
+    Methods
+    -------
+    `to_string()`
+        Returns a string representation of the error.
+    """
     __slots__: tuple[str, ...] = ("exception", "level", "message", "kwargs")
 
     def __init__(
@@ -46,6 +64,7 @@ class Error:
         return f"<Error {self.exception.__name__} {self.level.name} {self.message} {self.kwargs}>"
 
     def to_string(self) -> str:
+        """Returns a string representation of the error."""
         partial_exception: UserFeedbackException = UserFeedbackExceptionFactory.create(
             message=self.message, level=self.level
         )
@@ -53,12 +72,34 @@ class Error:
 
 
 class DiscordErrorHandler(BaseExtension):
+    """A class to handle Discord errors.
+
+    Attributes
+    ----------
+    bot: `Bot`
+        The bot instance.
+    flyweight: `Dict[str, Error]`
+        A dictionary of errors that have been created.
+    """
+
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
         self.flyweight: Dict[str, Error] = {}
 
     @staticmethod
     def to_discord_time_format(seconds: Union[int, float]) -> str:
+        """Converts seconds to a Discord time format.
+        
+        Parameters
+        ----------
+        seconds: `Union[int, float]`
+            The number of seconds to convert.
+
+        Returns
+        -------
+        `str`
+            The Discord time format.
+        """
         time = discord.utils.utcnow() + datetime.timedelta(seconds=seconds)
         return discord.utils.format_dt(time, style="R")
 
@@ -69,6 +110,24 @@ class DiscordErrorHandler(BaseExtension):
         message: str,
         **kwargs: Any,
     ) -> Error:
+        """Creates an error and adds it to the flyweight dictionary.
+        
+        Parameters
+        ----------
+        exception: `Type[Exception]`
+            The exception that was raised.
+        level: `ExceptionLevel`
+            The level of the exception.
+        message: `str`
+            The message to display to the user.
+        kwargs: `Dict[str, Any]`
+            The keyword arguments to pass to the exception.
+
+        Returns
+        -------
+        `Error`
+            The error that was created.
+        """
         if (instance := self.get_error(exception)) is not None:
             return instance
 
@@ -77,10 +136,37 @@ class DiscordErrorHandler(BaseExtension):
         return instance
 
     def get_error(self, exception: Type[Exception]) -> Optional[Error]:
+        """Gets an error from the flyweight dictionary.
+
+        Parameters
+        ----------
+        exception: `Type[Exception]`
+            The exception to get.
+
+        Returns
+        -------
+        `Optional[Error]`
+            The error that was found.
+        """
         return self.flyweight.get(exception.__name__)
 
     @commands.Cog.listener("on_command_error")
     async def on_command_error(self, ctx: Context, error: Exception) -> Optional[discord.Message]:
+        """Handles command errors.
+
+        Parameters
+        ----------
+        ctx: `Context`
+            The context of the command.
+        error: `Exception`
+            The exception that was raised.
+
+        Returns
+        -------
+        `Optional[discord.Message]`
+            The message that was sent.
+        """
+
         if hasattr(ctx.command, "on_error"):
             # The invoked command has a local error handler
             # therefore we can safely ignore this error
@@ -200,4 +286,5 @@ class DiscordErrorHandler(BaseExtension):
 
 
 async def setup(bot: Bot) -> None:
+    """Adds the DiscordErrorHandler cog to the bot."""
     await bot.add_cog(DiscordErrorHandler(bot))

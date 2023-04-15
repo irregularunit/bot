@@ -36,7 +36,26 @@ PIT_QUEUE_CHANNEL_ID: int = 1094316098993803444
 
 
 def is_support_server():
+    """Check that the command is being run in the support server.
+    
+    Returns
+    -------
+    `Check[Context]`
+        The check.
+    """
     def predicate(ctx: Context) -> bool:
+        """Check that the command is being run in the support server.
+
+        Parameters
+        ----------
+        ctx: `Context`
+            The context of the command.
+
+        Returns
+        -------
+        `bool`
+            Whether the command is being run in the support server.
+        """
         allowed = ctx.guild.id == SUPPORT_GUILD_ID
 
         if not allowed:
@@ -51,12 +70,41 @@ def is_support_server():
 
 
 class SupportServer(BaseExtension):
+    """Support server commands.
+
+    Attributes
+    ----------
+    bot: `Bot`
+        The bot instance.
+    cached_welcome_channel: `Optional[discord.TextChannel]`
+        The cached welcome channel.
+    cached_pit_queue_channel: `Optional[discord.TextChannel]`
+        The cached pit queue channel.
+    """
+
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
         self.cached_welcome_channel: Optional[discord.TextChannel] = None
         self.cached_pit_queue_channel: Optional[discord.TextChannel] = None
 
     async def cog_check(self, ctx: Context) -> bool:  # skipcq: PYL-R0201
+        """Check that the command is being run in the support server.
+
+        Parameters
+        ----------
+        ctx: `Context`
+            The context of the command.
+
+        Returns
+        -------
+        `bool`
+            Whether the command is being run in the support server.
+        
+        Raises
+        ------
+        `UserFeedbackException`
+            If the command is not being run in the support server.
+        """
         checks = [
             commands.guild_only(),
             is_support_server(),
@@ -65,9 +113,40 @@ class SupportServer(BaseExtension):
 
     @staticmethod
     def plural(n: int) -> str:
+        """Get the plural suffix for a number.
+
+        Parameters
+        ----------
+        n: `int`
+            The number.
+
+        Returns
+        -------
+        `str`
+            The plural suffix.
+        """
         return "th" if 4 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
 
     async def cache_channel(self, which: str) -> discord.TextChannel:
+        """Cache a type of channel.
+
+        Parameters
+        ----------
+        which: `str`
+            The type of channel to cache.
+
+        Returns
+        -------
+        `discord.TextChannel`
+            The cached channel.
+
+        Raises
+        ------
+        `ValueError`
+            If an invalid channel type is given.
+        `RuntimeError`
+            If the channel is not a text channel.
+        """
         if which == "welcome":
             wchannel = await self.bot.fetch_channel(WELCOME_CHANNEL_ID)
 
@@ -90,6 +169,13 @@ class SupportServer(BaseExtension):
 
     @commands.Cog.listener("on_member_join")
     async def on_member_join(self, member: discord.Member) -> None:
+        """Send a welcome message when a member joins the server.
+
+        Parameters
+        ----------
+        member: `discord.Member`
+            The member that joined.
+        """
         if member.guild.id != SUPPORT_GUILD_ID:
             return
 
@@ -173,6 +259,13 @@ class SupportServer(BaseExtension):
 
     @commands.Cog.listener("on_member_remove")
     async def on_member_remove(self, member: discord.Member) -> None:
+        """Send a message when a member leaves the server.
+
+        Parameters
+        ----------
+        member: `discord.Member`
+            The member that left.
+        """
         if member.guild.id != SUPPORT_GUILD_ID:
             return
 
@@ -352,4 +445,11 @@ class SupportServer(BaseExtension):
 
 
 async def setup(bot: Bot) -> None:
+    """Load the SupportServer cog.
+    
+    Parameters
+    ----------
+    bot : `Bot`
+        The bot instance.
+    """
     await bot.add_cog(SupportServer(bot))

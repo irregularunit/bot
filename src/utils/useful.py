@@ -18,7 +18,7 @@ from typing import (
     Callable,
     Final,
     Iterable,
-    Iterator,
+    Generator,
     Literal,
     Optional,
     Self,
@@ -69,6 +69,25 @@ PERIODS: Final[Sequence[tuple[str, str, int]]] = (
 
 
 def format_list(to_format: Sequence[str], /, *, comma: str = ",") -> str:
+    """Formats a list of strings into a human readable string.
+    
+    Parameters
+    ----------
+    to_format: `Sequence[str]`
+        The list of strings to format.
+    comma: `str`
+        The comma to use. Defaults to `,`.
+
+    Returns
+    -------
+    `str`
+        The formatted string.
+
+    Raises
+    ------
+    `ValueError`
+        If `to_format` is empty.
+    """
     length = len(to_format)
 
     if length == 0:
@@ -84,6 +103,18 @@ def format_list(to_format: Sequence[str], /, *, comma: str = ",") -> str:
 
 
 def humanize_seconds(seconds: float) -> str:
+    """Converts seconds into a human readable string.
+
+    Parameters
+    ----------
+    seconds: `float`
+        The number of seconds to convert.
+
+    Returns
+    -------
+    `str`
+        The human readable string.
+    """
     seconds = int(seconds)
     strings = []
     for period_name, plural_period_name, period_seconds in PERIODS:
@@ -98,6 +129,18 @@ def humanize_seconds(seconds: float) -> str:
 
 
 def humanize_timedelta(delta: timedelta) -> str:
+    """Converts a timedelta into a human readable string.
+
+    Parameters
+    ----------
+    delta: `timedelta`
+        The timedelta to convert.
+
+    Returns
+    -------
+    `str`
+        The human readable string.
+    """
     return humanize_seconds(delta.total_seconds())
 
 
@@ -110,8 +153,19 @@ class suppress(AbstractContextManager[None]):
 
     Its about 3x slower than just using a try except block.
 
-    Note:
-    -----
+    Parameters
+    ----------
+    *exceptions: `Type[BaseException]`
+        The exceptions to suppress.
+    _log: `Optional[str]`
+        The log message to use. Defaults to `An exception was suppressed: %s`.
+    capture: `bool`
+        Whether to capture the exception. Defaults to `True`.
+    **kwargs: `Any`
+        The keyword arguments to use for the log message.
+
+    Note
+    ----
     This should NOT use `return` within the context of `suppress`.
     Instead, use the `Single Return Law Pattern` to return from the context.
     Reasoning behind this is that static linters will not be able to understand
@@ -152,7 +206,20 @@ async def async_all(
     *,
     check: Callable[[T | Awaitable[T]], TypeGuard[Awaitable[T]]] = isawaitable,
 ) -> bool:
-    """Returns True if all elements in the iterable are truthy."""
+    """Returns True if all elements in the iterable are truthy.
+    
+    Parameters
+    ----------
+    gen: `Iterable[T | Awaitable[T]]`
+        The iterable to check.
+    check: `Callable[[T | Awaitable[T]], TypeGuard[Awaitable[T]]]`
+        The function to check if an element is awaitable. Defaults to `isawaitable`.
+
+    Returns
+    -------
+    `bool`
+        Whether all elements in the iterable are truthy.
+    """
     for elem in gen:
         if check(elem):
             elem = await elem
@@ -162,9 +229,27 @@ async def async_all(
 
 
 def count_source_lines() -> int:
-    """Counts the number of lines in the source code."""
+    """Counts the number of lines in the source code.
+    
+    Returns
+    -------
+    `int`
+        The number of lines in the source code.
+    """
 
-    def count_lines_recursive(path: Path) -> Iterator[int]:
+    def count_lines_recursive(path: Path) -> Generator[int, None, None]:
+        """Counts the number of lines in a file or directory.
+        
+        Parameters
+        ----------
+        path: `Path`
+            The path to count the lines of.
+
+        Yields
+        ------
+        `int`
+            The number of lines in the file or directory.
+        """
         if path.is_file():
             if path.suffix in (".py", ".sql", ".yml"):
                 with path.open('r', encoding='utf-8') as f:
@@ -180,7 +265,18 @@ def count_source_lines() -> int:
 
 
 def type_of(image: bytes) -> Optional[str]:
-    """Returns the raw mime type of an image buffer."""
+    """Returns the raw mime type of an image buffer.
+    
+    Parameters
+    ----------
+    image: `bytes`
+        The image buffer to get the mime type of.
+
+    Returns
+    -------
+    `Optional[str]`
+        The raw mime type of the image buffer.
+    """
 
     def validate_mime(mime: str) -> bool:
         return mime in ("image/png", "image/jpeg", "image/webp", "image/gif")
@@ -193,7 +289,13 @@ def type_of(image: bytes) -> Optional[str]:
 
 
 def setup_logging(level: int | str) -> None:
-    """Call this before doing anything else"""
+    """Call this before doing anything else
+    
+    Parameters
+    ----------
+    level: `Union[int, str]`
+        The logging level to use.
+    """
     coloredlogs.install(
         level=level,
         fmt="[%(asctime)s][%(name)s][%(levelname)s] - %(message)s",
@@ -217,16 +319,52 @@ def setup_logging(level: int | str) -> None:
 
 
 def num_to_emote(num: int) -> str:
-    """Converts a number to an emoji. range is 0-9."""
+    """Converts a number to an emoji. range is 0-9.
+    
+    Parameters
+    ----------
+    num: `int`
+        The number to convert to an emoji.
+
+    Returns
+    -------
+    `str`
+        The emoji representing the number.
+    """
     return chr(48 + num) + chr(65039) + chr(8419)
 
 
 def emote_to_num(emote: str) -> int:
-    """Converts an emoji to a number. range is 0-9."""
+    """Converts an emoji to a number. range is 0-9.
+    
+    Parameters
+    ----------
+    emote: `str`
+        The emoji to convert to a number.
+
+    Returns
+    -------
+    `int`
+        The number represented by the emoji.
+    """
     return ord(emote[0]) - 48
 
 
 def resize_to_limit(image: BytesIO, limit: int = 8_000_000) -> BytesIO:
+    """Resizes an image to a given limit.
+
+    Parameters
+    ----------
+    image: `BytesIO`
+        The image to resize.
+    limit: `int`
+        The limit to resize the image to.
+
+    Returns
+    -------
+    `BytesIO`
+        The resized image.
+    """
     current_size: int = image.getbuffer().nbytes
 
     while current_size > limit:
@@ -265,9 +403,32 @@ def resize_to_limit(image: BytesIO, limit: int = 8_000_000) -> BytesIO:
 
 
 def for_all_callbacks(decorator: Any) -> Callable[[Type[T]], Type[T]]:
-    """Decorates all function command callbacks in a class"""
+    """Decorates all function command callbacks in a class
+    
+    Parameters
+    ----------
+    decorator: `Any`
+        The decorator to apply to all function command callbacks.
+
+    Returns
+    -------
+    `Callable[[Type[T]], Type[T]]`
+        The class decorator.
+    """
 
     def decorate(cls: Type[T]) -> Type[T]:
+        """The class decorator.
+
+        Parameters
+        ----------
+        cls: `Type[T]`
+            The class to decorate.
+
+        Returns
+        -------
+        `Type[T]`
+            The decorated class.
+        """
         for attr in dir(cls):
             method = getattr(cls, attr)
             if isinstance(method, CommandType):

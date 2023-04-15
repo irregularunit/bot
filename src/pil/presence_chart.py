@@ -27,6 +27,19 @@ logger: Logger = getLogger("presence-chart")
 
 
 class PresenceType(TypedDict):
+    """PresenceType is a type hint for the presence data.
+
+    Parameters
+    ----------
+    avatar : `bytes`
+        The avatar of the user.
+    labels : `list[str]`
+        The labels of the pie chart.
+    values : `list[int]`
+        The values of the pie chart.
+    colors : `list[str]`
+        The colors of the pie chart.
+    """
     avatar: bytes
     labels: list[str]
     values: list[int]
@@ -34,6 +47,40 @@ class PresenceType(TypedDict):
 
 
 class PresenceChart:
+    """PresenceChart is a class that generates a presence chart.
+
+    Parameters
+    ----------
+    presence : `PresenceType`
+        The presence data.
+
+    Attributes
+    ----------
+    id : `str`
+        The ID of the chart.
+    avatar : `bytes`
+        The avatar of the user.
+    data : `list[int]`
+        The values of the pie chart.
+    labels : `list[str]`
+        The labels of the pie chart.
+    colors : `list[str]`
+        The colors of the pie chart.
+    inner_radius : `int`
+        The inner radius of the pie chart.
+    width : `int`
+        The width of the image.
+    height : `int`
+        The height of the image.
+    radius : `int`
+        The radius of the pie chart.
+    center : `tuple[int, int]`
+        The center of the pie chart.
+    image : `PIL.Image.Image`
+        The image of the chart.
+    draw : `PIL.ImageDraw.ImageDraw`
+        The draw object of the chart.
+    """
     def __init__(
         self,
         presence: PresenceType,
@@ -56,6 +103,7 @@ class PresenceChart:
         self.draw: ImageDraw.ImageDraw
 
     def draw_pie_chart(self) -> None:
+        """Draws the pie chart."""
         data = self.data
         total = sum(data) or 1
         start_angle = 0
@@ -76,6 +124,7 @@ class PresenceChart:
             start_angle += angle
 
     def clean_inner_circle(self) -> None:
+        """Cleans the inner circle of the pie chart."""
         self.draw.ellipse(
             (
                 self.center[0] - self.inner_radius,
@@ -87,9 +136,11 @@ class PresenceChart:
         )
 
     def sharpen(self) -> None:
+        """Sharpens the image."""
         self.image = self.image.filter(ImageFilter.SHARPEN)
 
-    def draw_cubes(self):
+    def draw_cubes(self) -> None:
+        """Draws the cubes."""
         total = sum(self.data) or 1
 
         for i, (color, label) in enumerate(zip(self.colors, self.labels)):
@@ -120,6 +171,7 @@ class PresenceChart:
             self.image.paste(avatar, (self.width - 150, 50 + len(self.colors) * 60))
 
     def unbrighten_image(self) -> None:
+        """Unbrightens the image."""
         for x in range(self.width):
             for y in range(self.height):
                 pixel = self.image.getpixel((x, y))
@@ -135,6 +187,13 @@ class PresenceChart:
                     )
 
     def create(self) -> File:
+        """Creates the chart.
+
+        Returns
+        -------
+        `File`
+            The chart as a file.
+        """
         self.image = Image.new("RGBA", (self.width, self.height), (255, 255, 255, 0))
         self.draw = ImageDraw.Draw(self.image)
 
@@ -156,6 +215,13 @@ class PresenceChart:
         return File(buffer, filename=f"{self.id}.png")
 
     def save(self, filename: str) -> None:
+        """Saves the chart.
+
+        Parameters
+        ----------
+        filename : `str`
+            The filename to save the chart to.
+        """
         self.image.save(filename)
 
     def __str__(self) -> str:

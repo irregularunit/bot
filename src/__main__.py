@@ -41,6 +41,18 @@ os.environ["JISHAKU_RETAIN"] = "true"
 
 
 async def setup() -> tuple[Bot, Pool[Record], ClientSession]:
+    """Sets up the bot.
+    
+    Returns
+    -------
+    `tuple[Bot, Pool[Record], ClientSession]`
+        The bot, the PostgreSQL pool, and the aiohttp session.
+
+    Raises
+    ------
+    `Exception`
+        If the PostgreSQL pool or the aiohttp session could not be created.
+    """
     setup_logging("INFO")
     prep_conf: Config = Config()  # type: ignore (my IDE doesn't get it)
     logger: Logger = logging.getLogger()
@@ -75,6 +87,7 @@ async def setup() -> tuple[Bot, Pool[Record], ClientSession]:
 
 
 async def main() -> None:
+    """The main function."""
     bot, pool, session = await setup()
 
     async with bot, pool, session:

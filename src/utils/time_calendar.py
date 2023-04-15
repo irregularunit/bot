@@ -32,8 +32,11 @@ RANGES_SHORT = {
 
 
 class TimeConverter(commands.Converter[str]):
+    """Converts a time range to a string."""
+
     @staticmethod
     async def convert(ctx: commands.Context, argument: str) -> str:
+        """Converts a time range to a string."""
         for time in RANGES_SHORT:
             if argument.lower() == time:
                 return time
@@ -47,6 +50,8 @@ class TimeConverter(commands.Converter[str]):
 
 
 class CountingCalender:
+    """A class to represent a counting calendar."""
+
     def __init__(self, user: int, guid: int) -> None:
         self.user: int = user
         self.guid: int = guid
@@ -54,6 +59,7 @@ class CountingCalender:
         self.build_time_mapping()
 
     def build_time_mapping(self) -> None:
+        """Builds the time mapping."""
         start_date = discord.utils.utcnow().timestamp()
 
         for time in RANGES_SHORT:

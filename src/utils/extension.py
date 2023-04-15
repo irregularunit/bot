@@ -18,6 +18,19 @@ __all__: tuple[str, ...] = ("BaseExtension",)
 
 
 class BaseExtension(commands.Cog):
+    """Base extension class for all extensions.
+
+    Parameters
+    ----------
+    bot: `Bot`
+        The bot instance.
+    name: `str`
+        The name of the extension.
+    description: `str`
+        The description of the extension.
+    hidden: `bool`
+        Whether the extension is hidden or not.
+    """
     hidden: Optional[bool] = False
 
     def __init__(self, bot: Bot, *args: Any, **kwargs: Any) -> None:

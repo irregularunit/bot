@@ -55,10 +55,25 @@ class MemberConverter(commands.Converter[discord.Member]):
 
     @staticmethod
     def get_id_match(argument):
+        """Returns the ID match object or None if not found."""
         return _ID_REGEX.match(argument)
 
     @staticmethod
     async def query_member_named(guild: discord.Guild, argument: str) -> Optional[discord.Member]:
+        """Queries a member by name and discriminator.
+        
+        Parameters
+        ----------
+        guild: `discord.Guild`
+            The guild to query.
+        argument: `str`
+            The name and discriminator to query.
+
+        Returns
+        -------
+        `Optional[discord.Member]`
+            The member found, or None if not found.
+        """
         cache = guild._state.member_cache_flags.joined
         if len(argument) > 5 and argument[-5] == '#':
             username, _, discriminator = argument.rpartition('#')
@@ -72,6 +87,22 @@ class MemberConverter(commands.Converter[discord.Member]):
     async def query_member_by_id(
         bot: Bot, guild: discord.Guild, user_id: int
     ) -> Optional[discord.Member]:
+        """Queries a member by ID.
+
+        Parameters
+        ----------
+        bot: `Bot`
+            The bot instance.
+        guild: `discord.Guild`
+            The guild to query.
+        user_id: `int`
+            The ID to query.
+
+        Returns
+        -------
+        `Optional[discord.Member]`
+            The member found, or None if not found.
+        """
         ws = bot._get_websocket(shard_id=guild.shard_id)
         cache = guild._state.member_cache_flags.joined
         if ws.is_ratelimited():
@@ -94,6 +125,25 @@ class MemberConverter(commands.Converter[discord.Member]):
 
     @override
     async def convert(self, ctx: Context, argument: str) -> discord.Member:
+        """Converts to a discord.Member.
+
+        Parameters
+        ----------
+        ctx: `Context`
+            The context of the command.
+        argument: `str`
+            The argument to convert.
+
+        Returns
+        -------
+        `discord.Member`
+            The member found.
+
+        Raises
+        ------
+        `UserFeedbackException`
+            If the member could not be found.
+        """
         bot = ctx.bot
         match = self.get_id_match(argument) or re.match(r'<@!?([0-9]{15,20})>$', argument)
         guild = ctx.guild
@@ -143,6 +193,20 @@ class EmojiConverter(commands.Converter[discord.PartialEmoji]):
     async def from_message(
         ctx: Context, message: discord.Message
     ) -> Optional[list[discord.PartialEmoji]]:
+        """Gets the emojis from a message.
+
+        Parameters
+        ----------
+        ctx: `Context`
+            The context of the command.
+        message: `discord.Message`
+            The message to get the emojis from.
+
+        Returns
+        -------
+        `Optional[list[discord.PartialEmoji]]`
+            The emojis found, or None if no emojis were found.
+        """
         message_content: str = message.content
         for embed in message.embeds:
             for field in embed.fields:
@@ -195,6 +259,20 @@ class EmojiConverter(commands.Converter[discord.PartialEmoji]):
     async def convert(
         self, ctx: Context, argument: Optional[str]
     ) -> Optional[list[discord.PartialEmoji]]:
+        """Converts to a list of discord.PartialEmoji.
+
+        Parameters
+        ----------
+        ctx: `Context`
+            The context of the command.
+        argument: `Optional[str]`
+            The argument to convert.
+
+        Returns
+        -------
+        `Optional[list[discord.PartialEmoji]]`
+            The emojis found, or None if no emojis were found.
+        """
         if ctx.reference:  # (False | None | discord.MessageReference)
             return await self.from_message(ctx, ctx.reference)
 

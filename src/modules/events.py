@@ -33,12 +33,25 @@ AVATAR_CHANNEL_ID: int = 1094282348469702677
 
 
 class SendQueueItem(NamedTuple):
+    """Represents an item to be sent to the avatar history channel.
+    
+    Attributes
+    ----------
+    user_id: `int`
+        The ID of the user.
+    name: `str | None`
+        The name of the user.
+    image: `bytes`
+        The image of the user's avatar.
+    """
     user_id: int
     name: str | None
     image: bytes
 
 
 class PartialMessageView(discord.ui.View):
+    """A view that allows the user to jump to a message."""
+
     def __init__(self, message: discord.Message, embed: EmbedBuilder) -> None:
         super().__init__(timeout=60.0)
         self.message: discord.Message = message
@@ -53,10 +66,19 @@ class PartialMessageView(discord.ui.View):
         )
 
     async def send_to_ctx(self, ctx: Context) -> None:
+        """Sends the embed to the context.
+        
+        Parameters
+        ----------
+        ctx: `Context`
+            The context to send the embed to.
+        """
         await ctx.send(embed=self.embed, view=self)
 
 
 class DiscordEventListener(BaseExtension):
+    """A class that handles events from Discord."""
+
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
 
@@ -76,12 +98,47 @@ class DiscordEventListener(BaseExtension):
 
     @staticmethod
     def timestamp_to_tztime(timestamp: float) -> datetime:
+        """Converts a timestamp to a timezone-aware datetime object.
+
+        Parameters
+        ----------
+        timestamp: `float`
+            The timestamp to convert.
+
+        Returns
+        -------
+        `datetime`
+            The timezone-aware datetime object.
+        """
         return datetime.fromtimestamp(timestamp, tz=timezone.utc)
 
     def push_item(self, user_id: int, name: str | None, image: bytes, /) -> None:
+        """Pushes an item to the send queue.
+
+        Parameters
+        ----------
+        user_id: `int`
+            The ID of the user.
+        name: `str | None`
+            The name of the user.
+        image: `bytes`
+            The image of the user's avatar.
+        """
         self._send_queue.append(SendQueueItem(user_id, name, image))
 
     async def _read_avatar(self, member: discord.Member | discord.User) -> Optional[bytes]:
+        """Reads the avatar of a member.
+
+        Parameters
+        ----------
+        member: `discord.Member | discord.User`
+            The member to read the avatar of.
+
+        Returns
+        -------
+        `Optional[bytes]`
+            The avatar of the member, if it exists.
+        """
         try:
             avatar: bytes = await member.display_avatar.read()
         except discord.HTTPException as exc:
@@ -102,6 +159,7 @@ class DiscordEventListener(BaseExtension):
 
     @tasks.loop(seconds=30)
     async def send_queue_task(self) -> None:
+        """A task that sends items to the avatar history channel."""
         if not self._send_queue or self._is_running:
             return
 
@@ -140,10 +198,18 @@ class DiscordEventListener(BaseExtension):
 
     @send_queue_task.before_loop
     async def before_send_queue_task(self) -> None:
+        """Waits for the bot to be ready. Before the task starts."""
         await self.bot.wait_until_ready()
 
     @commands.Cog.listener("on_guild_join")
     async def handle_guild_join(self, guild: discord.Guild) -> None:
+        """Handles a new guild joining the bot.
+
+        Parameters
+        ----------
+        guild: `discord.Guild`
+            The guild that joined.
+        """
         _log: Logger = log.getChild("manage_new_guild")
 
         _log.info("New guild joined: %s (%s)", guild.name, guild.id)
@@ -199,6 +265,13 @@ class DiscordEventListener(BaseExtension):
 
     @commands.Cog.listener("on_member_join")
     async def manage_new_member(self, member: discord.Member) -> None:
+        """Handles a new member joining the guild.
+
+        Parameters
+        ----------
+        member: `discord.Member`
+            The member that joined.
+        """
         if member.bot:
             return
 
@@ -219,6 +292,15 @@ class DiscordEventListener(BaseExtension):
 
     @commands.Cog.listener("on_member_update")
     async def manage_member_update(self, before: discord.Member, after: discord.Member) -> None:
+        """Handles a member updating their avatar.
+
+        Parameters
+        ----------
+        before: `discord.Member`
+            The member before the update.
+        after: `discord.Member`
+            The member after the update.
+        """
         if before.bot:
             return
 
@@ -232,6 +314,21 @@ class DiscordEventListener(BaseExtension):
 
     @commands.Cog.listener("on_user_update")
     async def manage_user_update(self, before: discord.User, after: discord.User) -> None:
+        """Handles a user updating their details.
+
+        Parameters
+        ----------
+        before: `discord.User`
+            The user before the update.
+        after: `discord.User`
+            The user after the update.
+
+        Handles the following updates:
+        - Name
+        - Discriminator
+        - Avatar    
+        """
+
         if before.name != after.name:
             query = "INSERT INTO item_history (uuid, item_type, item_value) VALUES ($1, $2, $3)"
 
@@ -258,6 +355,13 @@ class DiscordEventListener(BaseExtension):
 
     @commands.Cog.listener("on_guild_remove")
     async def manage_guild_leave(self, guild: discord.Guild) -> None:
+        """Handles a guild being removed from the bot.
+
+        Parameters
+        ----------
+        guild: `discord.Guild`
+            The guild that was removed.
+        """
         query: str = "DELETE FROM guilds WHERE uuid = $1"
 
         async with self.bot.pool.acquire() as connection:
@@ -265,6 +369,15 @@ class DiscordEventListener(BaseExtension):
 
     @commands.Cog.listener("on_presence_update")
     async def manage_presence_update(self, before: discord.Member, after: discord.Member) -> None:
+        """Handles a member updating their presence.
+
+        Parameters
+        ----------
+        before: `discord.Member`
+            The member before the update.
+        after: `discord.Member`
+            The member after the update.
+        """
         if before.bot:
             return
 
@@ -290,6 +403,19 @@ class DiscordEventListener(BaseExtension):
     async def insert_counting(
         self, uid: int, message: discord.Message, word: str, time: int
     ) -> None:
+        """Inserts a new counting word into the database.
+
+        Parameters
+        ----------
+        uid: `int`
+            The user's ID.
+        message: `discord.Message`
+            The message that was sent.
+        word: `str`
+            The word that was sent.
+        time: `int`
+            The time that the word was sent.
+        """
         if await self.bot.redis.client.get(f"{word}:{uid}"):
             # The user is most likely spamming to increase their score.
             return
@@ -318,6 +444,13 @@ class DiscordEventListener(BaseExtension):
 
     @commands.Cog.listener("on_message")
     async def manage_messages(self, message: discord.Message) -> None:
+        """Handles a message being sent.
+
+        Parameters
+        ----------
+        message: `discord.Message`
+            The message that was sent.
+        """
         if not message.guild or message.author.bot:
             return
 
@@ -357,6 +490,13 @@ class DiscordEventListener(BaseExtension):
 
     @commands.Cog.listener("on_message")
     async def manage_prefix_change(self, message: discord.Message) -> None:
+        """Handles a message being sent.
+
+        Parameters
+        ----------
+        message: `discord.Message`
+            The message that was sent.
+        """
         if message.author.id != self.bot.config.owo_bot_id:
             return
 
@@ -394,6 +534,13 @@ class DiscordEventListener(BaseExtension):
 
     @commands.Cog.listener("on_message")
     async def partial_message_handler(self, message: discord.Message) -> None:
+        """Handles a message being sent.
+
+        Parameters
+        ----------
+        message: `discord.Message`
+            The message that was sent.
+        """
         if message.author.bot or not message.guild:
             return
 
@@ -404,21 +551,20 @@ class DiscordEventListener(BaseExtension):
             return
         else:
             guild = partial_message.guild
-            
+
             if not guild:
                 return
-            
+
             try:
-                channel = (
-                    guild.get_channel(partial_message.channel.id)
-                    or await guild.fetch_channel(partial_message.channel.id)
-                )
+                channel = guild.get_channel(
+                    partial_message.channel.id
+                ) or await guild.fetch_channel(partial_message.channel.id)
             except discord.HTTPException:
                 return
-        
+
             if isinstance(channel, (discord.ForumChannel, discord.CategoryChannel)):
                 return
-            
+
             try:
                 qualified_message = await channel.fetch_message(partial_message.id)
             except (
@@ -426,7 +572,7 @@ class DiscordEventListener(BaseExtension):
                 discord.HTTPException,
             ):
                 return
-    
+
             embed = EmbedBuilder.from_message(qualified_message)
 
             view = PartialMessageView(qualified_message, embed)
@@ -436,4 +582,11 @@ class DiscordEventListener(BaseExtension):
 
 
 async def setup(bot: Bot) -> None:
+    """Load the DiscordEventListener cog.
+    
+    Parameters
+    ----------
+    bot: `Bot`
+        The bot instance.
+    """
     await bot.add_cog(DiscordEventListener(bot))
