@@ -86,6 +86,7 @@ class DiscordErrorHandler(BaseExtension):
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
         self.flyweight: Dict[str, Error] = {}
+        self.on_cooldown: Dict[int, datetime.datetime] = {}
 
     @staticmethod
     def to_discord_time_format(seconds: Union[int, float]) -> str:
@@ -188,11 +189,23 @@ class DiscordErrorHandler(BaseExtension):
         # Gets the original exception
         exc: Any | Exception = getattr(error, "original", error)
 
-        if isinstance(exc, commands.CommandNotFound):
+        if isinstance(error, commands.CommandNotFound):
             # The invoked command does not exist
             return
+        
+        if isinstance(error, commands.CommandOnCooldown):
+            if await self.bot.redis.client.get(f"cooldown:{ctx.author.id}"):
+                return
 
-        if isinstance(exc, commands.NotOwner):
+            await self.bot.redis.client.setex(
+                f"cooldown:{ctx.author.id}",
+                1,
+                int(error.retry_after) + 1,
+            )
+
+            return await ctx.message.add_reaction("\N{SNAIL}")
+
+        if isinstance(error, commands.NotOwner):
             if not (err := self.get_error(commands.NotOwner)):
                 err = self.create_error(
                     exception=commands.NotOwner,
@@ -203,28 +216,12 @@ class DiscordErrorHandler(BaseExtension):
 
             return await ctx.safe_send(content=err.to_string())
 
-        if isinstance(exc, commands.CommandOnCooldown):
-            if await self.bot.redis.client.get(f"cooldown:{ctx.author.id}") is not None:
-                return
-
-            await self.bot.redis.client.setex(
-                name=f"cooldown:{ctx.author.id}",
-                value="1",
-                time=int(exc.retry_after) + 1,
-            )
-
-            time_counter = self.to_discord_time_format(exc.retry_after)
-            return await ctx.safe_send(
-                content=f":stopwatch: | You are on cooldown, try again in {time_counter}.",
-                delete_after=exc.retry_after + 1,
-            )
-
-        if isinstance(exc, commands.TooManyArguments):
+        if isinstance(error, commands.TooManyArguments):
             # Maybe add better error handling later?
             return await ctx.send_help(ctx.command)
 
-        if isinstance(exc, commands.MissingRequiredArgument):
-            arg = exc.param.name
+        if isinstance(error, commands.MissingRequiredArgument):
+            arg = error.param.name
             signature = ctx.command.signature
             full_qualified_signature = ctx.command.full_parent_name + ctx.command.qualified_name
 
