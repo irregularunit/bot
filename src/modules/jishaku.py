@@ -52,7 +52,7 @@ class Jishaku(BaseExtension, *STANDARD_FEATURES, *OPTIONAL_FEATURES):
         *,
         start_time: Optional[float] = None,
         redirect_stdout: Optional[str] = None,
-    ):
+    ) -> discord.Message | PaginatorInterface:
         if isinstance(result, discord.Message):
             return await ctx.send(f"<Message <{result.jump_url}>>")
 

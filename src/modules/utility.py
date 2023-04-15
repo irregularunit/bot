@@ -182,6 +182,27 @@ class Utility(BaseExtension):
 
             await ctx.send(embed=embed)
 
+    @commands.command(name="nmap")
+    async def nmap(self, ctx: Context, host: str) -> None:
+        if not DOMAIN_REGEX.match(host):
+            raise UserFeedbackExceptionFactory.create(
+                "Please provide a valid domain name.",
+                ExceptionLevel.INFO,
+            )
+
+        process = await asyncio.create_subprocess_shell(
+            f"nmap {host}",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        stdout, stderr = await process.communicate()
+
+        if stdout:
+            await ctx.safe_send(f"```{stdout.decode()}```")
+        elif stderr:
+            await ctx.safe_send(f"```{stderr.decode()}```")
+
 
 async def setup(bot: Bot) -> None:
     await bot.add_cog(Utility(bot))

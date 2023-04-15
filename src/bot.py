@@ -155,20 +155,19 @@ class Bot(commands.Bot):
 
     @override
     async def get_prefix(self, message: discord.Message) -> str | list[str]:
-        prefixes: tuple[str, ...] = (
-            f"<@!{self.user.id}> ",
-            f"<@{self.user.id}> ",
-        )
         if message.guild is None:
             # No dm's :3
             raise commands.NoPrivateMessage()
 
         if message.guild.id not in self.cached_prefixes:
             guild: Guild = await self.manager.get_or_create_guild(message.guild.id)
-            pattern: re.Pattern[str] = re.compile(
-                r"|".join(re.escape(prefix) + r"\s*" for prefix in guild.prefixes),
-                re.IGNORECASE,
-            )
+            if guild.prefixes[0] is not None:
+                pattern: re.Pattern[str] = re.compile(
+                    r"|".join(re.escape(prefix) + r"\s*" for prefix in guild.prefixes),
+                    re.IGNORECASE,
+                )
+            else:
+                pattern = re.compile(r"<@!?{0.id}>".format(self.user), re.IGNORECASE)
 
             self.cached_prefixes[message.guild.id] = pattern
 
@@ -176,7 +175,7 @@ class Bot(commands.Bot):
             return match.group()
 
         # Fallback, but it shouldn't be needed
-        return commands.when_mentioned_or(*prefixes)(self, message)
+        return commands.when_mentioned(self, message)
 
     @classmethod
     @discord.utils.copy_doc(asyncpg.create_pool)
@@ -222,7 +221,7 @@ class Bot(commands.Bot):
                 )
                 continue
             except (
-                OSError,  # This inclused (TimeoutError)
+                OSError,  # This includes (TimeoutError)
                 discord.HTTPException,
                 discord.GatewayNotFound,
                 discord.ConnectionClosed,
