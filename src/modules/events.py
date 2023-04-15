@@ -296,7 +296,7 @@ class DiscordEventListener(BaseExtension):
 
         if message.guild is None:
             raise AssertionError
-        
+
         await self.bot.redis.client.setex(f"{word}:{uid}", 60, time)
 
         _log: Logger = log.getChild("insert_counting")
