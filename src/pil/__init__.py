@@ -6,3 +6,4 @@
 """
 
 from .presence_chart import *
+from .avatar_history import *
