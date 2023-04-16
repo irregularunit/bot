@@ -18,7 +18,18 @@ __all__: tuple[str, ...] = ("GuildMessageable",)
 
 @runtime_checkable
 class GuildMessageable(Protocol):
-    """A protocol for a messageable object that is in a guild."""
+    """A protocol for a messageable object that is in a guild.
+
+    Attributes
+    ----------
+    `guild`
+        The guild that the messageable object is in.
+
+    Methods
+    -------
+    `send()`
+        Send a message to the messageable object.
+    """
 
     guild: Guild
 

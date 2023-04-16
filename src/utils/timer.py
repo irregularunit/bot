@@ -18,12 +18,22 @@ class Timer:
 
     Functions
     ---------
-    start()
+    `start()`
         Start the timer.
-    stop()
+    `stop()`
         Stop the timer. > returns the time elapsed.
-    reset()
+    `reset()`
         Reset the timer.
+
+    Properties
+    ----------
+    `elapsed`
+        The time elapsed since the timer was started.
+
+    Notes
+    -----
+    The timer is meant to be used as a context manager, but can also be used
+    as a normal class.
     """
 
     def __init__(
@@ -57,6 +67,7 @@ class Timer:
         self.stop()
 
     def start(self) -> None:
+        """Start the timer."""
         if self._start != 0.0:
             raise RuntimeError("Timer is running. Use .stop() to stop it")
 
@@ -71,6 +82,7 @@ class Timer:
         return self.elapsed
 
     def reset(self) -> None:
+        """Reset the timer."""
         self._start = 0.0
         self._end = 0.0
 
@@ -78,6 +90,7 @@ class Timer:
 
     @property
     def elapsed(self) -> float:
+        """The time elapsed since the timer was started."""
         if self._end == 0.0:
             return self.stop()
 

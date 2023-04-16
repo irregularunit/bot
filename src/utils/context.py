@@ -165,6 +165,23 @@ class Context(commands.Context["Bot"]):
             return None
 
     async def copy_with(self, *, author=None, channel=None, **kwargs) -> Self:
+        """Copies the context with the given attributes.
+
+        Parameters
+        ----------
+        author: `Optional[discord.abc.User]`
+            The author of the context.
+        channel: `Optional[discord.abc.Messageable]`
+            The channel of the context.
+        **kwargs: `Any`
+            The keyword arguments to pass to `discord.abc.Messageable.send`.
+
+        Returns
+        -------
+        `Self`
+            The copied context.
+        """
+
         msg: discord.Message = copy.copy(self.message)
         msg._update(kwargs)  # type: ignore
 

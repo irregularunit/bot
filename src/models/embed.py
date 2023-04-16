@@ -25,6 +25,20 @@ config: Config = Config()  # type: ignore
 
 
 class EmbedBuilder(Embed):
+    """A custom embed builder.
+
+    Functions
+    ---------
+    `to_factory()`
+        Create a new embed from an existing embed.
+    `from_message()`
+        Create a new embed from a message.
+    `from_action()`
+        Create a new embed from a user action.
+    `factory()`
+        Factory function to create a new embed.
+    """
+
     @override
     def __init__(
         self,
@@ -40,6 +54,20 @@ class EmbedBuilder(Embed):
 
     @classmethod
     def to_factory(cls: Type[Self], embed: Embed, **kwargs: Any) -> Self:
+        """Create a new embed from an existing embed.
+
+        Parameters
+        ----------
+        embed: `discord.Embed`
+            The embed to copy from.
+        **kwargs: `Any`
+            Additional keyword arguments to pass to the embed builder.
+
+        Returns
+        -------
+        `EmbedBuilder`
+            The new embed builder.
+        """
         copied_embed = copy.copy(embed)
         copied_embed.color = config.color
 
@@ -51,6 +79,20 @@ class EmbedBuilder(Embed):
         message: Message,
         **kwargs: Any,
     ) -> Self:
+        """Create a new embed from a message.
+
+        Parameters
+        ----------
+        message: `discord.Message`
+            The message to create the embed from.
+        **kwargs: `Any`
+            Additional keyword arguments to pass to the embed builder.
+
+        Returns
+        -------
+        `EmbedBuilder`
+            The new embed builder.
+        """
         if embeds := message.embeds:
             return cls.to_factory(embeds[0], **kwargs)
 
@@ -71,6 +113,22 @@ class EmbedBuilder(Embed):
 
     @classmethod
     def from_action(cls: Type[Self], *, title: str, gif: str, footer: Optional[str] = None) -> Self:
+        """Create a new embed from a user action.
+
+        Parameters
+        ----------
+        title: `str`
+            The title of the embed.
+        gif: `str`
+            The URL of the GIF to use.
+        footer: `str`
+            The footer of the embed.
+
+        Returns
+        -------
+        `EmbedBuilder`
+            The new embed builder.
+        """
         instance: Self = cls(title=title).set_image(url=gif)
         if footer:
             instance.set_footer(text=footer)
@@ -79,6 +137,20 @@ class EmbedBuilder(Embed):
 
     @classmethod
     def factory(cls: Type[Self], ctx: Context, **kwargs: Any) -> Self:
+        """Factory function to create a new embed.
+
+        Parameters
+        ----------
+        ctx: `Context`
+            The context of the command.
+        **kwargs: `Any`
+            Additional keyword arguments to pass to the embed builder.
+
+        Returns
+        -------
+        `EmbedBuilder`
+            The new embed builder.
+        """
         instance = cls(**kwargs)
         instance.set_footer(
             text="Made with ❤️ by irregularunit.",
@@ -86,5 +158,12 @@ class EmbedBuilder(Embed):
         )
         return instance
 
-    def build(self) -> Embed:
+    def build(self) -> Self:
+        """Returns a shallow copy of the embed.
+
+        Returns
+        -------
+        `EmbedBuilder`
+            The shallow copy of the embed.
+        """
         return copy.copy(self)
