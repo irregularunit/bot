@@ -192,7 +192,7 @@ class DiscordErrorHandler(BaseExtension):
         if isinstance(error, commands.CommandNotFound):
             # The invoked command does not exist
             return
-        
+
         if isinstance(error, commands.CommandOnCooldown):
             if await self.bot.redis.client.get(f"cooldown:{ctx.author.id}"):
                 return

@@ -29,6 +29,7 @@ class AvatarCollageType(NamedTuple):
     avatars : `list[bytes]`
         The avatars of the user.
     """
+
     avatars: list[Image.Image]
 
     def grid_size(self) -> int:
@@ -81,7 +82,7 @@ class AvatarCollage:
             self.image.save(buffer, "webp")
             buffer.seek(0)
             return File(buffer, filename=f"{self.id}.webp")
-        
+
     def draw_collage(self) -> None:
         """Draw the collage."""
         fx = fy = 0
@@ -101,9 +102,9 @@ class AvatarCollage:
     def save(self) -> None:
         """Save the avatar collage to the disk."""
         self.image.save(f"{self.id}.png")
-            
+
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id={self.id}>"
-    
+
     def __str__(self) -> str:
         return self.__repr__()

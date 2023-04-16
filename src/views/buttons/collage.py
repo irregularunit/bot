@@ -14,8 +14,8 @@ from typing import Any, Optional
 import discord
 from PIL import Image
 
-from pil import AvatarCollage, AvatarCollageType
 from models import EmbedBuilder
+from pil import AvatarCollage, AvatarCollageType
 
 __all__: tuple[str, ...] = ("CollageAvatarButton",)
 
@@ -42,7 +42,7 @@ class CollageAvatarButton(discord.ui.Button):
         collage_entry: AvatarCollageType = AvatarCollageType(images)
         collage: AvatarCollage = AvatarCollage(collage_entry)
         return await asyncio.to_thread(collage.create)
-        
+
     async def get_member_collage(
         self, member: discord.Member | discord.User
     ) -> Optional[discord.File]:
@@ -90,7 +90,7 @@ class CollageAvatarButton(discord.ui.Button):
         self.disabled = True
 
         file: discord.File | None = await self.get_member_collage(view.member)
-        
+
         embed: EmbedBuilder = EmbedBuilder.factory(view.ctx)
         embed.set_image(url=f"attachment://{file.filename if file else 'collage.webp'}")
 
