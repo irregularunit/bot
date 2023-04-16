@@ -5,6 +5,8 @@
  * For more information, see README.md and LICENSE
 """
 
+from __future__ import annotations
+
 import asyncio
 import uuid
 from logging import Logger, getLogger
@@ -19,6 +21,8 @@ log: Logger = getLogger(__name__)
 
 
 def check_running(func: Any) -> Any:
+    """Check if the Redis connection is running."""
+
     async def wrapper(self, *args, **kwargs) -> Any:
         if not self._is_stopping:
             return False
@@ -28,6 +32,18 @@ def check_running(func: Any) -> Any:
 
 
 class RedisBridge:
+    """A bridge to connect to Redis.
+
+    Attributes
+    ----------
+    `client`
+        The Redis client.
+    `connection`
+        The Redis connection pool.
+    `is_stopping`
+        Whether the Redis connection is stopping.
+    """
+
     __slots__: tuple[str, ...] = (
         "_loop",
         "_pool",
@@ -56,17 +72,21 @@ class RedisBridge:
 
     @property
     def client(self) -> Redis:
+        """The Redis client."""
         return self._redis
 
     @property
     def connection(self) -> ConnectionPool:
+        """The Redis connection pool."""
         return self._pool
 
     @property
     def is_stopping(self) -> bool:
+        """Whether the Redis connection is stopping."""
         return self._is_stopping
 
     async def connect(self) -> None:
+        """Connect to Redis."""
         if self._is_connected:
             log.warning("Redis connection already established, skipping...")
             return
@@ -82,19 +102,23 @@ class RedisBridge:
                 await asyncio.sleep(5.0)
 
     @classmethod
-    def setup_redis(cls, uri: str) -> "RedisBridge":
+    def setup_redis(cls, uri: str) -> RedisBridge:
+        """Setup the Redis connection."""
         return cls(uri=uri)
 
     def lock(self, key: str) -> None:
+        """Lock a key."""
         return self._need_execution.add(key)
 
     def unlock(self, key: str) -> None:
+        """Unlock a key."""
         try:
             self._need_execution.discard(key)
         except ValueError:
             pass
 
     async def close(self) -> None:
+        """Close the Redis connection."""
         _log: Logger = self.log.getChild("close")
         _log.info(
             "Closing connection, waiting for %s tasks...",
@@ -120,10 +144,12 @@ class RedisBridge:
         _log.info("Redis connection has been terminated")
 
     def acquire_lock(self, name: str) -> str:
+        """Acquire a lock."""
         uniq_id: str = str(uuid.uuid4())
         self.lock(f"{name}_" + uniq_id)
 
         return uniq_id
 
     def release_lock(self, name: str, uniq_id: str) -> None:
+        """Release a lock."""
         self.unlock(f"{name}_" + uniq_id)

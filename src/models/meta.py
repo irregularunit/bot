@@ -25,6 +25,16 @@ BOT_ID: int = 1054123882384212078
 
 
 class Model:
+    """Base model class for custom psql models.
+
+    Attributes
+    ----------
+    `id`
+        The id of the model.
+    `created_at`
+        The time the model was created.
+    """
+
     __slots__: tuple[str, ...] = ("id", "created_at")
 
     def __init__(self, *, id: int, created_at: datetime) -> None:
@@ -33,14 +43,41 @@ class Model:
 
     @classmethod
     def from_record(cls: Type[Model], record: Record) -> ...:
+        """Meant to be overridden by subclasses.
+
+        Parameters
+        ----------
+        record: `asyncpg.Record`
+            The record to create the model from.
+
+        Returns
+        -------
+        `Model`
+            The model created from the record.
+        """
         raise NotImplementedError
 
     @property
     def mention(self) -> str:
+        """The mention of the model."""
         return f"<@{self.id}>"
 
 
 class User(Model):
+    """A custom user model.
+
+    Attributes
+    ----------
+    `emoji_server`
+        The id of the emoji server the user is in.
+    `timezone`
+        The timezone of the user.
+    `id`
+        The id of the user.
+    `created_at`
+        The time the user was created.
+    """
+
     __slots__: tuple[str, ...] = (
         "emoji_server",
         "timezone",
@@ -70,6 +107,13 @@ class User(Model):
         )
 
     async def delete(self, pool: Pool[Record]) -> None:
+        """Delete the user from the database.
+
+        Parameters
+        ----------
+        pool: `asyncpg.Pool`
+            The pool to delete the user from.
+        """
         to_cascade = [
             "avatar_history",
             "item_history",
@@ -87,6 +131,22 @@ class User(Model):
 
 
 class Guild(Model):
+    """A custom guild model.
+
+    Attributes
+    ----------
+    `prefixes`
+        The prefixes of the guild.
+    `owo_prefix`
+        The owo prefix of the guild.
+    `owo_counting`
+        Whether or not the guild is owo counting.
+    `id`
+        The id of the guild.
+    `created_at`
+        The time the guild was created.
+    """
+
     __slots__: tuple[str, ...] = (
         "prefixes",
         "owo_prefix",
@@ -121,10 +181,36 @@ class Guild(Model):
 
 
 class ModelManager:
+    """A model manager for all psql models.
+
+    Attributes
+    ----------
+    `pool`
+        The pool to use for the model manager.
+    """
+
     def __init__(self, pool: Pool[Record]) -> None:
         self.pool = pool
 
     async def create_user(self, user_id: int) -> User:
+        """Create a user in the database.
+
+        Parameters
+        ----------
+        user_id: `int`
+            The id of the user to create.
+
+        Returns
+        -------
+        `User`
+            The user created.
+
+        Raises
+        ------
+        `UserFeedbackException`
+            If the user could not be created.
+        """
+
         query: str = """
         INSERT INTO users (uuid)
         VALUES ($1)
@@ -145,6 +231,19 @@ class ModelManager:
         return User.from_record(record)
 
     async def get_user(self, user_id: int) -> Optional[User]:
+        """Get a user from the database.
+
+        Parameters
+        ----------
+        user_id: `int`
+            The id of the user to get.
+
+        Returns
+        -------
+        `Optional[User]`
+            The user if found, else `None`.
+        """
+
         query: str = "SELECT * FROM users WHERE uuid = $1"
 
         async with self.pool.acquire() as connection:
@@ -156,18 +255,59 @@ class ModelManager:
         return User.from_record(record)
 
     async def get_or_create_user(self, user_id: int) -> User:
+        """Get a user from the database, or create one if it doesn't exist.
+
+        Parameters
+        ----------
+        user_id: `int`
+            The id of the user to get or create.
+
+        Returns
+        -------
+        `User`
+            The user.
+        """
+
         user: User | None = await self.get_user(user_id)
         if user is None:
             user = await self.create_user(user_id)
         return user
 
-    async def set_user_timezone(self, user_id: int, timezone: str) -> None:
+    async def set_user_timezone(self, user: User, timezone: str) -> User:
+        """Set the timezone of a user.
+
+        Parameters
+        ----------
+        user_id: `int`
+            The id of the user to set the timezone of.
+        timezone: `str`
+            The timezone to set.
+        """
+
         query: str = "UPDATE users SET timezone = $1 WHERE uuid = $2"
 
         async with self.pool.acquire() as connection:
-            await connection.execute(query, timezone, user_id)
+            await connection.execute(query, timezone, user.id)
+
+        user.timezone = timezone
+        return user
 
     async def set_user_emoji_server(self, user: User, emoji_server: int) -> User:
+        """Set the emoji server of a user.
+
+        Parameters
+        ----------
+        user: `User`
+            The user to set the emoji server of.
+        emoji_server: `int`
+            The emoji server to set.
+
+        Returns
+        -------
+        `User`
+            The user.
+        """
+
         query: str = "UPDATE users SET emoji_server = $1 WHERE uuid = $2"
 
         async with self.pool.acquire() as connection:
@@ -177,6 +317,14 @@ class ModelManager:
         return user
 
     async def get_all_users(self) -> dict[int, User]:
+        """Get all users from the database.
+
+        Returns
+        -------
+        `dict[int, User]`
+            A dictionary of all users.
+        """
+
         query: str = "SELECT * FROM users"
 
         async with self.pool.acquire() as connection:
@@ -186,6 +334,24 @@ class ModelManager:
         return users
 
     async def create_guild(self, guild_id: int) -> Guild:
+        """Create a guild in the database.
+
+        Parameters
+        ----------
+        guild_id: `int`
+            The id of the guild to create.
+
+        Returns
+        -------
+        `Guild`
+            The guild created.
+
+        Raises
+        ------
+        `UserFeedbackException`
+            If the guild could not be created.
+        """
+
         query: str = """
         INSERT INTO guilds (gid)
         VALUES ($1)
@@ -214,6 +380,19 @@ class ModelManager:
         return instance
 
     async def get_guild(self, guild_id: int) -> Optional[Guild]:
+        """Get a guild from the database.
+
+        Parameters
+        ----------
+        guild_id: `int`
+            The id of the guild to get.
+
+        Returns
+        -------
+        `Optional[Guild]`
+            The guild if found, else `None`.
+        """
+
         query: str = """
         SELECT guilds.gid as gid,
             array_agg(guild_prefixes.prefix) as prefixes,
@@ -235,12 +414,33 @@ class ModelManager:
         return Guild.from_record(record)
 
     async def get_or_create_guild(self, guild_id: int) -> Guild:
+        """Get a guild from the database, or create one if it doesn't exist.
+
+        Parameters
+        ----------
+        guild_id: `int`
+            The id of the guild to get or create.
+
+        Returns
+        -------
+        `Guild`
+            The guild.
+        """
+
         guild: Guild | None = await self.get_guild(guild_id)
         if guild is None:
             guild = await self.create_guild(guild_id)
         return guild
 
     async def get_all_guilds(self) -> dict[int, Guild]:
+        """Get all guilds from the database.
+
+        Returns
+        -------
+        `dict[int, Guild]`
+            A dictionary of all guilds.
+        """
+
         query: str = """
         SELECT guilds.gid as gid,
             array_agg(guild_prefixes.prefix) as prefixes,
@@ -258,6 +458,26 @@ class ModelManager:
         return guilds
 
     async def remove_guild_prefix(self, guild: Guild, prefix: str) -> Guild:
+        """Remove a prefix from a guild.
+
+        Parameters
+        ----------
+        guild: `Guild`
+            The guild to remove the prefix from.
+        prefix: `str`
+            The prefix to remove.
+
+        Returns
+        -------
+        `Guild`
+            The guild.
+
+        Raises
+        ------
+        `UserFeedbackException`
+            If the prefix does not exist.
+        """
+
         if prefix not in guild.prefixes:
             raise UserFeedbackExceptionFactory.create(
                 "That prefix does not exist", ExceptionLevel.WARNING
@@ -272,6 +492,26 @@ class ModelManager:
         return guild
 
     async def add_guild_prefix(self, guild: Guild, prefix: str) -> Guild:
+        """Add a prefix to a guild.
+
+        Parameters
+        ----------
+        guild: `Guild`
+            The guild to add the prefix to.
+        prefix: `str`
+            The prefix to add.
+
+        Returns
+        -------
+        `Guild`
+            The guild.
+
+        Raises
+        ------
+        `UserFeedbackException`
+            If the prefix already exists or is reserved.
+        """
+
         if prefix in guild.prefixes or len(prefix) > 5:
             raise UserFeedbackExceptionFactory.create(
                 "That prefix already exists", ExceptionLevel.WARNING
@@ -292,6 +532,21 @@ class ModelManager:
         return guild
 
     async def set_guild_owo_prefix(self, guild: Guild, prefix: str) -> Guild:
+        """Set the owo prefix for a guild.
+
+        Parameters
+        ----------
+        guild: `Guild`
+            The guild to set the owo prefix for.
+        prefix: `str`
+            The owo prefix to set.
+
+        Returns
+        -------
+        `Guild`
+            The guild.
+        """
+
         query: str = "UPDATE guilds SET owo_prefix = $1 WHERE gid = $2"
 
         async with self.pool.acquire() as connection:
@@ -301,6 +556,19 @@ class ModelManager:
         return guild
 
     async def toggle_guild_owo_counting(self, guild: Guild) -> Guild:
+        """Toggle owo counting for a guild.
+
+        Parameters
+        ----------
+        guild: `Guild`
+            The guild to toggle owo counting for.
+
+        Returns
+        -------
+        `Guild`
+            The guild.
+        """
+
         query: str = "UPDATE guilds SET owo_counting = NOT owo_counting WHERE gid = $1"
 
         async with self.pool.acquire() as connection:

@@ -19,7 +19,19 @@ __all__: tuple[str, ...] = ("MinimalisticHelpCommand",)
 
 
 class MinimalisticHelpCommand(MinimalHelpCommand):
-    """A minimalistic help command for the bot."""
+    """A minimalistic help command for the bot.
+
+    Attributes
+    ----------
+    `verify_checks`
+        Whether to verify checks.
+    `sort_commands`
+        Whether to sort commands.
+    `no_category`
+        The name of the no category.
+
+    # See discord.ext.commands.MinimalHelpCommand for more attributes
+    """
 
     @override
     def __init__(self, **options) -> None:
@@ -31,10 +43,28 @@ class MinimalisticHelpCommand(MinimalHelpCommand):
 
     @override
     def get_opening_note(self) -> str:
+        """Return the help command's opening note. This is mainly useful to override for i18n purposes.
+
+        The default implementation has been overridden to return an empty string.
+
+        Returns
+        -------
+        `str`
+            The help command opening note.
+        """
         return ""
 
     @override
     def get_ending_note(self) -> str:
+        """Return the help command's ending note. This is mainly useful to override for i18n purposes.
+
+        The default implementation does nothing.
+
+        Returns
+        -------
+        `str`
+            The help command ending note.
+        """
         return (
             f"Type `{self.context.clean_prefix}{self.invoked_with} <command>` for more info on a command.\n"
             f"You can also type `{self.context.clean_prefix}{self.invoked_with} <category>` for more info on a category."
@@ -42,6 +72,9 @@ class MinimalisticHelpCommand(MinimalHelpCommand):
 
     @override
     async def send_pages(self) -> None:
+        """A helper method to send the help pages to the destination."""
+
+        # Importing here to avoid circular imports
         from utils.context import Context
 
         destination: Messageable = self.get_destination()

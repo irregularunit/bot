@@ -52,6 +52,20 @@ API_VERSION: int = 10
 
 
 class Bot(commands.Bot):
+    """Custom bot class for the bot.
+
+    Parameters
+    ----------
+    loop : `asyncio.AbstractEventLoop`
+        The event loop to use.
+    session : `aiohttp.ClientSession`
+        The session to use for HTTP requests.
+    pool : `asyncpg.Pool`
+        The pool to use for database connections.
+    redis : `RedisBridge`
+        The bridge to use for Redis connections.
+    """
+
     if TYPE_CHECKING:
         user: discord.ClientUser
         cogs: Mapping[str, commands.Cog]
@@ -91,7 +105,8 @@ class Bot(commands.Bot):
         self.author: str = author
         self.license: str = license
 
-        self.config: Config = Config()  # type: ignore (my IDE doesn't get it)
+        # my IDE doesn't get it
+        self.config: Config = Config()  # type: ignore
         self.logger: Logger = getLogger(__name__)
         self.manager: ModelManager = ModelManager(self.pool)
 
@@ -108,11 +123,32 @@ class Bot(commands.Bot):
 
     @staticmethod
     def chunker(item: str, *, size: int = 2000) -> Generator[str, None, None]:
+        """Yield successive n-sized chunks from l.
+
+        Parameters
+        ----------
+        item : `str`
+            The item to chunk.
+        size : Òptional[int]`
+            The size of the chunks, defaults to 2000.
+
+        Yields
+        ------
+        `str`
+            The chunked item.
+        """
         for i in range(0, len(item), size):
             yield item[i : i + size]
 
     @staticmethod
     def iter_extensions() -> Generator[str, None, None]:
+        """Iterate over the extensions in the modules folder.
+
+        Yields
+        ------
+        `str`
+            The full qualified name of the extension.
+        """
         extension: list[str] = [
             file for file in os.listdir("src/modules") if not file.startswith("_")
         ]
@@ -121,6 +157,13 @@ class Bot(commands.Bot):
 
     @staticmethod
     def iter_schemas() -> Generator[pathlib.Path, None, None]:
+        """Iterate over the schemas in the schemas folder.
+
+        Yields
+        ------
+        `pathlib.Path`
+            The path to the schema.
+        """
         root: pathlib.Path = pathlib.Path("src/schemas")
         for schema in root.glob("*.sql"):
             # Ignore nasty hidden files
@@ -131,11 +174,44 @@ class Bot(commands.Bot):
 
     @override
     async def get_context(
-        self, message: discord.Message, *, cls: Type[ContextT] = Context
+        self, message: discord.Message | discord.Interaction, *, cls: Type[ContextT] = Context
     ) -> Context:
+        """Returns the invocation context from the message or interaction.
+
+        This is a more low-level counter-part for :meth:`.process_commands`
+        to allow users more fine grained control over the processing.
+
+        The returned context is not guaranteed to be a valid invocation
+        context, `.Context.valid` must be checked to make sure it is.
+        If the context is not valid then it is not a valid candidate to be
+        invoked under `Bot.invoke`.
+
+        Parameters
+        ----------
+        origin: `Union[discord.Message, discord.Interaction]`
+            The message or interaction to get the invocation context from.
+        cls
+            The factory class that will be used to create the context.
+            By default, this is `.Context`. Should a custom
+            class be provided, it must be similar enough to `.Context`\'s
+            interface.
+
+        Returns
+        -------
+        `Context`
+            The invocation context. The type of this can change via the
+            `cls` parameter.
+        """
         return await super().get_context(message, cls=cls or commands.Context["Bot"])
 
     async def process_commands(self, message: discord.Message, /) -> None:
+        """Processes commands found in `message`.
+
+        Parameters
+        ----------
+        message : `discord.Message`
+            The message to process commands for.
+        """
         try:
             await asyncio.wait_for(self.wait_until_ready(), timeout=5.0)
         except asyncio.TimeoutError:
@@ -160,6 +236,24 @@ class Bot(commands.Bot):
 
     @override
     async def get_prefix(self, message: discord.Message) -> str | list[str]:
+        """Returns the prefix for the given message.
+
+        Parameters
+        ----------
+        message : `discord.Message`
+            The message to get the prefix for.
+
+        Returns
+        -------
+        `str` | `list[str]`
+            The prefix for the given message.
+
+        Raises
+        ------
+        `commands.NoPrivateMessage`
+            If the message is sent outside of the guild context.
+        """
+
         if message.guild is None:
             # No dm's :3
             raise commands.NoPrivateMessage()
@@ -321,6 +415,7 @@ class Bot(commands.Bot):
 
     @tasks.loop(minutes=15)
     async def update_presence(self) -> None:
+        """Updates the bot's presence in fixed intervals."""
         presences: dict[discord.ActivityType, str] = {
             discord.ActivityType.watching: (
                 f"over {len(self.guilds)} {'guilds' if len(self.guilds) != 1 else 'guild'}"
