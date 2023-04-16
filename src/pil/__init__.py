@@ -5,4 +5,5 @@
  * For more information, see README.md and LICENSE
 """
 
+from .avatar_history import *
 from .presence_chart import *
