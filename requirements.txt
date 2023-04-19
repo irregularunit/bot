@@ -9,7 +9,7 @@ discord.py==2.2.2
 git+https://github.com/gorialis/jishaku
 
 # Enhancments and Utilities
-bson==0.5.10
+pympler==1.0.1 
 orjson==3.8.10
 uvloop==0.17.0; sys_platform != "win32"
 numpy==1.24.2

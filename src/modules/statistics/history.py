@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, Optional
 import discord
 from discord.ext import commands
 from discord.ui import Button, View, button
+from pympler.asizeof import asizeof
 
 from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
 from models import EmbedBuilder
@@ -578,9 +579,9 @@ class TrackedDiscordHistory(BaseExtension):
                     level=ExceptionLevel.INFO,
                 )
 
-            bot_memory = sys.getsizeof(self.bot)
-            cached_users_memory = sys.getsizeof(self.bot.cached_users)
-            cached_guilds_memory = sys.getsizeof(self.bot.cached_guilds)
+            bot_memory = asizeof(self.bot)
+            cached_users_memory = asizeof(self.bot.cached_users)
+            cached_guilds_memory = asizeof(self.bot.cached_guilds)
 
             await ctx.maybe_reply(
                 content=(
