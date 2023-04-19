@@ -33,13 +33,11 @@ from typing_extensions import override
 
 from bridges import RedisBridge
 from gateway import Gateway
-from meta import ( # fmt: off
-    # sucks that isort w. pyright settings tries
-    # to map this into a one liner...
+from meta import (  # fmt: off; sucks that isort w. pyright settings tries; to map this into a one liner...; fmt: on
     __author__ as author,
     __license__ as license,
-    __version__ as version
-) # fmt: on
+    __version__ as version,
+)
 from models import Guild, ModelManager, User
 from settings import Config
 from utils import Context, ContextT, GuildMessageable, MinimalisticHelpCommand
@@ -231,7 +229,7 @@ class Bot(commands.Bot):
         if ctx.guild:
             if not isinstance(ctx.channel, GuildMessageable):
                 return
-            
+
             # TODO: ensure the user exists in our database, prepare for grinding game
 
             if not ctx.channel.permissions_for(ctx.me).send_messages:  # type: ignore

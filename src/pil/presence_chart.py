@@ -9,7 +9,7 @@ import uuid
 from io import BytesIO
 from logging import Logger, getLogger
 from os import path
-from typing import TypedDict, Protocol
+from typing import Protocol, TypedDict
 
 from discord import File
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, UnidentifiedImageError
@@ -49,6 +49,7 @@ class PresenceType(TypedDict):
 
 class PresenceChartProtocol(Protocol):
     """PresenceChartProtocol is a protocol for the presence chart."""
+
     id: str
 
     def create(self) -> File:
