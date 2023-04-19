@@ -97,6 +97,17 @@ class DiscordEventListener(BaseExtension):
         self.__owo_std_commands: tuple[str, ...] = ("owo", "uwu")
         self.send_queue_task.start()
 
+    @property
+    def emoji(self) -> str:
+        """Get the emoji for the extension.
+
+        Returns
+        -------
+        `str`
+            The emoji for the extension.
+        """
+        return "\N{CLOCK FACE ONE OCLOCK}"
+
     @staticmethod
     def timestamp_to_tztime(timestamp: float) -> datetime:
         """Converts a timestamp to a timezone-aware datetime object.

@@ -12,6 +12,7 @@ import zoneinfo
 
 import discord
 from discord.ext import commands
+from typing_extensions import override
 
 from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
 
@@ -35,6 +36,7 @@ class TimeConverter(commands.Converter[str]):
     """Converts a time range to a string."""
 
     @staticmethod
+    @override
     async def convert(ctx: commands.Context, argument: str) -> str:
         """Converts a time range to a string."""
         for time in RANGES_SHORT:

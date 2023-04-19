@@ -125,6 +125,8 @@ class AvatarHistoryView(PluginView):
                 attachments=[],
             )
         else:
+            # Wow wer are stopid, guess it still gets checked just to shutup the
+            # linter in our IDE. QUACK
             raise TypeError(f"Expected EmbedBuilder, got {type(element)!r}")
 
     @discord.ui.button(label="Previous", style=discord.ButtonStyle.secondary)

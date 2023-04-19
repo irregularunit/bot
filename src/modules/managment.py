@@ -41,6 +41,17 @@ class Managment(BaseExtension):
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
 
+    @property
+    def emoji(self) -> str:
+        """Get the emoji for the extension.
+
+        Returns
+        -------
+        `str`
+            The emoji for the extension.
+        """
+        return "\N{LOCK}"
+
     async def cog_check(self, ctx: Context) -> bool:  # skipcq: PYL-R0201
         """Check that the command is being run in a guild.
 
@@ -108,7 +119,7 @@ class Managment(BaseExtension):
                 value=(
                     ">>> " + "\n".join(f"`{prefix}`" for prefix in guild.prefixes)
                     if guild.prefixes
-                    else "No prefixes configured."
+                    else "You can mention the bot"
                 ),
                 inline=False,
             )
@@ -122,7 +133,7 @@ class Managment(BaseExtension):
         aliases=("emote", "emotes", "emojis"),
         invoke_without_command=True,
     )
-    async def emoji(
+    async def emoji_group(
         self,
         ctx: Context,
         *,
@@ -156,7 +167,7 @@ class Managment(BaseExtension):
 
         await EmoteView(self.bot, *items).send_to_ctx(ctx)
 
-    @emoji.group(name="set", aliases=("add",), invoke_without_command=True)
+    @emoji_group.group(name="set", aliases=("add",), invoke_without_command=True)
     async def emoji_set(self, ctx: Context) -> None:
         await ctx.send_help()
 

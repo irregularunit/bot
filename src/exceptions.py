@@ -84,8 +84,14 @@ class UserFeedbackEmojiStrategy(ABC):
 
     @abstractmethod
     def get_emoji(self) -> str:
-        """Returns the emoji."""
-        pass
+        """Returns the emoji.
+
+        Returns
+        -------
+        :class:`str`
+            The emoji linked to the strategy.
+        """
+        raise NotImplementedError
 
 
 class DefaultUserFeedbackEmoji(UserFeedbackEmojiStrategy):

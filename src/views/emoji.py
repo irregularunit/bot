@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, LiteralString
 from discord import ButtonStyle, Guild, HTTPException, Interaction, Member, PartialEmoji
 from discord.ui import Button, View, button
 
+from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
 from models import EmbedBuilder, User
 
 if TYPE_CHECKING:
@@ -148,6 +149,8 @@ class StealEmoteButton(Button[EmoteView]):
         super().__init__(label=label, style=style, emoji="🥷🏾", custom_id="steal")
         self.steals: dict[int, int] = {}
 
+        self.view: EmoteView
+
     async def read_emote(self, unit: EmoteUnit) -> bytes | None:
         """Read the emote from the URL.
 
@@ -161,8 +164,6 @@ class StealEmoteButton(Button[EmoteView]):
         `bytes | None`
             The emote bytes, or `None` if the emote couldn't be read.
         """
-        if self.view is None:
-            raise AssertionError
         session: ClientSession = self.view.bot.session
 
         async with session.get(unit.emote.url + "?size=64") as resp:
@@ -183,8 +184,7 @@ class StealEmoteButton(Button[EmoteView]):
         `tuple[str, bool]`
             A tuple of the error message and whether the user can add an emoji.
         """
-        if self.view is None:
-            raise AssertionError
+
         bot: Bot = self.view.bot
 
         user_id: int = interaction.user.id
@@ -248,8 +248,6 @@ class StealEmoteButton(Button[EmoteView]):
         `EmbedBuilder`
             The embed builder.
         """
-        if self.view is None:
-            raise AssertionError
         items: tuple[EmoteUnit, ...] = self.view.items
 
         emoji: EmoteUnit = items[page - 1]
@@ -273,17 +271,19 @@ class StealEmoteButton(Button[EmoteView]):
         unit: `EmoteUnit`
             The emote unit.
         """
-        if self.view is None:
-            raise AssertionError
         bot: Bot = self.view.bot
 
         user_id: int = interaction.user.id
         user: User = bot.cached_users[user_id]
         emoji_server: Guild | None = bot.get_guild(user.emoji_server)
+
         if emoji_server is None:
-            raise AssertionError
+            raise UserFeedbackExceptionFactory.create(
+                message="Something fucked up", level=ExceptionLevel.WARNING
+            )
 
         emote: bytes | None = await self.read_emote(unit)
+
         if not emote:
             return await interaction.response.send_message("Couldn't read emote...", ephemeral=True)
 
@@ -303,8 +303,6 @@ class StealEmoteButton(Button[EmoteView]):
         interaction: `Interaction[Bot]`
             The interaction.
         """
-        if self.view is None:
-            raise AssertionError
         items: tuple[EmoteUnit, ...] = self.view.items
 
         reason, can_add = await self.can_add_emoji(interaction)

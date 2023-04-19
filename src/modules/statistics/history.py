@@ -411,15 +411,10 @@ class TrackedDiscordHistory(BaseExtension):
                         f"{discord.utils.format_dt(member.joined_at or discord.utils.utcnow(), style='R')}"
                         for i, member in enumerate(sorted_list[page * 10 : (page + 1) * 10])
                     ),
-                    color=discord.Color.blurple(),
                 )
                 .set_footer(text=f"Page {i + 1} of {math.ceil(len(sorted_list) / 10)}")
                 .set_author(name=f"📜 Join List for {ctx.guild.name}")
                 .set_thumbnail(url=self.bot.user.display_avatar)
-                .set_footer(
-                    text="Made with ❤️ by irregularunit.",
-                    icon_url=self.bot.user.display_avatar,
-                )
             )
             for i, page in enumerate(range(math.ceil(len(sorted_list) / 10)))
         ]

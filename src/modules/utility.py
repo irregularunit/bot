@@ -138,6 +138,17 @@ class Utility(BaseExtension):
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
 
+    @property
+    def emoji(self) -> str:
+        """Get the emoji for the extension.
+
+        Returns
+        -------
+        `str`
+            The emoji for the extension.
+        """
+        return "\N{ELECTRIC LIGHT BULB}"
+
     async def cog_check(self, ctx: Context) -> bool:  # skipcq: PYL-R0201
         """Check if the command is guild only.
 

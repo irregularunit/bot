@@ -32,7 +32,8 @@ class BaseExtension(commands.Cog):
         Whether the extension is hidden or not.
     """
 
-    hidden: Optional[bool] = False
+    hidden: Optional[bool] = False  #
+    emoji: str
 
     def __init__(self, bot: Bot, *args: Any, **kwargs: Any) -> None:
         self.bot: Bot = bot
