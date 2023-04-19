@@ -81,7 +81,8 @@ class MemberConverter(commands.Converter[discord.Member]):
             return discord.utils.get(members, name=username, discriminator=discriminator)
 
         members = await guild.query_members(argument, limit=100, cache=cache)
-        return discord.utils.find(lambda m: argument in (m.name, m.nick), members)
+        maybre_result =  discord.utils.find(lambda m: argument in (m.name, m.nick), members)
+        return maybre_result or members[0] if members else None
 
     @staticmethod
     async def query_member_by_id(

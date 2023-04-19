@@ -33,7 +33,13 @@ from typing_extensions import override
 
 from bridges import RedisBridge
 from gateway import Gateway
-from meta import __author__ as author, __license__ as license, __version__ as version
+from meta import ( # fmt: off
+    # sucks that isort w. pyright settings tries
+    # to map this into a one liner...
+    __author__ as author,
+    __license__ as license,
+    __version__ as version
+) # fmt: on
 from models import Guild, ModelManager, User
 from settings import Config
 from utils import Context, ContextT, GuildMessageable, MinimalisticHelpCommand
@@ -129,7 +135,7 @@ class Bot(commands.Bot):
         ----------
         item : `str`
             The item to chunk.
-        size : Òptional[int]`
+        size : `Optional[int]`
             The size of the chunks, defaults to 2000.
 
         Yields
@@ -225,6 +231,8 @@ class Bot(commands.Bot):
         if ctx.guild:
             if not isinstance(ctx.channel, GuildMessageable):
                 return
+            
+            # TODO: ensure the user exists in our database, prepare for grinding game
 
             if not ctx.channel.permissions_for(ctx.me).send_messages:  # type: ignore
                 if await self.is_owner(ctx.author):
@@ -381,22 +389,20 @@ class Bot(commands.Bot):
         initial_exts: list[str] = list(self.iter_extensions())
         initial_schemas: list[pathlib.Path] = list(self.iter_schemas())
 
-        errors = await asyncio.gather(
-            *[self.load_extension(ext) for ext in initial_exts],
-            *[self.pool.execute(schema.read_text()) for schema in initial_schemas],
-        )
+        async def load_and_log(item: str | pathlib.Path) -> None:
+            try:
+                if isinstance(item, str):
+                    await self.load_extension(item)
+                    _log.info(f"Loaded extension {item!r}")
+                elif isinstance(item, pathlib.Path):
+                    # Only been tested with posix paths, but should work anywhere (I GUESS)
+                    await self.pool.execute(item.read_text())
+                    _log.info(f"Loaded schema {item!r}")
 
-        for ext, error in zip(initial_exts, errors):
-            if error:
-                _log.exception(f"Failed to load extension {ext!r}", exc_info=error)
-            else:
-                _log.info(f"Loaded extension {ext!r}")
+            except Exception as e:
+                _log.exception(f"Failed to load {item!r}", exc_info=e)
 
-        for schema, error in zip(initial_schemas, errors):
-            if error:
-                _log.exception(f"Failed to load schema {schema!r}", exc_info=error)
-            else:
-                _log.info(f"Loaded schema {schema!r}")
+        await asyncio.gather(*[load_and_log(item) for item in initial_exts + initial_schemas])
 
         await self.redis.connect()
 
@@ -416,17 +422,13 @@ class Bot(commands.Bot):
     @tasks.loop(minutes=15)
     async def update_presence(self) -> None:
         """Updates the bot's presence in fixed intervals."""
-        presences: dict[discord.ActivityType, str] = {
-            discord.ActivityType.watching: (
-                f"over {len(self.guilds)} {'guilds' if len(self.guilds) != 1 else 'guild'}"
-            ),
-            discord.ActivityType.listening: f"to {len(self.users)} {'users' if len(self.users) != 1 else 'user'}",
-            discord.ActivityType.playing: (
-                f"with {len(self.commands)} {'commands' if len(self.commands) != 1 else 'command'}"
-            ),
+        activity_hash_map: dict[discord.ActivityType, str] = {
+            discord.ActivityType.watching: "your mom",
+            discord.ActivityType.listening: "your dreams",
+            discord.ActivityType.playing: "with your feelings",
         }
 
-        activity_type, message = random.choice(list(presences.items()))
+        activity_type, message = random.choice(list(activity_hash_map.items()))
         await self.change_presence(activity=discord.Activity(type=activity_type, name=message))
 
     @update_presence.before_loop

@@ -253,7 +253,7 @@ class Utility(BaseExtension):
             embed: EmbedBuilder = EmbedBuilder.factory(
                 ctx,
                 title=f"{get_random_emoji()} HTTP Status Code",
-                description=f"Code ID - (`{status_code}`)",
+                description=f"`Code ID  :` `{status_code}`",
             )
 
             embed.set_image(url=HTTP_CAT_URL)
