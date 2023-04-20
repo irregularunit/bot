@@ -52,6 +52,8 @@ class EmbedBuilder(Embed):
         for name, value, inline in fields:
             self.add_field(name=name, value=value, inline=inline)
 
+        self.description: str = ""
+
     @classmethod
     def to_factory(cls: Type[Self], embed: Embed, **kwargs: Any) -> Self:
         """Create a new embed from an existing embed.
