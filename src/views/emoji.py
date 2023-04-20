@@ -171,6 +171,7 @@ class StealEmoteButton(Button[EmoteView]):
                 return await resp.read()
             return None
 
+    # pylint: disable=R0911
     async def can_add_emoji(self, interaction: Interaction[Bot]) -> tuple[str, bool]:
         """Check if the user can add an emoji.
 

@@ -11,7 +11,7 @@ import asyncio
 import logging
 from abc import ABCMeta
 from contextlib import suppress
-from typing import Any, Callable, Coroutine, Generator, MutableSet, Optional, Self, overload
+from typing import Any, Callable, Coroutine, Generator, MutableSet, Optional, Self
 from weakref import WeakSet
 
 __all__: tuple[str, ...] = ("AsyncInstance",)
@@ -135,15 +135,13 @@ class AsyncABCMeta(ABCMeta):
 
     def __new__(
         cls,
-        clsname: str,
-        bases: tuple[type, ...],
-        namespace: dict[str, Any],
+        *args: Any,
+        **kwargs: Any,
     ) -> AsyncABCMeta:
-        instance = super(AsyncABCMeta, cls).__new__(
+        instance = super().__new__(
             cls,
-            clsname,
-            bases,
-            namespace,
+            *args,
+            **kwargs,
         )
 
         if not asyncio.iscoroutinefunction(instance.__ainit__):  # type: ignore
@@ -263,14 +261,6 @@ class AsyncInstance(AsyncInstanceType):
             return
 
         await asyncio.gather(*tasks, return_exceptions=True)
-
-    @overload
-    async def __ainit__(self) -> None:
-        ...
-
-    @overload
-    async def __ainit__(self, *args: Any, **kwargs: Any) -> None:
-        ...
 
     async def __ainit__(self, *args: Any, **kwargs: Any) -> None:
         ...

@@ -95,7 +95,9 @@ class DiscordEventListener(BaseExtension):
         self.__owo_hunt_commands: tuple[str, ...] = ("hunt", "h", "catch")
         self.__owo_battle_commands: tuple[str, ...] = ("b", "battle", "fight")
         self.__owo_std_commands: tuple[str, ...] = ("owo", "uwu")
-        self.send_queue_task.start()
+
+        self.send_queue_task.start()  # pylint: disable=no-member
+        super().__init__(bot)
 
     @property
     def emoji(self) -> str:
@@ -561,36 +563,36 @@ class DiscordEventListener(BaseExtension):
             partial_message = await PartialMessageConverter().convert(ctx, message.content)
         except (commands.BadArgument, commands.CommandError):
             return
-        else:
-            guild = partial_message.guild
 
-            if not guild:
-                return
+        guild = partial_message.guild
 
-            try:
-                channel = guild.get_channel(
-                    partial_message.channel.id
-                ) or await guild.fetch_channel(partial_message.channel.id)
-            except discord.HTTPException:
-                return
+        if not guild:
+            return
 
-            if isinstance(channel, (discord.ForumChannel, discord.CategoryChannel)):
-                return
+        try:
+            channel = guild.get_channel(partial_message.channel.id) or await guild.fetch_channel(
+                partial_message.channel.id
+            )
+        except discord.HTTPException:
+            return
 
-            try:
-                qualified_message = await channel.fetch_message(partial_message.id)
-            except (
-                discord.NotFound,
-                discord.HTTPException,
-            ):
-                return
+        if isinstance(channel, (discord.ForumChannel, discord.CategoryChannel)):
+            return
 
-            embed = EmbedBuilder.from_message(qualified_message)
+        try:
+            qualified_message = await channel.fetch_message(partial_message.id)
+        except (
+            discord.NotFound,
+            discord.HTTPException,
+        ):
+            return
 
-            view = PartialMessageView(qualified_message, embed)
-            await view.send_to_ctx(ctx)
+        embed = EmbedBuilder.from_message(qualified_message)
 
-            await message.delete()
+        view = PartialMessageView(qualified_message, embed)
+        await view.send_to_ctx(ctx)
+
+        await message.delete()
 
 
 async def setup(bot: Bot) -> None:

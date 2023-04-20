@@ -93,6 +93,7 @@ class InfoView(View):
 class TrackedDiscordHistory(BaseExtension):
     """A class to track discord history."""
 
+    # pylint: disable=W0231
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
 
@@ -433,6 +434,7 @@ class TrackedDiscordHistory(BaseExtension):
                 datetime.datetime.utcnow() - datetime.timedelta(days=query_days),
             )
 
+    # pylint: disable=too-many-locals
     @commands.command(name="presence", aliases=("ps",))
     async def presence_command(
         self,
