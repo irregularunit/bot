@@ -51,7 +51,7 @@ T = TypeVar("T")
 API_VERSION: int = 10
 
 
-class Bot(commands.Bot):  # pylint: disable=too-many-instance-attributes
+class Bot(commands.Bot):
     """Custom bot class for the bot.
 
     Parameters
