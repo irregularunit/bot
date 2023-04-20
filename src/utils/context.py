@@ -89,9 +89,11 @@ class Context(commands.Context["Bot"]):
         """
         return self.bot.session
 
+    # pylint: disable=arguments-differ
     @override
     async def send_help(
-        self, command: Optional[commands.Command | str] = None, **kwargs: Any
+        self,
+        command: Optional[commands.Command | str] = None,
     ) -> None:
         """Sends the help command for the given command.
 

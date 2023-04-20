@@ -39,7 +39,6 @@ class MinimalisticHelpCommand(MinimalHelpCommand):
 
         self.verify_checks = False
         self.sort_commands = True
-        # 🧭
         self.no_category = "\N{COMPASS} HelpSections"
 
     @override
