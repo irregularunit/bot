@@ -82,7 +82,7 @@ class MinimalisticHelpCommand(MinimalHelpCommand):
 
         if not self.context.bot.user:
             raise RuntimeError(
-                "Bot hasn't been logged in yet. " "Shouldn't be possible to get here."
+                "Bot hasn't been logged in yet. Shouldn't be possible to get here."
             )
 
         for page in self.paginator.pages:

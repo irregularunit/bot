@@ -81,8 +81,6 @@ class User(Model):
     __slots__: tuple[str, ...] = (
         "emoji_server",
         "timezone",
-        "id",
-        "created_at",
     )
 
     def __init__(
@@ -151,8 +149,6 @@ class Guild(Model):
         "prefixes",
         "owo_prefix",
         "owo_counting",
-        "id",
-        "created_at",
     )
 
     def __init__(

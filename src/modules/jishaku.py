@@ -56,6 +56,7 @@ class Jishaku(BaseExtension, *STANDARD_FEATURES, *OPTIONAL_FEATURES):
         """
         return "\N{HAMMER AND WRENCH}"
 
+    # pylint: disable=R0911
     async def jsk_python_result_handling(
         self,
         ctx: Context,

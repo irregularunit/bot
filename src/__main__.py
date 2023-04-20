@@ -99,6 +99,6 @@ async def main() -> None:
 
 if __name__ == "__main__":
     with suppress(
-        KeyboardInterrupt, asyncio.CancelledError, capture=False
+        KeyboardInterrupt, asyncio.CancelledError,
     ), asyncio.Runner() as runner:
         runner.run(main())

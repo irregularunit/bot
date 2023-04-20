@@ -90,7 +90,9 @@ class Context(commands.Context["Bot"]):
         return self.bot.session
 
     @override
-    async def send_help(self, command: Optional[commands.Command | str] = None) -> None:
+    async def send_help(
+        self, command: Optional[commands.Command | str] = None, **kwargs: Any
+    ) -> None:
         """Sends the help command for the given command.
 
         Parameters

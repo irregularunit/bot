@@ -132,4 +132,3 @@ class GuildMessageable(Protocol):
         :class:`Message`
             The message that was sent. Assuming OK, since this is a protocol.
         """
-        ...

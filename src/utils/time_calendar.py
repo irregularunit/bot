@@ -39,6 +39,7 @@ class TimeConverter(commands.Converter[str]):
     @override
     async def convert(ctx: commands.Context, argument: str) -> str:
         """Converts a time range to a string."""
+        # pylint: disable=C0206
         for time in RANGES_SHORT:
             if argument.lower() == time:
                 return time

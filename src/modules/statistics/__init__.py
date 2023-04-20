@@ -34,6 +34,7 @@ class Statistics(*features):
 
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
+        super().__init__(bot)
 
     @property
     def emoji(self) -> str:
@@ -46,6 +47,7 @@ class Statistics(*features):
         """
         return "\N{CHART WITH UPWARDS TREND}"
 
+    # pylint: disable=W0236
     async def cog_check(self, ctx: Context) -> bool:  # skipcq: PYL-R0201
         """Check that the command is being run in a guild.
 

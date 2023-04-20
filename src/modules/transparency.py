@@ -80,6 +80,7 @@ class Transparency(BaseExtension):
 
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
+        super().__init__(bot)
 
     @property
     def emoji(self) -> str:
@@ -92,6 +93,7 @@ class Transparency(BaseExtension):
         """
         return "\N{EYES}"
 
+    # pylint: disable=W0236
     async def cog_check(self, ctx: Context) -> bool:  # skipcq: PYL-R0201
         """Check that the command is being run in a guild.
 

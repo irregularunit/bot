@@ -33,9 +33,9 @@ from typing_extensions import override
 
 from bridges import RedisBridge
 from gateway import Gateway
-from meta import (  # fmt: off; sucks that isort w. pyright settings tries; to map this into a one liner...; fmt: on
+from meta import (
     __author__ as author,
-    __license__ as license,
+    __license__ as _our_license,
     __version__ as version,
 )
 from models import Guild, ModelManager, User
@@ -55,7 +55,7 @@ T = TypeVar("T")
 API_VERSION: int = 10
 
 
-class Bot(commands.Bot):
+class Bot(commands.Bot):  # pylint: disable=too-many-instance-attributes
     """Custom bot class for the bot.
 
     Parameters
@@ -107,7 +107,7 @@ class Bot(commands.Bot):
 
         self.version: str = version
         self.author: str = author
-        self.license: str = license
+        self.license: str = _our_license
 
         # my IDE doesn't get it
         self.config: Config = Config()  # type: ignore
@@ -118,7 +118,7 @@ class Bot(commands.Bot):
         self.cached_guilds: dict[int, Guild] = {}
         self.cached_prefixes: dict[int, re.Pattern[str]] = {}
 
-        self.update_presence.start()
+        self.update_presence.start()  # pylint: disable=no-member
 
     @staticmethod
     @discord.utils.copy_doc(asyncio.to_thread)
@@ -177,7 +177,7 @@ class Bot(commands.Bot):
             yield schema  # Returns the PosixPath object (assuming we don't use Windows)
 
     @override
-    async def get_context(
+    async def get_context(  # pylint: disable=arguments-differ
         self, message: discord.Message | discord.Interaction, *, cls: Type[ContextT] = Context
     ) -> Context:
         """Returns the invocation context from the message or interaction.
@@ -230,8 +230,6 @@ class Bot(commands.Bot):
             if not isinstance(ctx.channel, GuildMessageable):
                 return
 
-            # TODO: ensure the user exists in our database, prepare for grinding game
-
             if not ctx.channel.permissions_for(ctx.me).send_messages:  # type: ignore
                 if await self.is_owner(ctx.author):
                     await ctx.send(f"I cannot send messages in {ctx.channel.name}.")
@@ -241,7 +239,9 @@ class Bot(commands.Bot):
         await self.invoke(ctx)
 
     @override
-    async def get_prefix(self, message: discord.Message) -> str | list[str]:
+    async def get_prefix(  # pylint: disable=arguments-differ
+        self, message: discord.Message
+    ) -> str | list[str]:
         """Returns the prefix for the given message.
 
         Parameters
@@ -272,7 +272,7 @@ class Bot(commands.Bot):
                     re.IGNORECASE,
                 )
             else:
-                pattern = re.compile(r"<@!?{0.id}>".format(self.user), re.IGNORECASE)
+                pattern = re.compile(fr"<@!?{self.user.id}>", re.IGNORECASE)
 
             self.cached_prefixes[message.guild.id] = pattern
 
