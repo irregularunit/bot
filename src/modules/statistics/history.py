@@ -542,7 +542,7 @@ class TrackedDiscordHistory(BaseExtension):
                 )
 
             last_seen: datetime.datetime = history[0]["changed_at"]
-            last_seen_status: str = history[0]["status_before"]
+            last_seen_status: str = history[0]["status"]
 
             await ctx.maybe_reply(
                 content=(
