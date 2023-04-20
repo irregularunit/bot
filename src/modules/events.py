@@ -97,7 +97,6 @@ class DiscordEventListener(BaseExtension):
         self.__owo_std_commands: tuple[str, ...] = ("owo", "uwu")
 
         self.send_queue_task.start()  # pylint: disable=no-member
-        super().__init__(bot)
 
     @property
     def emoji(self) -> str:

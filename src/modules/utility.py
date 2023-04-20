@@ -137,7 +137,6 @@ class Utility(BaseExtension):
 
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
-        super().__init__(bot)
 
     @property
     def emoji(self) -> str:
