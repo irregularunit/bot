@@ -116,6 +116,9 @@ class Bot(commands.Bot):
 
         self.update_presence.start()  # pylint: disable=no-member
 
+        # Sucpiciously missing
+        self.ws: Any
+
     @staticmethod
     @discord.utils.copy_doc(asyncio.to_thread)
     async def to_thread(func: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs) -> T:
