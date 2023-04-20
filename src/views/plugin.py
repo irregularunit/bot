@@ -64,9 +64,7 @@ class PluginView(View):
         if self.message is not None:
             await self.message.edit(view=self)
 
-    async def interaction_check(
-            self, interaction: discord.Interaction[Bot]
-        ) -> bool:
+    async def interaction_check(self, interaction: discord.Interaction[Bot]) -> bool:
         """Check if the interaction is valid.
 
         Parameters

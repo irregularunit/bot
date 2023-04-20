@@ -570,9 +570,9 @@ class DiscordEventListener(BaseExtension):
             return
 
         try:
-            channel = guild.get_channel(
+            channel = guild.get_channel(partial_message.channel.id) or await guild.fetch_channel(
                 partial_message.channel.id
-            ) or await guild.fetch_channel(partial_message.channel.id)
+            )
         except discord.HTTPException:
             return
 

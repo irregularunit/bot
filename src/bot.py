@@ -33,11 +33,7 @@ from typing_extensions import override
 
 from bridges import RedisBridge
 from gateway import Gateway
-from meta import (
-    __author__ as author,
-    __license__ as _our_license,
-    __version__ as version,
-)
+from meta import __author__ as author, __license__ as _our_license, __version__ as version
 from models import Guild, ModelManager, User
 from settings import Config
 from utils import Context, ContextT, GuildMessageable, MinimalisticHelpCommand
