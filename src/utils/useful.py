@@ -180,7 +180,7 @@ class suppress(AbstractContextManager[None]):
         **kwargs: Any,
     ) -> None:
         self._exceptions: tuple[Type[BaseException], ...] = exceptions
-        self._log: str = _log or "An exception was suppressed: %s"
+        self._log: str = _log or "Supressed exception aquired: '%s'"
         self._capture: bool = capture
         self._kwargs: dict[str, Any] = kwargs
 

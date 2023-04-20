@@ -25,6 +25,7 @@ disable=
         W2301, # unnecessary-else
         R0902, # too-many-instance-attributes
         W0221, # arguments-differ (dpy shit)
+        W0231, # custom exts
 
 # A comma-separated list of package or module names from where C extensions may
 # be loaded. Extensions are loading into the active Python interpreter and may

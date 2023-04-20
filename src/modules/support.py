@@ -89,8 +89,6 @@ class SupportServer(BaseExtension):
         self.cached_welcome_channel: Optional[discord.TextChannel] = None
         self.cached_pit_queue_channel: Optional[discord.TextChannel] = None
 
-        super().__init__(bot)
-
     @property
     def emoji(self) -> str:
         """Get the emoji for the extension.

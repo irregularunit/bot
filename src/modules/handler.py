@@ -87,7 +87,6 @@ class DiscordErrorHandler(BaseExtension):
         self.bot: Bot = bot
         self.flyweight: Dict[str, Error] = {}
         self.on_cooldown: Dict[int, datetime.datetime] = {}
-        super().__init__(bot)
 
     @property
     def emoji(self) -> str:
