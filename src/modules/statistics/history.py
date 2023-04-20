@@ -93,6 +93,7 @@ class InfoView(View):
 class TrackedDiscordHistory(BaseExtension):
     """A class to track discord history."""
 
+    # pylint: disable=W0231
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
 
@@ -411,15 +412,10 @@ class TrackedDiscordHistory(BaseExtension):
                         f"{discord.utils.format_dt(member.joined_at or discord.utils.utcnow(), style='R')}"
                         for i, member in enumerate(sorted_list[page * 10 : (page + 1) * 10])
                     ),
-                    color=discord.Color.blurple(),
                 )
                 .set_footer(text=f"Page {i + 1} of {math.ceil(len(sorted_list) / 10)}")
                 .set_author(name=f"📜 Join List for {ctx.guild.name}")
                 .set_thumbnail(url=self.bot.user.display_avatar)
-                .set_footer(
-                    text="Made with ❤️ by irregularunit.",
-                    icon_url=self.bot.user.display_avatar,
-                )
             )
             for i, page in enumerate(range(math.ceil(len(sorted_list) / 10)))
         ]
@@ -438,6 +434,7 @@ class TrackedDiscordHistory(BaseExtension):
                 datetime.datetime.utcnow() - datetime.timedelta(days=query_days),
             )
 
+    # pylint: disable=too-many-locals
     @commands.command(name="presence", aliases=("ps",))
     async def presence_command(
         self,

@@ -110,4 +110,25 @@ class GuildMessageable(Protocol):
         ...
 
     async def send(self, *args: Any, **kwargs: Any) -> Any:
-        ...
+        """Send a message to the messageable object.
+
+        Parameters
+        ----------
+        content: :class:`str`
+            The content of the message.
+        tts: :class:`bool`
+            Whether the message should be sent using text-to-speech.
+        embed: :class:`Embed`
+            The embed to be sent.
+        embeds: :class:`list[Embed]`
+            A list of embeds to be sent.
+        file: :class:`File`
+            The file to be sent.
+        files: :class:`list[File]`
+            A list of files to be sent.
+
+        Returns
+        -------
+        :class:`Message`
+            The message that was sent. Assuming OK, since this is a protocol.
+        """

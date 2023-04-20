@@ -17,6 +17,7 @@ from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
 from models import EmbedBuilder
 from utils import BaseExtension, async_all, get_random_emoji
 
+# pylint: disable=E0402
 from .transparency import SafetyPrompt
 
 if TYPE_CHECKING:
@@ -88,6 +89,20 @@ class SupportServer(BaseExtension):
         self.cached_welcome_channel: Optional[discord.TextChannel] = None
         self.cached_pit_queue_channel: Optional[discord.TextChannel] = None
 
+        super().__init__(bot)
+
+    @property
+    def emoji(self) -> str:
+        """Get the emoji for the extension.
+
+        Returns
+        -------
+        `str`
+            The emoji for the extension.
+        """
+        return "\N{SPEECH BALLOON}"
+
+    # pylint: disable=W0236
     async def cog_check(self, ctx: Context) -> bool:  # skipcq: PYL-R0201
         """Check that the command is being run in the support server.
 

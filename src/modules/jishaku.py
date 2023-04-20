@@ -45,6 +45,18 @@ class Jishaku(BaseExtension, *STANDARD_FEATURES, *OPTIONAL_FEATURES):
 
     __jsk_instance__: ClassVar[bool] = True
 
+    @property
+    def emoji(self) -> str:
+        """Get the emoji for the extension.
+
+        Returns
+        -------
+        `str`
+            The emoji for the extension.
+        """
+        return "\N{HAMMER AND WRENCH}"
+
+    # pylint: disable=R0911
     async def jsk_python_result_handling(
         self,
         ctx: Context,

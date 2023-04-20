@@ -87,6 +87,18 @@ class DiscordErrorHandler(BaseExtension):
         self.bot: Bot = bot
         self.flyweight: Dict[str, Error] = {}
         self.on_cooldown: Dict[int, datetime.datetime] = {}
+        super().__init__(bot)
+
+    @property
+    def emoji(self) -> str:
+        """Get the emoji for the extension.
+
+        Returns
+        -------
+        `str`
+            The emoji for the extension.
+        """
+        return "\N{WARNING SIGN}"
 
     @staticmethod
     def to_discord_time_format(seconds: Union[int, float]) -> str:
@@ -152,6 +164,7 @@ class DiscordErrorHandler(BaseExtension):
         """
         return self.flyweight.get(exception.__name__)
 
+    # pylint: disable=R0911
     @commands.Cog.listener("on_command_error")
     async def on_command_error(self, ctx: Context, error: Exception) -> Optional[discord.Message]:
         """Handles command errors.

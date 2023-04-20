@@ -7,6 +7,8 @@
 
 __all__: tuple[str, ...] = ("check_owo_command", "owo_command_set", "HTTP_STATUS_CODES")
 
+# Somewhat incomplete list of owo commands
+# linked from christopherbthai
 owo_commands: tuple[str, ...] = (
     # battle folder
     "ab",
@@ -238,7 +240,7 @@ owo_commands: tuple[str, ...] = (
     "yy",
     "zodiackey",
     "zk",
-    # https:#github.com/ChristopherBThai/Discord-OwO-Bot/blob/335ade88e1f452367d9cbf4cc3d2eff243e8708b/src/commands/commandList/patreon/utils/collectibles.json
+    # collectibles folder
     "fear",
     "nommy",
     "bear",
