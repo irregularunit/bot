@@ -121,5 +121,5 @@ class MinimalisticHelpCommand(MinimalHelpCommand):
             else:
                 heading = f"__**{heading}**__"
 
-            self.paginator.add_line(f'{heading}')
+            self.paginator.add_line(heading)
             self.paginator.add_line(joined)
