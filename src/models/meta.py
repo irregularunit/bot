@@ -326,7 +326,9 @@ class ModelManager:
         async with self.pool.acquire() as connection:
             records: list[Record] = await connection.fetch(query)
 
-        users: dict[int, User] = {record["uuid"]: User.from_record(record) for record in records}
+        users: dict[int, User] = {
+            record["uuid"]: User.from_record(record) for record in records
+        }
         return users
 
     async def create_guild(self, guild_id: int) -> Guild:
@@ -450,7 +452,9 @@ class ModelManager:
         async with self.pool.acquire() as connection:
             records: list[Record] = await connection.fetch(query)
 
-        guilds: dict[int, Guild] = {record["gid"]: Guild.from_record(record) for record in records}
+        guilds: dict[int, Guild] = {
+            record["gid"]: Guild.from_record(record) for record in records
+        }
         return guilds
 
     async def remove_guild_prefix(self, guild: Guild, prefix: str) -> Guild:

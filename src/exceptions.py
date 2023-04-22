@@ -163,6 +163,8 @@ class UserFeedbackExceptionFactory:
             message,
             # Probably not the best idea to default to DefaultUserFeedbackEmoji
             # but I guess it's fine for now. I'll probably change this later.
-            UserFeedbackExceptionFactory.EMOJI_STRATEGIES.get(level, DefaultUserFeedbackEmoji()),
+            UserFeedbackExceptionFactory.EMOJI_STRATEGIES.get(
+                level, DefaultUserFeedbackEmoji()
+            ),
             formatters,
         )

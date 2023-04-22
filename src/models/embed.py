@@ -114,7 +114,9 @@ class EmbedBuilder(Embed):
         return instance
 
     @classmethod
-    def from_action(cls: Type[Self], *, title: str, gif: str, footer: Optional[str] = None) -> Self:
+    def from_action(
+        cls: Type[Self], *, title: str, gif: str, footer: Optional[str] = None
+    ) -> Self:
         """Create a new embed from a user action.
 
         Parameters

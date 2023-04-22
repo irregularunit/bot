@@ -6,6 +6,7 @@
 """
 
 from .avatar import *
+from .calculator import *
 from .emoji import *
 from .paginator import *
 from .plugin import *
