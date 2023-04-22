@@ -100,13 +100,17 @@ class MinimalisticHelpCommand(MinimalHelpCommand):
         destination: Messageable = self.get_destination()
 
         if not self.context.bot.user:
-            raise RuntimeError("Bot hasn't been logged in yet. Shouldn't be possible to get here.")
+            raise RuntimeError(
+                "Bot hasn't been logged in yet. Shouldn't be possible to get here."
+            )
 
         for page in self.paginator.pages:
             if "brackets" not in page:
                 embed: EmbedBuilder = EmbedBuilder.factory(
                     cast(Context, self.context), description=page
-                ).set_author(name="Help Menu", icon_url=self.context.bot.user.display_avatar)
+                ).set_author(
+                    name="Help Menu", icon_url=self.context.bot.user.display_avatar
+                )
                 await destination.send(embed=embed)
             else:
                 await destination.send(page)
@@ -136,7 +140,9 @@ class MinimalisticHelpCommand(MinimalHelpCommand):
 
             if getattr(cog, "emoji", None):
                 if not isinstance(cog.emoji, str):
-                    raise TypeError(f"Expected emoji to be a str, got {type(cog.emoji)} instead.")
+                    raise TypeError(
+                        f"Expected emoji to be a str, got {type(cog.emoji)} instead."
+                    )
 
                 emote: str = cog.emoji
                 heading = f"{emote} __**{heading}**__"

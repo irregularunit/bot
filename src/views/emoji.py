@@ -110,12 +110,16 @@ class EmoteView(View):
     @button(label="<", style=ButtonStyle.secondary)
     async def back(self, interaction: Interaction[Bot], btn: Button[EmoteView]) -> None:
         self.previous_page()
-        await interaction.response.edit_message(embed=self.generate_page(self.items[self.page]))
+        await interaction.response.edit_message(
+            embed=self.generate_page(self.items[self.page])
+        )
 
     @button(label=">", style=ButtonStyle.secondary)
     async def next(self, interaction: Interaction[Bot], btn: Button[EmoteView]) -> None:
         self.next_page()
-        await interaction.response.edit_message(embed=self.generate_page(self.items[self.page]))
+        await interaction.response.edit_message(
+            embed=self.generate_page(self.items[self.page])
+        )
 
     async def send_to_ctx(self, ctx: Context) -> None:
         """Send the view to the context.
@@ -286,15 +290,21 @@ class StealEmoteButton(Button[EmoteView]):
         emote: bytes | None = await self.read_emote(unit)
 
         if not emote:
-            return await interaction.response.send_message("Couldn't read emote...", ephemeral=True)
+            return await interaction.response.send_message(
+                "Couldn't read emote...", ephemeral=True
+            )
 
         try:
             await emoji_server.create_custom_emoji(name=unit.name, image=emote)
         except HTTPException as exc:
-            await interaction.response.send_message(f"Couldn't add emote: `{exc}`", ephemeral=True)
+            await interaction.response.send_message(
+                f"Couldn't add emote: `{exc}`", ephemeral=True
+            )
         else:
             self.updated_stealcounter(self.view.page)
-            await interaction.response.edit_message(embed=self.generate_embed(self.view.page))
+            await interaction.response.edit_message(
+                embed=self.generate_embed(self.view.page)
+            )
 
     async def callback(self, interaction: Interaction[Bot]) -> None:
         """Callback for the button.

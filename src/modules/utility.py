@@ -18,7 +18,13 @@ from discord.ext import commands
 
 from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
 from models.embed import EmbedBuilder
-from utils import HTTP_STATUS_CODES, BaseExtension, async_all, for_all_callbacks, get_random_emoji
+from utils import (
+    HTTP_STATUS_CODES,
+    BaseExtension,
+    async_all,
+    for_all_callbacks,
+    get_random_emoji,
+)
 from views import CalculatorView
 
 if TYPE_CHECKING:
@@ -196,7 +202,9 @@ class Utility(BaseExtension):
                 ExceptionLevel.INFO,
             )
 
-        async with self.bot.session.get(IP_LOOKUP_URL.format(ip=ip, format="json")) as resp:
+        async with self.bot.session.get(
+            IP_LOOKUP_URL.format(ip=ip, format="json")
+        ) as resp:
             if resp.status != 200:
                 raise UserFeedbackExceptionFactory.create(
                     "An error occurred while fetching the IP information.",
@@ -298,7 +306,10 @@ class Utility(BaseExtension):
     async def calculator(self, ctx: Context) -> None:
         embed: EmbedBuilder = (
             EmbedBuilder(description="```yaml\n0```")
-            .set_author(name=f"{get_random_emoji()} Calculator", icon_url=ctx.author.display_avatar)
+            .set_author(
+                name=f"{get_random_emoji()} Calculator",
+                icon_url=ctx.author.display_avatar,
+            )
             .set_footer(text="Made with ❤️ by irregularunit.")
         )
 

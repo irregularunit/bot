@@ -63,7 +63,9 @@ class CalculatorView(View):
         if interaction.user == self.ctx.author:
             return True
 
-        await interaction.response.send_message("This is not your calculator!", ephemeral=True)
+        await interaction.response.send_message(
+            "This is not your calculator!", ephemeral=True
+        )
         return False
 
     def find_description(self) -> str:
@@ -120,12 +122,16 @@ class CalculatorView(View):
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="4", style=ButtonStyle.grey, row=1)
-    async def row_two_first_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_two_first_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         self.embed.description = self.edit_embed(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="5", style=ButtonStyle.grey, row=1)
-    async def row_two_second_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_two_second_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         self.embed.description = self.edit_embed(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
@@ -135,65 +141,80 @@ class CalculatorView(View):
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="-", style=ButtonStyle.green, row=1)
-    async def row_two_fourth_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_two_fourth_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         self.embed.description = self.edit_embed(" - ")
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="ˣ", style=ButtonStyle.green, row=1)
-    async def row_two_fifth_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_two_fifth_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         self.embed.description = self.edit_embed(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="7", style=ButtonStyle.grey, row=2)
-    async def row_three_first_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_three_first_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         self.embed.description = self.edit_embed(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="8", style=ButtonStyle.grey, row=2)
-    async def row_three_second_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_three_second_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         self.embed.description = self.edit_embed(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="9", style=ButtonStyle.grey, row=2)
-    async def row_three_third_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_three_third_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         self.embed.description = self.edit_embed(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="+", style=ButtonStyle.green, row=2)
-    async def row_three_fourth_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_three_fourth_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         self.embed.description = self.edit_embed(" + ")
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="⌧", style=ButtonStyle.red, row=2)
-    async def row_three_fifth_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_three_fifth_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         content = self.find_description()
-        display = (
-            f"```yaml\n{self.find_description()[:-1] if self.find_description() != '0' else '0'}```"
-        )
+        display = f"```yaml\n{self.find_description()[:-1] if self.find_description() != '0' else '0'}```"
 
-        if content[-1] == " " and content[-2] in operations:  # type: ignore
+        if content[-1] == " " and content[-2] in operations:
             display = f"```yaml\n{content[:-3]}```"
 
         self.embed.description = display
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label=".", style=ButtonStyle.grey, row=3)
-    async def row_four_first_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_four_first_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         self.embed.description = self.edit_embed(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="0", style=ButtonStyle.grey, row=3)
-    async def row_four_second_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_four_second_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         self.embed.description = self.edit_embed(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="=", style=ButtonStyle.grey, row=3)
-    async def row_four_third_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_four_third_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         display = self.find_description()
-        equation = "".join(
-            k if k not in norm else f"**{norm[k]}"  # type: ignore
-            for k in display  # type: ignore
-        )
+        equation = "".join(k if k not in norm else f"**{norm[k]}" for k in display)
         pattern = re.compile(r"^√(\d+)")
         equation = pattern.sub("\\1 ** 0.5 ", equation)
 
@@ -205,35 +226,49 @@ class CalculatorView(View):
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="/", style=ButtonStyle.green, row=3)
-    async def row_four_fourth_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_four_fourth_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         self.embed.description = self.edit_embed(" / ")
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="Clear", style=ButtonStyle.red, row=3)
-    async def row_four_fifth_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_four_fifth_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         self.embed.description = "```yaml\n0```"
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="(", style=ButtonStyle.blurple, row=4)
-    async def row_five_first_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_five_first_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         self.embed.description = self.edit_embed(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label=")", style=ButtonStyle.blurple, row=4)
-    async def row_five_second_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_five_second_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         self.embed.description = self.edit_embed(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="Space", style=ButtonStyle.red, row=4)
-    async def row_five_third_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_five_third_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         self.embed.description = self.edit_embed(" ")
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="Sci", style=ButtonStyle.red, row=4)
-    async def row_five_fourth_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_five_fourth_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         await interaction.response.send_message("Soon to come...", ephemeral=True)
 
     @button(label="Exit", style=ButtonStyle.red, row=4)
-    async def row_five_fifth_button(self, interaction: Interaction, button: Button) -> None:
+    async def row_five_fifth_button(
+        self, interaction: Interaction, button: Button
+    ) -> None:
         await interaction.response.edit_message()
         self.stop()

@@ -16,7 +16,13 @@ from discord.ext import commands
 
 from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
 from models import EmbedBuilder, User
-from utils import BaseExtension, EmojiConverter, async_all, for_all_callbacks, get_random_emoji
+from utils import (
+    BaseExtension,
+    EmojiConverter,
+    async_all,
+    for_all_callbacks,
+    get_random_emoji,
+)
 from views import EmoteUnit, EmoteView
 
 if TYPE_CHECKING:
@@ -91,7 +97,9 @@ class Managment(BaseExtension):
         if (guild := self.bot.cached_guilds.get(ctx.guild.id)) is None:
             guild = await self.bot.manager.get_or_create_guild(ctx.guild.id)
 
-        self.bot.cached_guilds[guild.id] = await self.bot.manager.add_guild_prefix(guild, prefix)
+        self.bot.cached_guilds[guild.id] = await self.bot.manager.add_guild_prefix(
+            guild, prefix
+        )
         self.bot.cached_prefixes[ctx.guild.id] = await self.bot.to_thread(
             self.compile_prefixes,
             self.bot.cached_guilds[ctx.guild.id].prefixes,
@@ -110,7 +118,9 @@ class Managment(BaseExtension):
         if (guild := self.bot.cached_guilds.get(ctx.guild.id)) is None:
             guild = await self.bot.manager.get_or_create_guild(ctx.guild.id)
 
-        self.bot.cached_guilds[guild.id] = await self.bot.manager.remove_guild_prefix(guild, prefix)
+        self.bot.cached_guilds[guild.id] = await self.bot.manager.remove_guild_prefix(
+            guild, prefix
+        )
         self.bot.cached_prefixes[ctx.guild.id] = await self.bot.to_thread(
             self.compile_prefixes,
             self.bot.cached_guilds[ctx.guild.id].prefixes,
@@ -131,7 +141,9 @@ class Managment(BaseExtension):
 
         embed: EmbedBuilder = (
             EmbedBuilder()
-            .set_author(name=f"{get_random_emoji()} Prefix settings for {ctx.guild.name}")
+            .set_author(
+                name=f"{get_random_emoji()} Prefix settings for {ctx.guild.name}"
+            )
             .set_footer(
                 text="Made with ❤️ by irregularunit.",
                 icon_url=self.bot.user.display_avatar,
@@ -172,9 +184,9 @@ class Managment(BaseExtension):
         ),
     ) -> None:
         if not emojis:
-            maybe_emojis: list[discord.PartialEmoji] | None = await EmojiConverter().convert(
-                ctx, None
-            )
+            maybe_emojis: list[
+                discord.PartialEmoji
+            ] | None = await EmojiConverter().convert(ctx, None)
 
             if maybe_emojis:
                 emojis = maybe_emojis
@@ -237,9 +249,9 @@ class Managment(BaseExtension):
             user = await self.bot.manager.get_or_create_user(ctx.author.id)
             self.bot.cached_users[user.id] = user
 
-        self.bot.cached_users[ctx.author.id] = await self.bot.manager.set_user_emoji_server(
-            user, ctx.guild.id
-        )
+        self.bot.cached_users[
+            ctx.author.id
+        ] = await self.bot.manager.set_user_emoji_server(user, ctx.guild.id)
 
         await ctx.safe_send(f"Set your emoji server to `{ctx.guild.name}`.")
 
@@ -259,7 +271,9 @@ class Managment(BaseExtension):
         if (guild := self.bot.cached_guilds.get(ctx.guild.id)) is None:
             guild = await self.bot.manager.get_or_create_guild(ctx.guild.id)
 
-        self.bot.cached_guilds[guild.id] = await self.bot.manager.toggle_guild_owo_counting(guild)
+        self.bot.cached_guilds[
+            guild.id
+        ] = await self.bot.manager.toggle_guild_owo_counting(guild)
 
         true, false = "✅", "❌"
         await ctx.safe_send(

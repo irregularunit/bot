@@ -33,7 +33,11 @@ from typing_extensions import override
 
 from bridges import RedisBridge
 from gateway import Gateway
-from meta import __author__ as author, __license__ as _our_license, __version__ as version
+from meta import (
+    __author__ as author,
+    __license__ as _our_license,
+    __version__ as version,
+)
 from models import Guild, ModelManager, User
 from settings import Config
 from utils import Context, ContextT, GuildMessageable, MinimalisticHelpCommand
@@ -121,7 +125,9 @@ class Bot(commands.Bot):
 
     @staticmethod
     @discord.utils.copy_doc(asyncio.to_thread)
-    async def to_thread(func: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs) -> T:
+    async def to_thread(
+        func: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs
+    ) -> T:
         return await asyncio.to_thread(func, *args, **kwargs)
 
     @staticmethod
@@ -177,7 +183,10 @@ class Bot(commands.Bot):
 
     @override
     async def get_context(  # pylint: disable=arguments-differ
-        self, message: discord.Message | discord.Interaction, *, cls: Type[ContextT] = Context
+        self,
+        message: discord.Message | discord.Interaction,
+        *,
+        cls: Type[ContextT] = Context,
     ) -> Context:
         """Returns the invocation context from the message or interaction.
 
@@ -283,7 +292,9 @@ class Bot(commands.Bot):
 
     @classmethod
     @discord.utils.copy_doc(asyncpg.create_pool)
-    async def create_pool(cls: Type[BotT], *, dsn: str, **kwargs: Any) -> Optional[Pool[Record]]:
+    async def create_pool(
+        cls: Type[BotT], *, dsn: str, **kwargs: Any
+    ) -> Optional[Pool[Record]]:
         prep_init: Any | None = kwargs.pop("init", None)
 
         async def init(connection: Connection[Any]) -> None:
@@ -399,7 +410,9 @@ class Bot(commands.Bot):
             except Exception as e:
                 _log.exception(f"Failed to load {item!r}", exc_info=e)
 
-        await asyncio.gather(*[load_and_log(item) for item in initial_exts + initial_schemas])
+        await asyncio.gather(
+            *[load_and_log(item) for item in initial_exts + initial_schemas]
+        )
 
         await self.redis.connect()
 
@@ -426,7 +439,9 @@ class Bot(commands.Bot):
         }
 
         activity_type, message = random.choice(list(activity_hash_map.items()))
-        await self.change_presence(activity=discord.Activity(type=activity_type, name=message))
+        await self.change_presence(
+            activity=discord.Activity(type=activity_type, name=message)
+        )
 
     @update_presence.before_loop
     async def before_presence(self) -> None:

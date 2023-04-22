@@ -108,7 +108,9 @@ class Context(commands.Context["Bot"]):
         command = command or self.command
         await super().send_help(command)
 
-    async def safe_send(self, content: str = "", **kwargs: Any) -> Optional[discord.Message]:
+    async def safe_send(
+        self, content: str = "", **kwargs: Any
+    ) -> Optional[discord.Message]:
         """Sends a message, splitting it into multiple messages if necessary.
 
         Parameters

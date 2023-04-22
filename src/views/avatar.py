@@ -152,7 +152,9 @@ class AvatarHistoryView(PluginView):
             The message to start the view with.
         """
         self.cached_avatars = await self.fetch_avatar_history_items()
-        self.add_item(CollageAvatarButton(label="Collage", style=discord.ButtonStyle.blurple))
+        self.add_item(
+            CollageAvatarButton(label="Collage", style=discord.ButtonStyle.blurple)
+        )
 
         if not self.cached_avatars:
             return await self.ctx.send(

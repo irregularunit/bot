@@ -83,7 +83,9 @@ class InfoView(View):
             self.add_item(item)
 
     @button(label="Close", style=discord.ButtonStyle.danger)
-    async def close_button(self, interaction: discord.Interaction, btn: Button["InfoView"]) -> None:
+    async def close_button(
+        self, interaction: discord.Interaction, btn: Button["InfoView"]
+    ) -> None:
         """Close the view."""
         await interaction.response.defer()
         await interaction.delete_original_response()
@@ -130,7 +132,9 @@ class TrackedDiscordHistory(BaseExtension):
             default=None, converter=MemberConverter(), displayed_default="You"
         ),
     ) -> None:
-        await AvatarHistoryView(ctx, member=member or ctx.referenced_user or ctx.author).start()
+        await AvatarHistoryView(
+            ctx, member=member or ctx.referenced_user or ctx.author
+        ).start()
 
     @commands.command(
         name="info",
@@ -140,9 +144,7 @@ class TrackedDiscordHistory(BaseExtension):
         related_commands=("botstats", "bs", "src", "source"),
     )
     async def info_command(self, ctx: Context) -> None:
-        python_version = (
-            f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-        )
+        python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
         discord_version = discord.__version__
         lines_of_code = count_source_lines()
 
@@ -400,7 +402,16 @@ class TrackedDiscordHistory(BaseExtension):
             "userinfo",
             "userinfo @lexicalunit",
         ),
-        related_commands=("avatar", "av", "lastseen", "ls", "presence", "ps", "score", "sc"),
+        related_commands=(
+            "avatar",
+            "av",
+            "lastseen",
+            "ls",
+            "presence",
+            "ps",
+            "score",
+            "sc",
+        ),
     )
     async def userinfo_command(
         self,
@@ -468,7 +479,9 @@ class TrackedDiscordHistory(BaseExtension):
                     description="\n".join(
                         f"**{i + 1}.** {member.display_name} - "
                         f"{discord.utils.format_dt(member.joined_at or discord.utils.utcnow(), style='R')}"
-                        for i, member in enumerate(sorted_list[page * 10 : (page + 1) * 10])
+                        for i, member in enumerate(
+                            sorted_list[page * 10 : (page + 1) * 10]
+                        )
                     ),
                 )
                 .set_footer(text=f"Page {i + 1} of {math.ceil(len(sorted_list) / 10)}")
@@ -501,7 +514,16 @@ class TrackedDiscordHistory(BaseExtension):
             "presence",
             "presence @lexicalunit",
         ),
-        related_commands=("avatar", "av", "lastseen", "ls", "userinfo", "ui", "score", "sc"),
+        related_commands=(
+            "avatar",
+            "av",
+            "lastseen",
+            "ls",
+            "userinfo",
+            "ui",
+            "score",
+            "sc",
+        ),
     )
     async def presence_command(
         self,
@@ -584,7 +606,16 @@ class TrackedDiscordHistory(BaseExtension):
             "lastseen",
             "lastseen @lexicalunit",
         ),
-        related_commands=("avatar", "av", "presence", "ps", "userinfo", "ui", "score", "sc"),
+        related_commands=(
+            "avatar",
+            "av",
+            "presence",
+            "ps",
+            "userinfo",
+            "ui",
+            "score",
+            "sc",
+        ),
     )
     async def lastseen_command(
         self,

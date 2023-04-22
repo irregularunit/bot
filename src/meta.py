@@ -42,7 +42,9 @@ class VersionInfo(NamedTuple):
         :class:`str`
             The version info as a string.
         """
-        return f'{self.major}.{self.minor}.{self.micro}{self.releaselevel}#{self.serial}'
+        return (
+            f'{self.major}.{self.minor}.{self.micro}{self.releaselevel}#{self.serial}'
+        )
 
 
 def generate_serial_number(major: int, minor: int) -> int:

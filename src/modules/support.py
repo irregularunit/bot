@@ -139,7 +139,11 @@ class SupportServer(BaseExtension):
         `str`
             The plural suffix.
         """
-        return "th" if 4 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+        return (
+            "th"
+            if 4 <= n % 100 <= 20
+            else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+        )
 
     async def cache_channel(self, which: str) -> discord.TextChannel:
         """Cache a type of channel.
@@ -230,7 +234,9 @@ class SupportServer(BaseExtension):
                 raise RuntimeError("Drones role not found")
 
             if len(member.roles) > 1 and member.id not in (self.bot.user.id,):
-                await member.kick(reason="Bot has a custom role and was invited with permissions")
+                await member.kick(
+                    reason="Bot has a custom role and was invited with permissions"
+                )
                 return
 
             if drones_role not in member.roles:
@@ -421,7 +427,9 @@ class SupportServer(BaseExtension):
         if self.cached_pit_queue_channel is None:
             self.cached_pit_queue_channel = await self.cache_channel("pit_queue")
 
-        await self.cached_pit_queue_channel.send(f"**ℹ️ |** - {bot.name} has been approved.")
+        await self.cached_pit_queue_channel.send(
+            f"**ℹ️ |** - {bot.name} has been approved."
+        )
         await ctx.message.add_reaction("✅")
 
     @commands.has_guild_permissions(manage_guild=True)
@@ -454,7 +462,9 @@ class SupportServer(BaseExtension):
         if self.cached_pit_queue_channel is None:
             self.cached_pit_queue_channel = await self.cache_channel("pit_queue")
 
-        await self.cached_pit_queue_channel.send(f"**ℹ️ |** - {bot.name} has been denied.")
+        await self.cached_pit_queue_channel.send(
+            f"**ℹ️ |** - {bot.name} has been denied."
+        )
         await ctx.message.add_reaction("✅")
 
 

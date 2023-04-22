@@ -14,7 +14,11 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Type, Union
 import discord
 from discord.ext import commands
 
-from exceptions import ExceptionLevel, UserFeedbackException, UserFeedbackExceptionFactory
+from exceptions import (
+    ExceptionLevel,
+    UserFeedbackException,
+    UserFeedbackExceptionFactory,
+)
 from utils import BaseExtension
 
 if TYPE_CHECKING:
@@ -165,7 +169,9 @@ class DiscordErrorHandler(BaseExtension):
 
     # pylint: disable=R0911
     @commands.Cog.listener("on_command_error")
-    async def on_command_error(self, ctx: Context, error: Exception) -> Optional[discord.Message]:
+    async def on_command_error(
+        self, ctx: Context, error: Exception
+    ) -> Optional[discord.Message]:
         """Handles command errors.
 
         Parameters
@@ -190,7 +196,9 @@ class DiscordErrorHandler(BaseExtension):
         if not ctx.command:
             return
 
-        if ctx.cog and (ctx.cog._get_overridden_method(ctx.cog.cog_command_error) is not None):
+        if ctx.cog and (
+            ctx.cog._get_overridden_method(ctx.cog.cog_command_error) is not None
+        ):
             # The cog which the invoked command belongs to has a local error handler
             return
 
@@ -235,7 +243,9 @@ class DiscordErrorHandler(BaseExtension):
         if isinstance(error, commands.MissingRequiredArgument):
             arg = error.param.name
             signature = ctx.command.signature
-            full_qualified_signature = ctx.command.full_parent_name + ctx.command.qualified_name
+            full_qualified_signature = (
+                ctx.command.full_parent_name + ctx.command.qualified_name
+            )
 
             partial_exception: UserFeedbackException = UserFeedbackExceptionFactory.create(
                 message=(

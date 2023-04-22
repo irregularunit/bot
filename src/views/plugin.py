@@ -80,5 +80,7 @@ class PluginView(View):
         if interaction.user and interaction.user.id == self.ctx.author.id:
             return True
 
-        await interaction.response.send_message("You cannot use this, sorry. :(", ephemeral=True)
+        await interaction.response.send_message(
+            "You cannot use this, sorry. :(", ephemeral=True
+        )
         return False
