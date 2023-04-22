@@ -23,7 +23,7 @@ python-magic==0.4.27
 python-magic-bin==0.4.14; os_name == "nt"
 Pillow==9.5.0
 
-# Database Related
+# Database Related and Stubs
 asyncpg>=0.27.0
 redis>=4.2.0rc1
 git+https://github.com/bryanforbes/asyncpg-stubs

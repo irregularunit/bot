@@ -14,12 +14,12 @@ import uuid
 from typing import TYPE_CHECKING, TypedDict
 
 import discord
-import simpleeval
 from discord.ext import commands
 
 from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
 from models.embed import EmbedBuilder
 from utils import HTTP_STATUS_CODES, BaseExtension, async_all, for_all_callbacks, get_random_emoji
+from views import CalculatorView
 
 if TYPE_CHECKING:
     from bot import Bot
@@ -294,20 +294,15 @@ class Utility(BaseExtension):
         elif stderr:
             await ctx.safe_send(f"```{stderr.decode()}```")
 
-    @commands.command(name="math", aliases=("calc",))
-    async def math(self, ctx: Context, *, expression: str) -> None:
-        result = simpleeval.simple_eval(expression)
-
+    @commands.command(name="calculatior", aliases=("calc",))
+    async def calculator(self, ctx: Context) -> None:
         embed: EmbedBuilder = (
-            EmbedBuilder()
-            .set_footer(text=str(ctx.author) + " | Evaluation", icon_url=ctx.author.display_avatar)
-            .add_field(
-                name="Your expression: ", value=f'```yaml\n"{expression}"\n```', inline=False
-            )
-            .add_field(name="Result: ", value=f"```\n{result}\n```")
+            EmbedBuilder(description="```yaml\n0```")
+            .set_author(name=f"{get_random_emoji()} Calculator", icon_url=ctx.author.display_avatar)
+            .set_footer(text="Made with ❤️ by irregularunit.")
         )
 
-        await ctx.maybe_reply(embed=embed)
+        await ctx.maybe_reply(embed=embed, view=CalculatorView(ctx, embed=embed))
 
 
 async def setup(bot: Bot) -> None:

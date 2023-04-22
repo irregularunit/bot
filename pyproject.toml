@@ -4,7 +4,7 @@
 # * For more information, see README.md and LICENSE
 
 [tool.black]
-line-length = 100
+line-length = 88
 skip-string-normalization = true
 force-exclude = "LICENSE|.+.sql|.+.json|.+.md|.+.yml|.+.env|.+.txt"
 
@@ -12,7 +12,7 @@ force-exclude = "LICENSE|.+.sql|.+.json|.+.md|.+.yml|.+.env|.+.txt"
 profile = "black"
 combine_as_imports = true
 combine_star = true
-line_length = 100
+line_length = 88
 
 [tool.pyright]
 pythonVersion = "3.11"
