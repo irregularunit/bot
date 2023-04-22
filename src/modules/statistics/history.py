@@ -12,7 +12,6 @@ import inspect
 import math
 import sys
 import time as _time
-from collections import defaultdict
 from os import path
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -113,7 +112,16 @@ class TrackedDiscordHistory(BaseExtension):
         """
         return str(math.floor(count / 3))
 
-    @commands.command(name="avatar", aliases=("av",))
+    @commands.command(
+        name="avatar",
+        aliases=("av",),
+        help="View a user's avatar history.",
+        brief=(
+            "avatar",
+            "avatar @lexicalunit",
+        ),
+        related_commands=("userinfo", "ui"),
+    )
     async def avatar_command(
         self,
         ctx: Context,
@@ -124,7 +132,13 @@ class TrackedDiscordHistory(BaseExtension):
     ) -> None:
         await AvatarHistoryView(ctx, member=member or ctx.referenced_user or ctx.author).start()
 
-    @commands.command(name="info", aliases=("about",))
+    @commands.command(
+        name="info",
+        aliases=("about",),
+        help="Get up-to-date information about the bot.",
+        brief=("info",),
+        related_commands=("botstats", "bs", "src", "source"),
+    )
     async def info_command(self, ctx: Context) -> None:
         python_version = (
             f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
@@ -175,7 +189,16 @@ class TrackedDiscordHistory(BaseExtension):
         view = InfoView(self.bot.config.invite, "Invite")
         await ctx.safe_send(embed=embed, view=view)
 
-    @commands.command(name="source", aliases=("src",))
+    @commands.command(
+        name="source",
+        aliases=("src",),
+        help="View the source code for a command.",
+        brief=(
+            "source",
+            "source userinfo",
+        ),
+        related_commands=("info", "about", "botstats", "bs"),
+    )
     async def source_command(
         self, ctx: Context, *, command: Optional[str] = None
     ) -> Optional[discord.Message]:
@@ -234,7 +257,16 @@ class TrackedDiscordHistory(BaseExtension):
 
         return await ctx.safe_send(embed=embed, view=view)
 
-    @commands.command(name="score", aliases=("sc",))
+    @commands.command(
+        name="score",
+        aliases=("sc",),
+        help="Get the score of a user.",
+        brief=(
+            "score",
+            "score @lexicalunit",
+        ),
+        s=("leaderboard", "lb"),
+    )
     async def score_command(
         self,
         ctx: Context,
@@ -306,7 +338,18 @@ class TrackedDiscordHistory(BaseExtension):
 
         await ctx.safe_send(embed=embed)
 
-    @commands.command(name="leaderboard", aliases=("lb",))
+    @commands.command(
+        name="leaderboard",
+        aliases=("lb",),
+        help="Get the leaderboard of your server.",
+        brief=(
+            "leaderboard",
+            "leaderboard 20",
+            "leaderboard 20 all time",
+            "leaderboard 20 this month",
+        ),
+        related_commands=("score", "sc"),
+    )
     async def leaderboard_command(
         self,
         ctx: Context,
@@ -349,7 +392,16 @@ class TrackedDiscordHistory(BaseExtension):
 
         await ctx.safe_send(embed=embed)
 
-    @commands.command(name="userinfo", aliases=("ui",))
+    @commands.command(
+        name="userinfo",
+        aliases=("ui",),
+        help="Get the information of a user.",
+        brief=(
+            "userinfo",
+            "userinfo @lexicalunit",
+        ),
+        related_commands=("avatar", "av", "lastseen", "ls", "presence", "ps", "score", "sc"),
+    )
     async def userinfo_command(
         self,
         ctx: Context,
@@ -397,7 +449,13 @@ class TrackedDiscordHistory(BaseExtension):
 
         await ctx.safe_send(embed=embed, view=view)
 
-    @commands.command(name="joinlist", aliases=("jl",))
+    @commands.command(
+        name="joinlist",
+        aliases=("jl",),
+        help="Get the join list of your server.",
+        brief=("joinlist",),
+        related_commands=(),
+    )
     async def joinlist_command(self, ctx: Context) -> Optional[discord.Message]:
         sorted_list: list[discord.Member] = sorted(
             ctx.guild.members,
@@ -435,7 +493,16 @@ class TrackedDiscordHistory(BaseExtension):
             )
 
     # pylint: disable=too-many-locals
-    @commands.command(name="presence", aliases=("ps",))
+    @commands.command(
+        name="presence",
+        aliases=("ps",),
+        help="Get the presence history of a user.",
+        brief=(
+            "presence",
+            "presence @lexicalunit",
+        ),
+        related_commands=("avatar", "av", "lastseen", "ls", "userinfo", "ui", "score", "sc"),
+    )
     async def presence_command(
         self,
         ctx: Context,
@@ -466,44 +533,34 @@ class TrackedDiscordHistory(BaseExtension):
                 for record in history
             }
 
-            status_time: defaultdict[str, float] = defaultdict(float)
-            sorted_presences = sorted(record_dict.items())
+            status_timers: dict[str, float] = {
+                "Online": 0,
+                "Idle": 0,
+                "Do Not Disturb": 0,
+                "Offline": 0,
+            }
 
-            for i in range(len(sorted_presences) - 1):
-                curr_datetime, curr_status = sorted_presences[i]
-                next_datetime, next_status = sorted_presences[i + 1]
-                curr_status = curr_status[1]  # old status
-                next_status = next_status[0]  # new status
-                time_diff = (next_datetime - curr_datetime).total_seconds()
-
-                if curr_status == next_status:
-                    status_time[curr_status] += time_diff
-                else:
-                    status_time[curr_status] += (60 * 60 * 24 - curr_datetime.second) - sum(
-                        status_time.values()
-                    )
-                    status_time[next_status] += time_diff
-
-            try:
-                status_time[sorted_presences[0][1][1]] += 86_401 - sum(status_time.values())
-            except KeyError:
-                # Didn't wanna use get, here so that's why this is here
-                status_time[sorted_presences[0][1][1]] = 86_401 - sum(status_time.values())
-
-            analysis_time = timer.elapsed
-            timer.reset()
+            for i, (changed_at, statuses) in enumerate(record_dict.items()):
+                # REFACTOR THIS
+                if i != 0:
+                    status_timers[statuses[0]] += (
+                        changed_at - list(record_dict.keys())[i - 1]
+                    ).total_seconds()
 
             presence_data = PresenceType(
                 avatar=await user.display_avatar.read(),
                 labels=["idle", "online", "dnd", "offline"],
                 colors=["#fba31c", "#43b581", "#f04747", "#747f8d"],
                 values=[
-                    int(status_time.get("Idle", 0)),
-                    int(status_time.get("Online", 0)),
-                    int(status_time.get("Do Not Disturb", 0)),
-                    int(status_time.get("Offline", 0)),
+                    int(status_timers["Idle"]),
+                    int(status_timers["Online"]),
+                    int(status_timers["Do Not Disturb"]),
+                    int(status_timers["Offline"]),
                 ],
             )
+
+            analysis_time = timer.elapsed
+            timer.reset()
 
             presence_instance = PresenceChart(presence_data)
             canvas: discord.File = await self.bot.to_thread(presence_instance.create)
@@ -519,7 +576,16 @@ class TrackedDiscordHistory(BaseExtension):
                 file=canvas,
             )
 
-    @commands.command(name="lastseen", aliases=("ls",))
+    @commands.command(
+        name="lastseen",
+        aliases=("ls",),
+        help="Get the last time a user was seen.",
+        brief=(
+            "lastseen",
+            "lastseen @lexicalunit",
+        ),
+        related_commands=("avatar", "av", "presence", "ps", "userinfo", "ui", "score", "sc"),
+    )
     async def lastseen_command(
         self,
         ctx: Context,
@@ -554,7 +620,13 @@ class TrackedDiscordHistory(BaseExtension):
                 )
             )
 
-    @commands.command(name="botstats", aliases=("bs",))
+    @commands.command(
+        name="botstats",
+        aliases=("bs",),
+        help="Get some stats about the bot.",
+        brief=("botstats",),
+        related_commands=("info", "source", "src"),
+    )
     async def botstats_command(self, ctx: Context) -> Optional[discord.Message]:
         async with self.bot.pool.acquire() as connection:
             with Timer() as timer:
