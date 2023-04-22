@@ -77,7 +77,16 @@ class Managment(BaseExtension):
         )
 
     @commands.has_guild_permissions(administrator=True)
-    @commands.group(name="prefix", invoke_without_command=True)
+    @commands.group(
+        name="prefix",
+        invoke_without_command=True,
+        help="Configure the bot's prefixes for the guild.",
+        brief=(
+            "prefix",
+            "prefix {prefix}",
+        ),
+        related_commands=("prefix", "prefix remove", "prefix list"),
+    )
     async def prefix(self, ctx: Context, *, prefix: str) -> None:
         if (guild := self.bot.cached_guilds.get(ctx.guild.id)) is None:
             guild = await self.bot.manager.get_or_create_guild(ctx.guild.id)
@@ -90,7 +99,13 @@ class Managment(BaseExtension):
 
         await ctx.safe_send(f"Added `{prefix}` to the guild's prefixes.")
 
-    @prefix.command(name="remove", aliases=("rm",))
+    @prefix.command(
+        name="remove",
+        aliases=("rm",),
+        help="Remove a prefix from the guild's prefixes.",
+        brief=("prefix remove {prefix}",),
+        related_commands=("prefix", "prefix remove", "prefix list"),
+    )
     async def prefix_remove(self, ctx: Context, *, prefix: str) -> None:
         if (guild := self.bot.cached_guilds.get(ctx.guild.id)) is None:
             guild = await self.bot.manager.get_or_create_guild(ctx.guild.id)
@@ -103,7 +118,13 @@ class Managment(BaseExtension):
 
         await ctx.safe_send(f"Removed `{prefix}` from the guild's prefixes.")
 
-    @prefix.command(name="list", aliases=("ls",))
+    @prefix.command(
+        name="list",
+        aliases=("ls",),
+        help="List the guild's prefixes.",
+        brief=("prefix list",),
+        related_commands=("prefix", "prefix remove", "prefix list"),
+    )
     async def prefix_list(self, ctx: Context) -> None:
         if (guild := self.bot.cached_guilds.get(ctx.guild.id)) is None:
             guild = await self.bot.manager.get_or_create_guild(ctx.guild.id)
@@ -133,6 +154,12 @@ class Managment(BaseExtension):
         name="emoji",
         aliases=("emote", "emotes", "emojis"),
         invoke_without_command=True,
+        help="Get information about an emoji.",
+        brief=(
+            "emoji {emoji}",
+            "emoji {emoji} {emoji}",
+        ),
+        related_commands=(),
     )
     async def emoji_group(
         self,
@@ -168,12 +195,27 @@ class Managment(BaseExtension):
 
         await EmoteView(self.bot, *items).send_to_ctx(ctx)
 
-    @emoji_group.group(name="set", aliases=("add",), invoke_without_command=True)
+    @emoji_group.group(
+        name="set",
+        aliases=("add",),
+        invoke_without_command=True,
+        help="Set an emoji to the guild.",
+        brief=("emoji set guild [ID]"),
+        related_commands=(),
+    )
     async def emoji_set(self, ctx: Context) -> None:
         await ctx.send_help()
 
-    @emoji_set.command(name="guild", aliases=("server", "g", "s"))
-    async def emoji_set_guild(self, ctx: Context) -> None:
+    @emoji_set.command(
+        name="guild",
+        aliases=("server", "g", "s"),
+        help="Set an emoji to the guild.",
+        brief=("emoji set guild [ID]"),
+        related_commands=(),
+    )
+    async def emoji_set_guild(
+        self, ctx: Context, id: discord.Guild = commands.CurrentGuild
+    ) -> None:
         if not isinstance(ctx.author, discord.Member):
             # Purely for type checking, the cog_check above already
             # ensures that this is a guild only command.
@@ -202,7 +244,13 @@ class Managment(BaseExtension):
         await ctx.safe_send(f"Set your emoji server to `{ctx.guild.name}`.")
 
     @commands.has_guild_permissions(administrator=True)
-    @commands.group(name="toggle", invoke_without_command=True)
+    @commands.group(
+        name="toggle",
+        invoke_without_command=True,
+        help="Toggle a setting.",
+        brief=("toggle {setting}",),
+        related_commands=(),
+    )
     async def toggle(self, ctx: Context) -> None:
         await ctx.send_help()
 

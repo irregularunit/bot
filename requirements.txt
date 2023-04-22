@@ -16,6 +16,7 @@ numpy==1.24.2
 
 # Useful and Cosmetic
 aiofiles==23.1.0
+simpleeval==0.9.13 
 emoji==1.7.0
 coloredlogs==15.0.1
 python-magic==0.4.27

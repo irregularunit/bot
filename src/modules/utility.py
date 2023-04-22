@@ -14,6 +14,7 @@ import uuid
 from typing import TYPE_CHECKING, TypedDict
 
 import discord
+import simpleeval
 from discord.ext import commands
 
 from exceptions import ExceptionLevel, UserFeedbackExceptionFactory
@@ -292,6 +293,21 @@ class Utility(BaseExtension):
             await ctx.safe_send(f"```{stdout.decode()}```")
         elif stderr:
             await ctx.safe_send(f"```{stderr.decode()}```")
+
+    @commands.command(name="math", aliases=("calc",))
+    async def math(self, ctx: Context, *, expression: str) -> None:
+        result = simpleeval.simple_eval(expression)
+
+        embed: EmbedBuilder = (
+            EmbedBuilder()
+            .set_footer(text=str(ctx.author) + " | Evaluation", icon_url=ctx.author.display_avatar)
+            .add_field(
+                name="Your expression: ", value=f'```yaml\n"{expression}"\n```', inline=False
+            )
+            .add_field(name="Result: ", value=f"```\n{result}\n```")
+        )
+
+        await ctx.maybe_reply(embed=embed)
 
 
 async def setup(bot: Bot) -> None:
