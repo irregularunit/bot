@@ -50,7 +50,7 @@ norm = {
 }
 operations = ["/", "*", "+", "-"]
 
-
+# pylint: disable=R0904
 class CalculatorView(View):
     """Simple calculator view"""
 
@@ -68,7 +68,7 @@ class CalculatorView(View):
         )
         return False
 
-    def find_description(self) -> str:
+    def _find_description(self) -> str:
         """Find the description of the embed.
 
         Returns
@@ -78,116 +78,114 @@ class CalculatorView(View):
         """
         return self.embed.description[8:-3]
 
-    def edit_embed(self, label) -> str:
-        content: str = self.find_description()
+    def _adjust_embed_description(self, label) -> str:
+        content: str = self._find_description()
         if content == "0":
             return f"```yaml\n{label}```"
 
         try:
-            if "Out" in content:
-                return f"```yaml\n{label}```"
-            if label == " ":
-                return f"```yaml\n{content} ```"
-            if content[-1] == "ˣ":
-                return f"```yaml\n{content[:-1]}{sup[label]}```"
-            if content[-1] in norm:
-                return f"```yaml\n{content}{sup[label]}```"
-            return f"```yaml\n{content}{label}```"
+            return (
+                f"```yaml\n{label}```"
+                if "Out" in content or label == " "
+                else f"```yaml\n{content} {sup[label] if content[-1] == 'ˣ' else label}```"
+                if content[-1] in norm
+                else f"```yaml\n{content}{label}```"
+            )
         except KeyError:
             return f"```yaml\n{content}```"
 
     @button(label="1", style=ButtonStyle.grey, row=0)
     async def first_button(self, interaction: Interaction, button: Button) -> None:
-        self.embed.description = self.edit_embed(button.label)
+        self.embed.description = self._adjust_embed_description(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="2", style=ButtonStyle.grey, row=0)
     async def second_button(self, interaction: Interaction, button: Button) -> None:
-        self.embed.description = self.edit_embed(button.label)
+        self.embed.description = self._adjust_embed_description(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="3", style=ButtonStyle.grey, row=0)
     async def third_button(self, interaction: Interaction, button: Button) -> None:
-        self.embed.description = self.edit_embed(button.label)
+        self.embed.description = self._adjust_embed_description(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="*", style=ButtonStyle.green, row=0)
     async def fourth_button(self, interaction: Interaction, button: Button) -> None:
-        self.embed.description = self.edit_embed(" * ")
+        self.embed.description = self._adjust_embed_description(" * ")
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="√", style=ButtonStyle.green, row=0)
     async def fifth_button(self, interaction: Interaction, button: Button) -> None:
-        self.embed.description = self.edit_embed(button.label)
+        self.embed.description = self._adjust_embed_description(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="4", style=ButtonStyle.grey, row=1)
     async def row_two_first_button(
         self, interaction: Interaction, button: Button
     ) -> None:
-        self.embed.description = self.edit_embed(button.label)
+        self.embed.description = self._adjust_embed_description(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="5", style=ButtonStyle.grey, row=1)
     async def row_two_second_button(
         self, interaction: Interaction, button: Button
     ) -> None:
-        self.embed.description = self.edit_embed(button.label)
+        self.embed.description = self._adjust_embed_description(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="6", style=ButtonStyle.grey, row=1)
     async def row_two_third_button(self, interaction: Interaction, button: Button):
-        self.embed.description = self.edit_embed(button.label)
+        self.embed.description = self._adjust_embed_description(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="-", style=ButtonStyle.green, row=1)
     async def row_two_fourth_button(
         self, interaction: Interaction, button: Button
     ) -> None:
-        self.embed.description = self.edit_embed(" - ")
+        self.embed.description = self._adjust_embed_description(" - ")
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="ˣ", style=ButtonStyle.green, row=1)
     async def row_two_fifth_button(
         self, interaction: Interaction, button: Button
     ) -> None:
-        self.embed.description = self.edit_embed(button.label)
+        self.embed.description = self._adjust_embed_description(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="7", style=ButtonStyle.grey, row=2)
     async def row_three_first_button(
         self, interaction: Interaction, button: Button
     ) -> None:
-        self.embed.description = self.edit_embed(button.label)
+        self.embed.description = self._adjust_embed_description(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="8", style=ButtonStyle.grey, row=2)
     async def row_three_second_button(
         self, interaction: Interaction, button: Button
     ) -> None:
-        self.embed.description = self.edit_embed(button.label)
+        self.embed.description = self._adjust_embed_description(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="9", style=ButtonStyle.grey, row=2)
     async def row_three_third_button(
         self, interaction: Interaction, button: Button
     ) -> None:
-        self.embed.description = self.edit_embed(button.label)
+        self.embed.description = self._adjust_embed_description(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="+", style=ButtonStyle.green, row=2)
     async def row_three_fourth_button(
         self, interaction: Interaction, button: Button
     ) -> None:
-        self.embed.description = self.edit_embed(" + ")
+        self.embed.description = self._adjust_embed_description(" + ")
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="⌧", style=ButtonStyle.red, row=2)
     async def row_three_fifth_button(
         self, interaction: Interaction, button: Button
     ) -> None:
-        content = self.find_description()
-        display = f"```yaml\n{self.find_description()[:-1] if self.find_description() != '0' else '0'}```"
+        content = self._find_description()
+        display = f"```yaml\n{self._find_description()[:-1] if self._find_description() != '0' else '0'}```"
 
         if content[-1] == " " and content[-2] in operations:
             display = f"```yaml\n{content[:-3]}```"
@@ -199,21 +197,21 @@ class CalculatorView(View):
     async def row_four_first_button(
         self, interaction: Interaction, button: Button
     ) -> None:
-        self.embed.description = self.edit_embed(button.label)
+        self.embed.description = self._adjust_embed_description(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="0", style=ButtonStyle.grey, row=3)
     async def row_four_second_button(
         self, interaction: Interaction, button: Button
     ) -> None:
-        self.embed.description = self.edit_embed(button.label)
+        self.embed.description = self._adjust_embed_description(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="=", style=ButtonStyle.grey, row=3)
     async def row_four_third_button(
         self, interaction: Interaction, button: Button
     ) -> None:
-        display = self.find_description()
+        display = self._find_description()
         equation = "".join(k if k not in norm else f"**{norm[k]}" for k in display)
         pattern = re.compile(r"^√(\d+)")
         equation = pattern.sub("\\1 ** 0.5 ", equation)
@@ -229,7 +227,7 @@ class CalculatorView(View):
     async def row_four_fourth_button(
         self, interaction: Interaction, button: Button
     ) -> None:
-        self.embed.description = self.edit_embed(" / ")
+        self.embed.description = self._adjust_embed_description(" / ")
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="Clear", style=ButtonStyle.red, row=3)
@@ -243,21 +241,21 @@ class CalculatorView(View):
     async def row_five_first_button(
         self, interaction: Interaction, button: Button
     ) -> None:
-        self.embed.description = self.edit_embed(button.label)
+        self.embed.description = self._adjust_embed_description(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label=")", style=ButtonStyle.blurple, row=4)
     async def row_five_second_button(
         self, interaction: Interaction, button: Button
     ) -> None:
-        self.embed.description = self.edit_embed(button.label)
+        self.embed.description = self._adjust_embed_description(button.label)
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="Space", style=ButtonStyle.red, row=4)
     async def row_five_third_button(
         self, interaction: Interaction, button: Button
     ) -> None:
-        self.embed.description = self.edit_embed(" ")
+        self.embed.description = self._adjust_embed_description(" ")
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="Sci", style=ButtonStyle.red, row=4)
