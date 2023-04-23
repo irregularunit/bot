@@ -390,7 +390,7 @@ class TrackedDiscordHistory(BaseExtension):
             )
 
         if not embed.fields:
-            embed.description = "> No one counter entries yet."
+            embed.description = "> No counter entries yet."
 
         await ctx.safe_send(embed=embed)
 
