@@ -50,6 +50,7 @@ norm = {
 }
 operations = ["/", "*", "+", "-"]
 
+
 # pylint: disable=R0904
 class CalculatorView(View):
     """Simple calculator view"""
