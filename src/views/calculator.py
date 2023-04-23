@@ -222,7 +222,7 @@ class CalculatorView(View):
             result = simpleeval.simple_eval(equation)
         except Exception:
             result = "Error! Something went wrong"
-        self.embed.description = f"```yaml\nIn  >> {display} \nOut >> {result}```"
+        self.embed.description = f"```yaml\nIn  << {display} \nOut >> {result}```"
         await interaction.response.edit_message(embed=self.embed)
 
     @button(label="/", style=ButtonStyle.green, row=3)

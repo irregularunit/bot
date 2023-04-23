@@ -302,12 +302,12 @@ class Utility(BaseExtension):
         elif stderr:
             await ctx.safe_send(f"```{stderr.decode()}```")
 
-    @commands.command(name="calculatior", aliases=("calc",))
+    @commands.command(name="calculator", aliases=("icalc",))
     async def calculator(self, ctx: Context) -> None:
         embed: EmbedBuilder = (
             EmbedBuilder(description="```yaml\n0```")
             .set_author(
-                name=f"{get_random_emoji()} Calculator",
+                name=f"{ctx.author.display_name}'s Calculator",
                 icon_url=ctx.author.display_avatar,
             )
             .set_footer(text="Made with ❤️ by irregularunit.")
