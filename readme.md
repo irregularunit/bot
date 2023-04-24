@@ -1,6 +1,7 @@
 # Welcome to my Discord bot!
 
 Thank you for checking out my Discord bot! This readme.md file is just a brief introduction to the bot and its licensing terms.
+# [![DeepSource](https://app.deepsource.com/gh/irregularunit/bot.svg/?label=active+issues&show_trend=true&token=9vxySpY835O0aFX8WxCdqM_c)](https://app.deepsource.com/gh/irregularunit/bot/?ref=repository-badge)
 
 ## Please read
 
