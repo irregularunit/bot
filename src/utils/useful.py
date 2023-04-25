@@ -350,7 +350,7 @@ def emote_to_num(emote: str) -> int:
     return ord(emote[0]) - 48
 
 
-def resize_to_limit(image: BytesIO, limit: int = 8_000_000) -> BytesIO:
+def resize_to_limit(image: BytesIO, limit: int = 26_214_400) -> BytesIO:
     """Resizes an image to a given limit.
 
     Parameters
