@@ -1,107 +1,74 @@
-"""
- * Bot for Discord
- * Copyright (C) 2023 Irregular Unit
- * This software is licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
- * For more information, see README.md and LICENSE
-"""
+# -*- coding: utf-8 -*-
 
 from __future__ import annotations
 
 import asyncio
-import logging
-import logging.handlers
 import os
-from logging import Logger, getLogger
-from typing import TYPE_CHECKING
+import sys
+from contextlib import suppress
+from typing import TYPE_CHECKING, Any, Optional
 
 from aiohttp import ClientSession
+from discord.utils import setup_logging
+from redis.asyncio import Redis
 
-from bot import Bot
-from bridges import RedisBridge
-from settings import Config
-from utils import setup_logging, suppress
+from src.models.serenity import Serenity
+from src.shared import SerenityConfig
 
 if TYPE_CHECKING:
     from asyncpg import Pool, Record
 
-log: Logger = getLogger(__name__)
 
-try:
-    import uvloop  # type: ignore
-
-    if os.name in ("posix",):
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())  # type: ignore
-except ImportError:
-    log.info("uvloop is not installed, using the default event loop policy.")
-
-os.environ["JISHAKU_NO_UNDERSCORE"] = "true"
-os.environ["JISHAKU_NO_DM_TRACEBACK"] = "true"
-os.environ["JISHAKU_HIDE"] = "false"
-os.environ["JISHAKU_RETAIN"] = "true"
+def run_with_suppress(runner: Optional[asyncio.Runner]) -> None:
+    with suppress(KeyboardInterrupt, asyncio.CancelledError):
+        if runner is None:
+            asyncio.run(main())
+        else:
+            runner.run(main())
 
 
-async def setup() -> tuple[Bot, Pool[Record], ClientSession]:
-    """Sets up the bot.
+async def setup() -> tuple[Serenity, Pool[Record], ClientSession]:
+    setup_logging()
+    config = SerenityConfig.parse_obj({})
 
-    Returns
-    -------
-    `tuple[Bot, Pool[Record], ClientSession]`
-        The bot, the PostgreSQL pool, and the aiohttp session.
-
-    Raises
-    ------
-    `Exception`
-        If the PostgreSQL pool or the aiohttp session could not be created.
-    """
-    setup_logging("INFO")
-    prep_conf: Config = Config()  # type: ignore (my IDE doesn't get it)
-    logger: Logger = logging.getLogger()
-
-    handler = logging.handlers.RotatingFileHandler(
-        filename="logs/bot.log",
-        encoding="utf-8",
-        maxBytes=32 * 1024 * 1024,
-        backupCount=5,
-    )
-    handler.setFormatter(
-        logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s")
-    )
-
-    logger.addHandler(handler)
     loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
     session: ClientSession = ClientSession()
 
     try:
-        pool: Pool[Record] = await Bot.create_pool(dsn=prep_conf.psql)  # type: ignore
-        redis: RedisBridge = RedisBridge.setup_redis(uri=prep_conf.redis)
+        pool: Pool[Record] = await Serenity.create_pool(config.sql_dsn)
 
-        log.info("PostgreSQL and Redis successfully connected.")
+        if pool is None:
+            raise RuntimeError("Failed to create database pool.")
+
+        redis: Redis[Any] = Redis.from_url(config.redis_url)  # type: ignore
+
     except Exception as exc:
         raise exc
 
-    try:
-        bot: Bot = Bot(loop=loop, session=session, pool=pool, redis=redis)
-        log.info("Successfully created a bot instance.")
-    except Exception as exc:
-        raise exc
+    serenity = Serenity(loop=loop, session=session, pool=pool, redis=redis)
 
-    return bot, pool, session
+    return serenity, pool, session
 
 
 async def main() -> None:
-    """The main function."""
-    bot, pool, session = await setup()
+    serenity, pool, session = await setup()
 
-    async with bot, pool, session:
+    async with serenity, pool, session:
         try:
-            await bot.start()
+            await serenity.start()
         except Exception as exc:
             raise exc
 
 
 if __name__ == "__main__":
-    with suppress(
-        KeyboardInterrupt,
-        asyncio.CancelledError,
-    ), asyncio.Runner() as runner:
-        runner.run(main())
+    if os.name in ("nt",):
+        run_with_suppress(None)
+    else:
+        import uvloop
+
+        if sys.version_info >= (3, 11):
+            with asyncio.Runner(loop_factory=uvloop.new_event_loop) as runner:
+                run_with_suppress(runner)
+        else:
+            uvloop.install()
+            run_with_suppress(None)
