@@ -37,6 +37,7 @@ import asyncio
 import os
 import pathlib
 import re
+from itertools import islice
 from typing import Any, Callable, Generator, ParamSpec, TypeVar
 
 from discord.utils import copy_doc
@@ -95,8 +96,31 @@ class SerenityMixin:
         `str`
             The chunks of the string.
         """
-        for i in range(0, len(item), size):
-            yield item[i : i + size]
+        it = iter(item)
+        while True:
+            chunk = "".join(islice(it, size))
+            if not chunk:
+                return
+            yield chunk
+
+    @staticmethod
+    def chunk(*items: T, size: int = 1) -> Generator[tuple[T], None, None]:
+        """Splits a iterable into chunks of a given size.
+
+        Parameters
+        ----------
+        items : `list[T]`
+            The list to split.
+        size : `int`
+            The maximum size of each chunk.
+
+        Yields
+        ------
+        `list[T]`
+            The chunks of the list.
+        """
+        for i in range(0, len(items), size):
+            yield items[i : i + size]
 
     @staticmethod
     def walk_plugins() -> Generator[str, None, None]:

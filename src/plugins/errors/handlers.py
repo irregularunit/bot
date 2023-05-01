@@ -59,6 +59,7 @@ INTERNAL_ERROR = "Something went wrong internally. Please try again later."
 logger = getLogger(__name__)
 
 
+# I don't know how to type this properly
 def coverter_name(converter: Any) -> str:
     try:
         return converter.__name__
@@ -165,7 +166,10 @@ def register_handler(
 
 def get_handler(error: Type[BaseException]) -> Optional[Callable[..., Any]]:
     chain: tuple[Type[BaseException], ...] = type(error).__mro__
-    return next(filter(None, map(ERROR_HANDLERS.get, chain)))
+    try:
+        return next(filter(None, map(ERROR_HANDLERS.get, chain)))
+    except StopIteration:
+        return None
 
 
 def get_message(ctx: SerenityContext, error: BaseException) -> str:
@@ -238,9 +242,10 @@ def bad_argument_handler(ctx: SerenityContext, error: commands.BadArgument) -> s
     return f"Bad argument for `{param.name}`: {error_message}{signature}"
 
 
+@register_handler(commands.MissingPermissions)
 @register_handler(commands.BotMissingPermissions)
 def bot_missing_permissions_handler(
-    ctx: SerenityContext, error: commands.BotMissingPermissions
+    ctx: SerenityContext, error: Union[commands.BotMissingPermissions, commands.MissingPermissions]
 ) -> str:
     perms = error.missing_permissions
 
@@ -252,7 +257,8 @@ def bot_missing_permissions_handler(
     s = 's' if len(perms) > 1 else ''
     missing = formatted.replace('_', ' ').replace('guild', 'server')
 
-    return f'I\'m missing the `{missing}` permission{s} required to run this command.'
+    your_or_me = 'I\'m' if isinstance(error, commands.BotMissingPermissions) else 'You\'re'
+    return f'{your_or_me} missing the `{missing}` permission{s} required to run this command.'
 
 
 @register_handler(commands.UnexpectedQuoteError)
@@ -269,3 +275,10 @@ def quote_error_handler(
     error_message = str(error)
     stop = "" if error_message.endswith(".") else "."
     return f'{error_message}{stop}'.replace('\'', '`')
+
+
+@register_handler(commands.NoPrivateMessage)
+def no_private_message_handler(
+    ctx: SerenityContext, error: commands.NoPrivateMessage
+) -> str:
+    return "Sorry, I don't respond to commands in private messages."
