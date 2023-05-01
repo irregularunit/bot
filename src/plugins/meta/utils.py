@@ -31,44 +31,39 @@ This is a human-readable summary of the Legal Code. The full license is availabl
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
-from __future__ import annotations
+from pathlib import Path
 
-from typing import TYPE_CHECKING, Any
+__all__: tuple[str, ...] = (
+    "BRANCH",
+    "count_source_lines",
+    "GITHUB_URL",
+    "LICENSE",
+)
 
-import discord
-
-from src.interfaces import GuildMessagable
-from src.shared import Plugin
-
-from .handlers import get_message
-
-if TYPE_CHECKING:
-    from src.models.discord import SerenityContext
-    from src.models.serenity import Serenity
+BRANCH = "serenity/rewrite"
+GITHUB_URL = "https://github.com/irregularunit/bot"
+LICENSE = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
 
 
-__all__: tuple[str, ...] = ("Errors",)
+def count_source_lines() -> int:
+    """Counts the number of lines of source code in the project.
 
+    Returns:
+    --------
+    `int`
+        The number of lines of source code in the project.
+    """
 
-class Errors(Plugin):
-    def __init__(self, serenity: Serenity) -> None:
-        self.serenity = serenity
+    def _count_lines(path: Path) -> int:
+        if path.is_file():
+            with path.open("r", encoding="utf-8") as file:
+                return len(file.readlines())
+        elif path.is_dir():
+            if path.name.startswith("__"):
+                return 0
 
-    async def on_error(self, event: str, *args: Any, **kwargs: Any) -> None:
-        self.logger.exception("Unhandled exception in event %s", event)
+            return sum(_count_lines(child) for child in path.iterdir())
 
-    @Plugin.listener("on_command_error")
-    async def command_error_listener(
-        self, ctx: SerenityContext, error: Exception
-    ) -> None:
-        if isinstance(ctx.channel, GuildMessagable):
-            return
+        return 0
 
-        hint = get_message(ctx, error)
-        send = ctx.channel.permissions_for(ctx.me).send_messages
-
-        if send and hint is not None:
-            try:
-                await ctx.safe_send(hint)
-            except discord.HTTPException:
-                pass
+    return _count_lines(Path("src"))

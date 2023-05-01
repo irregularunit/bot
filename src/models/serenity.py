@@ -73,11 +73,12 @@ __all__: tuple[str, ...] = ("Serenity", "SerenityT")
 
 _config = SerenityConfig.parse_obj({})
 _logger = getLogger(__name__)
-SerenityT = TypeVar("SerenityT", bound="Serenity")
-SerenityContextT = TypeVar("SerenityContextT", bound="SerenityContext")
+
+SerenityT = TypeVar("SerenityT", bound="Serenity", covariant=True)
+SerenityContextT = TypeVar("SerenityContextT", bound="SerenityContext", covariant=True)
 
 
-class Serenity(SerenityMixin, commands.Bot):
+class Serenity(SerenityMixin, commands.Bot):  # type: ignore
     def __init__(
         self,
         loop: asyncio.AbstractEventLoop,
@@ -154,7 +155,7 @@ class Serenity(SerenityMixin, commands.Bot):
         self,
         message: discord.Message | discord.Interaction[Self],
         *,
-        cls: Type[SerenityContextT] = SerenityContext,
+        cls: Type[SerenityContext] = SerenityContext,
     ) -> SerenityContext:
         return await super().get_context(message, cls=cls or commands.Context[Self])
 

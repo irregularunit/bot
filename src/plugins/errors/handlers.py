@@ -157,6 +157,7 @@ def register_handler(
     `Callable[[Callable[..., Any]], Callable[..., Any]]`
         A decorator that registers the decorated function as a handler for `exc_type`.
     """
+
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         ERROR_HANDLERS[exc_type] = func
         return func
@@ -245,7 +246,8 @@ def bad_argument_handler(ctx: SerenityContext, error: commands.BadArgument) -> s
 @register_handler(commands.MissingPermissions)
 @register_handler(commands.BotMissingPermissions)
 def bot_missing_permissions_handler(
-    ctx: SerenityContext, error: Union[commands.BotMissingPermissions, commands.MissingPermissions]
+    ctx: SerenityContext,
+    error: Union[commands.BotMissingPermissions, commands.MissingPermissions],
 ) -> str:
     perms = error.missing_permissions
 
@@ -257,7 +259,9 @@ def bot_missing_permissions_handler(
     s = 's' if len(perms) > 1 else ''
     missing = formatted.replace('_', ' ').replace('guild', 'server')
 
-    your_or_me = 'I\'m' if isinstance(error, commands.BotMissingPermissions) else 'You\'re'
+    your_or_me = (
+        'I\'m' if isinstance(error, commands.BotMissingPermissions) else 'You\'re'
+    )
     return f'{your_or_me} missing the `{missing}` permission{s} required to run this command.'
 
 

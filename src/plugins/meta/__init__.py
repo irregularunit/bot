@@ -33,42 +33,13 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-import discord
-
-from src.interfaces import GuildMessagable
-from src.shared import Plugin
-
-from .handlers import get_message
+from .plugin import Meta
 
 if TYPE_CHECKING:
-    from src.models.discord import SerenityContext
     from src.models.serenity import Serenity
 
 
-__all__: tuple[str, ...] = ("Errors",)
-
-
-class Errors(Plugin):
-    def __init__(self, serenity: Serenity) -> None:
-        self.serenity = serenity
-
-    async def on_error(self, event: str, *args: Any, **kwargs: Any) -> None:
-        self.logger.exception("Unhandled exception in event %s", event)
-
-    @Plugin.listener("on_command_error")
-    async def command_error_listener(
-        self, ctx: SerenityContext, error: Exception
-    ) -> None:
-        if isinstance(ctx.channel, GuildMessagable):
-            return
-
-        hint = get_message(ctx, error)
-        send = ctx.channel.permissions_for(ctx.me).send_messages
-
-        if send and hint is not None:
-            try:
-                await ctx.safe_send(hint)
-            except discord.HTTPException:
-                pass
+async def setup(bot: Serenity) -> None:
+    await bot.add_cog(Meta(bot))

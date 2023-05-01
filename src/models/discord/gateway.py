@@ -133,7 +133,7 @@ class MobileGateway(discord.gateway.DiscordWebSocket):
     ) -> Self:
         """Creates a main websocket for Discord from a :class:`Client`.
 
-        This is for internal use only.
+        This is for internal use only. (OR IS IT?)
         """
 
         gateway = gateway or cls.DEFAULT_GATEWAY

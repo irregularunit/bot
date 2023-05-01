@@ -38,9 +38,12 @@ import os
 import pathlib
 import re
 from itertools import islice
-from typing import Any, Callable, Generator, ParamSpec, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Generator, ParamSpec, TypeVar
 
 from discord.utils import copy_doc
+
+if TYPE_CHECKING:
+    from src.shared import Plugin
 
 __all__: tuple[str, ...] = ("SerenityMixin",)
 
@@ -50,6 +53,8 @@ T = TypeVar("T")
 
 class SerenityMixin:
     """A mixin for the Serenity bot."""
+
+    plugins: dict[str, bool] = {}
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -135,6 +140,8 @@ class SerenityMixin:
             file for file in os.listdir("src/plugins") if not file.startswith("_")
         ]
         for plugin in plugins:
+            SerenityMixin.plugins[plugin] = True
+
             yield f"src.plugins.{plugin[:-3] if plugin.endswith('.py') else plugin}"
 
     @staticmethod
@@ -155,3 +162,38 @@ class SerenityMixin:
 
         for schema in sorted(schemas, key=_sort_key):
             yield pathlib.Path(f"src/migrations/{schema}")
+
+    def is_plugin_enabled(self, plugin: Plugin, /) -> bool:
+        """Check if a plugin is enabled.
+
+        Parameters
+        ----------
+        plugin : `Plugin`
+            The plugin to check.
+
+        Returns
+        -------
+        `bool`
+            Whether the plugin is enabled.
+        """
+        return SerenityMixin.plugins.get(str(plugin).lower(), False)
+
+    def enable_plugin(self, plugin: Plugin, /) -> None:
+        """Enable a plugin.
+
+        Parameters
+        ----------
+        plugin : `Plugin`
+            The plugin to enable.
+        """
+        SerenityMixin.plugins[str(plugin).lower()] = True
+
+    def disable_plugin(self, plugin: Plugin, /) -> None:
+        """Disable a plugin.
+
+        Parameters
+        ----------
+        plugin : `Plugin`
+            The plugin to disable.
+        """
+        SerenityMixin.plugins[str(plugin).lower()] = False

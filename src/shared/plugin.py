@@ -37,8 +37,10 @@ from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from discord.ext import commands
+from typing_extensions import override
 
 if TYPE_CHECKING:
+    from src.models.discord import SerenityContext
     from src.models.serenity import Serenity
 
 
@@ -48,9 +50,15 @@ __all__: tuple[str, ...] = ("Plugin",)
 class Plugin(commands.Cog):
     """Base class for all plugins."""
 
+    @override
+    async def cog_check(self, ctx: SerenityContext) -> bool:  # type: ignore
+        return self.serenity.is_plugin_enabled(self)
+        
+
     def __init__(self, serinity: Serenity, *args: Any, **kwargs: Any) -> None:
         self.serenity = serinity
         self.id = uuid4()
+        self.enabled = True
         self.logger = serinity.logger.getChild(self.__class__.__name__)
 
         next_in_method_resolution_order = next(iter(self.__class__.__mro__))
