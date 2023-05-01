@@ -35,7 +35,7 @@ from __future__ import annotations
 
 from sys import version_info
 from time import perf_counter
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar, Union
 
 import discord
 from discord.ext import commands
@@ -43,13 +43,14 @@ from discord.utils import async_all
 from typing_extensions import override
 
 from src.shared import Plugin, SerenityEmbed
+from src.models.discord.converter import MaybeMember
 
 from .utils import count_source_lines
 from .views import AboutSerenityView
 
 if TYPE_CHECKING:
-    from src.models.serenity import Serenity
     from src.models.discord import SerenityContext
+    from src.models.serenity import Serenity
 
 
 __all__: tuple[str, ...] = ("Meta",)
@@ -65,7 +66,9 @@ class Meta(Plugin):
     @override
     async def cog_check(self, ctx: SerenityContext) -> bool:
         checks = (commands.guild_only(),)
-        return await async_all(check(ctx) for check in checks) and await super().cog_check(ctx)
+        return await async_all(
+            check(ctx) for check in checks
+        ) and await super().cog_check(ctx)
 
     @commands.command(
         name="info",
@@ -116,10 +119,50 @@ class Meta(Plugin):
                 fields=fields,
             )
             .set_thumbnail(url=ctx.me.display_avatar.url)
-            .set_author(name=f"{ctx.me.display_name} Information", icon_url=ctx.me.display_avatar.url)
+            .set_author(
+                name=f"{ctx.me.display_name} Information",
+                icon_url=ctx.me.display_avatar.url,
+            )
         )
 
         await ctx.send(
             embed=embed,
-            view=AboutSerenityView(ctx.author.id, self.serenity.config.invite, "Invite"),
+            view=AboutSerenityView(
+                ctx.author.id, self.serenity.config.invite, "Invite"
+            ),
         )
+
+    @commands.command(
+        name="avatar",
+        aliases=("av",),
+        help="Shows the avatar of a user.",
+    )
+    async def avatar_command(
+        self,
+        ctx: SerenityContext,
+        user: discord.User = commands.param(
+            converter=Union[discord.User, MaybeMember],
+            default=None,
+            displayed_default="you",
+        ),
+    ) -> None:
+        user = user or ctx.author
+
+        webp = user.display_avatar.with_format("webp").url
+        png = user.display_avatar.with_format("png").url
+        jpg = user.display_avatar.with_format("jpg").url
+        gif = user.display_avatar.url if user.display_avatar.is_animated() else None
+
+        embed = (
+            SerenityEmbed(
+                description=(
+                    f"[webp]({webp}) | [png]({png}) | [jpg]({jpg}) {'| [gif]({})'.format(gif) if gif else ''}"
+                )
+            )
+            .set_author(
+                name=f"{user.display_name}'s Avatar", icon_url=user.display_avatar
+            )
+            .set_image(url=user.display_avatar.url)
+        )
+
+        await ctx.send(embed=embed)

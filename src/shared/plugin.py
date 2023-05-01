@@ -53,7 +53,6 @@ class Plugin(commands.Cog):
     @override
     async def cog_check(self, ctx: SerenityContext) -> bool:  # type: ignore
         return self.serenity.is_plugin_enabled(self)
-        
 
     def __init__(self, serinity: Serenity, *args: Any, **kwargs: Any) -> None:
         self.serenity = serinity

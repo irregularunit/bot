@@ -33,8 +33,8 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from typing import Self
 from operator import eq
+from typing import Self
 
 from discord import ButtonStyle, Interaction
 from discord.ui import Button, button
@@ -43,7 +43,6 @@ from src.shared import SerenityView
 
 from ..utils import GITHUB_URL
 
-
 __all__: tuple[str, ...] = ("AboutSerenityView",)
 
 
@@ -51,9 +50,9 @@ class AboutSerenityView(SerenityView):
     def __init__(
         self,
         owner: int,
+        /,
         link: str,
         label: str,
-        /,
         *,
         timeout: int = 60,
     ) -> None:
