@@ -5,6 +5,7 @@ PYTHON=python3.11
 if [ ! -d "./.venv" ]; then
     echo "No virtual environment found. Creating virtual environment..."
     $PYTHON -m venv .venv
+    
     source .venv/bin/activate
     $PYTHON -m pip install --upgrade pip
 else
