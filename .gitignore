@@ -17,3 +17,4 @@ venv/
 *.py[cod]
 *$py.class
 *.log
+*.mixin
