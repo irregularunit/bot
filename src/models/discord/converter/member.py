@@ -152,9 +152,10 @@ class MaybeMember(commands.Converter[discord.Member]):
             return member
 
         # If we're not being rate limited then we can use the websocket to actually query
-        members = await guild.query_members(limit=1, user_ids=[user_id], cache=cache)
+        members = await guild.query_members(limit=5, user_ids=[user_id], cache=cache)
         if not members:
             return None
+
         return members[0]
 
     @override

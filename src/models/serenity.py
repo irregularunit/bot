@@ -92,6 +92,7 @@ class Serenity(SerenityMixin, commands.Bot):  # type: ignore
             intents=INTENTS,
             case_insensitive=True,
             owner_ids=_config.OWNER_IDS,
+            help_command=commands.MinimalHelpCommand(),
             **kwargs,
         )
         self.loop = loop
@@ -159,24 +160,31 @@ class Serenity(SerenityMixin, commands.Bot):  # type: ignore
     ) -> SerenityContext:
         return await super().get_context(message, cls=cls or commands.Context[Self])
 
-    async def gather_and_log(self, coros: list[Coroutine[Any, Any, Any]]) -> list[Any]:
+    async def gather_and_log(
+        self, coros: list[Coroutine[Any, Any, Any]], what: str
+    ) -> list[Any]:
         results = await asyncio.gather(*coros, return_exceptions=True)
-        for result in results:
-            if isinstance(result, Exception):
-                _logger.error(
-                    "Exception %s with error %s", result.__class__.__name__, result
-                )
+
+        for _, r in zip(coros, results):
+            if isinstance(r, Exception):
+                _logger.error(f"Failed to {what} with error: {r}")
+            else:
+                _logger.info(f"Successfully loaded {what}.")
+
         return results
 
     @override
     async def setup_hook(self) -> None:
-        # fmt: off
         await asyncio.gather(
-            *[self.gather_and_log([self.load_extension(ext) for ext in (list(self.walk_plugins()) + ["jishaku"])])],
-            *[self.gather_and_log([self.load_schema(schema.read_text()) for schema in self.walk_schemas()])],
+            *[
+                self.gather_and_log([self.load_schema(schema.read_text())], schema.name)
+                for schema in self.walk_schemas()
+            ],
+            *[
+                self.gather_and_log([self.load_extension(ext)], f"{ext!r}")
+                for ext in self.walk_plugins()
+            ],
         )
-        # fmt: on
-
         users = await self.model_manager.gather_users()
         guilds = await self.model_manager.gather_guilds()
 
@@ -187,9 +195,7 @@ class Serenity(SerenityMixin, commands.Bot):  # type: ignore
     async def get_prefix(self, message: discord.Message, /) -> list[str] | str:
         if message.guild is None:
             # Our bot is not meant to be used in DMs.
-            raise ExceptionFactory.create_exception(
-                ExecptionLevel.ERROR, "Sorry, I don't do DMs."
-            )
+            return commands.when_mentioned(self, message)
 
         if message.guild.id not in self.cached_prefixes:
             guild = await self.get_or_create_guild(message.guild.id)

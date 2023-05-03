@@ -173,13 +173,11 @@ def get_handler(error: Type[BaseException]) -> Optional[Callable[..., Any]]:
         return None
 
 
-def get_message(ctx: SerenityContext, error: BaseException) -> str:
-    # Can't be bothered to fix this yet
-    # TODO: Look into this
+def get_message(ctx: SerenityContext, error: commands.CommandError) -> Optional[str]:
     handler = get_handler(error)  # type: ignore
 
     if handler is None:
-        return INTERNAL_ERROR
+        return
 
     return handler(ctx, error)
 

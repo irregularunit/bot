@@ -33,9 +33,10 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import discord
+from discord.ext import commands
 
 from src.interfaces import GuildMessagable
 from src.shared import Plugin
@@ -54,13 +55,8 @@ class Errors(Plugin):
     def __init__(self, serenity: Serenity) -> None:
         self.serenity = serenity
 
-    async def on_error(self, event: str, *args: Any, **kwargs: Any) -> None:
-        self.logger.exception("Unhandled exception in event %s", event)
-
-    @Plugin.listener("on_command_error")
-    async def command_error_listener(
-        self, ctx: SerenityContext, error: Exception
-    ) -> None:
+    @Plugin.listener()
+    async def on_command_error(self, ctx: SerenityContext, error: commands.CommandError) -> None:
         if isinstance(ctx.channel, GuildMessagable):
             return
 

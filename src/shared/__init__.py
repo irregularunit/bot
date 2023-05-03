@@ -31,6 +31,7 @@ This is a human-readable summary of the Legal Code. The full license is availabl
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
+from .avatars import AvatarCollage, AvatarPointer, Pointer
 from .config import SerenityConfig
 from .embed import SerenityEmbed
 from .exceptions import ExceptionFactory, ExecptionLevel, UserFeedbackException
@@ -41,12 +42,15 @@ from .scraped.mapping import check_owo_command
 from .view import SerenityView
 
 __all__: tuple[str, ...] = (
+    "AvatarCollage",
+    "AvatarPointer",
     "ExecptionLevel",
     "ExceptionFactory",
     "SerenityConfig",
     "SerenityEmbed",
     "UserFeedbackException",
     "Plugin",
+    "Pointer",
     "SerenityView",
     "get_random_emoji",
     "check_owo_command",

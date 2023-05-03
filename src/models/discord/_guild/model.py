@@ -56,7 +56,7 @@ _LINKED_TABLES = (
 SERENITY_GUILDS_LINKED_TABLE = "serenity_guilds"
 
 
-@dataclass
+@dataclass(slots=True)
 class SerenityGuild:
     id: int
     prefixes: list[str]

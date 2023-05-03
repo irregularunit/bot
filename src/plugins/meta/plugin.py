@@ -42,8 +42,8 @@ from discord.ext import commands
 from discord.utils import async_all
 from typing_extensions import override
 
-from src.shared import Plugin, SerenityEmbed
 from src.models.discord.converter import MaybeMember
+from src.shared import Plugin, SerenityEmbed
 
 from .utils import count_source_lines
 from .views import AboutSerenityView

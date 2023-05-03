@@ -64,7 +64,7 @@ _LINKED_TABLES = (
 SERENITY_USERS_LINKED_TABLE = "serenity_users"
 
 
-@dataclass
+@dataclass(slots=True)
 class SerenityUser:
     id: int
     created_at: datetime
