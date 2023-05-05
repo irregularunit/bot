@@ -18,7 +18,9 @@ BEGIN
     ) THEN
         INSERT INTO serenity_user_settings (snowflake) VALUES (NEW.snowflake);
     END IF;
-END $$ LANGUAGE plpgsql;
+    RETURN NEW;
+END $$ 
+LANGUAGE plpgsql;
 
 DO $$
 BEGIN
@@ -51,27 +53,11 @@ CREATE TABLE IF NOT EXISTS serenity_user_avatars (
     CONSTRAINT serenity_user_avatars_fkey FOREIGN KEY (snowflake) REFERENCES serenity_users(snowflake) ON DELETE CASCADE
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM pg_type
-        WHERE typname = 'serenity_history_type'
-    ) THEN
-        CREATE TYPE serenity_history_type AS ENUM (
-            'avatar',
-            'banner',
-            'name',
-            'discriminator'
-        );
-    END IF;
-END $$;
 
 CREATE TABLE IF NOT EXISTS serenity_user_history (
     snowflake BIGINT NOT NULL,
-    uuid BIGINT NOT NULL,
     item_name VARCHAR(255) NOT NULL,
-    item_value serenity_history_type NOT NULL,
+    item_value TEXT NOT NULL,
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
     CONSTRAINT serenity_user_history_fkey FOREIGN KEY (snowflake) REFERENCES serenity_users(snowflake) ON DELETE CASCADE
 );

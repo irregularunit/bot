@@ -135,6 +135,7 @@ class Serenity(SerenityMixin, commands.Bot):  # type: ignore
                 decoder=_decode_jsonb,
                 schema="pg_catalog",
             )
+
             if init is not None:
                 await init(conn)
 
@@ -177,14 +178,22 @@ class Serenity(SerenityMixin, commands.Bot):  # type: ignore
     async def setup_hook(self) -> None:
         await asyncio.gather(
             *[
-                self.gather_and_log([self.load_schema(schema.read_text())], schema.name)
-                for schema in self.walk_schemas()
-            ],
-            *[
                 self.gather_and_log([self.load_extension(ext)], f"{ext!r}")
-                for ext in self.walk_plugins()
+                for ext in (list(self.walk_plugins()) + ["jishaku"])
             ],
         )
+
+        for file in self.walk_schemas():
+            # Not using gather here to ensure that the schemas
+            # are loaded in order of their sequence number
+            try:
+                await self.load_schema(file.read_text())
+                self.logger.info(f"Successfully loaded schema {file.name!r}.")
+            except Exception as e:
+                self.logger.error(
+                    f"Failed to load schema {file.name!r} with error: {e}"
+                )
+
         users = await self.model_manager.gather_users()
         guilds = await self.model_manager.gather_guilds()
 
@@ -218,7 +227,7 @@ class Serenity(SerenityMixin, commands.Bot):  # type: ignore
         if (guild := self.cached_guilds.get(guild_id)) is None:
             guild = await self.model_manager.get_or_create_guild(guild_id)
 
-            self.cached_guilds[guild_id] = guild
+            self.set_guild(guild)
 
         return guild
 
@@ -227,7 +236,7 @@ class Serenity(SerenityMixin, commands.Bot):  # type: ignore
             user = await self.model_manager.get_or_create_user(user_id)
 
             # Automatically gets evicted after 30 minutes
-            self.user_cache.push(user.id, user)
+            self.set_user(user)
 
         return user
 

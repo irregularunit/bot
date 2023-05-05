@@ -57,9 +57,6 @@ class Plugin(commands.Cog):
     def __init__(self, serinity: Serenity, *args: Any, **kwargs: Any) -> None:
         self.serenity = serinity
         self.id = uuid4()
-        self.enabled = True
-        self.logger = serinity.logger.getChild(self.__class__.__name__)
-
         next_in_method_resolution_order = next(iter(self.__class__.__mro__))
 
         if issubclass(next_in_method_resolution_order, self.__class__):

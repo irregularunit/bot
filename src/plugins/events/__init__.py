@@ -30,3 +30,16 @@ Under the following terms:
 This is a human-readable summary of the Legal Code. The full license is available
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from .plugin import Events
+
+if TYPE_CHECKING:
+    from src.models.serenity import Serenity
+
+
+async def setup(bot: Serenity) -> None:
+    await bot.add_cog(Events(bot))

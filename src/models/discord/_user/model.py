@@ -82,7 +82,7 @@ class SerenityUser:
             locale=record["locale"],
             banned=record["banned"],
             timezone=record["timezone"],
-            emoji_server_id=record["emoji_server_id"],
+            emoji_server_id=record["emoji_server_snowflake"],
             counting=CountingSettings(
                 counter_message=record["counter_message"],
                 hunt_battle_message=record["hunt_battle_message"],
@@ -99,7 +99,7 @@ class SerenityUser:
             locale=record["locale"],
             banned=record["banned"],
             timezone=record["timezone"],
-            emoji_server_id=record["emoji_server_id"],
+            emoji_server_id=record["emoji_server_snowflake"],
             counting=settings,
         )
 

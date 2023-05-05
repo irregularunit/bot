@@ -41,7 +41,11 @@ from magic import from_buffer
 
 from src.shared import AvatarPointer
 
-__all__: tuple[str, ...] = ("StoreQueueItems", "StoreQueue", "type_of")
+__all__: tuple[str, ...] = (
+    "StoreQueueItems",
+    "StoreQueue",
+    "type_of",
+)
 
 
 _VALID_MIME_TYPES = (
@@ -71,22 +75,58 @@ class StoreQueue(Generic[ItemsType]):
     """A queue for storing items to be sent to the store."""
 
     def __init__(self) -> None:
-        self.__queue: Queue[ItemsType] = Queue(maxsize=256)
+        self.__queue: Queue[ItemsType] = Queue()
 
     @property
     def queue(self) -> Queue[ItemsType]:
         return self.__queue
 
     async def push(self, item: ItemsType) -> None:
+        """Push an item into the queue.
+
+        If the queue is full, wait until a free slot
+        is available before adding item.
+        """
         await self.queue.put(item)
 
     async def pop(self) -> ItemsType:
+        """Remove and return an item from the queue.
+
+        If queue is empty, wait until an item is available.
+        """
         return await self.queue.get()
 
     async def empty(self) -> bool:
         return self.queue.empty()
 
     async def size(self) -> int:
+        return self.queue.qsize()
+
+    def put_nowait(self, item: ItemsType) -> None:
+        """Put an item into the queue without blocking.
+
+        If no free slot is immediately available.
+
+        Raises:
+        -------
+        `QueueFull`
+            If the queue is full.
+        """
+        self.queue.put_nowait(item)
+
+    def get_nowait(self) -> ItemsType:
+        """Remove and return an item from the queue.
+
+        Return an item if one is immediately available.
+
+        Raises:
+        -------
+        `QueueEmpty`
+            If the queue is empty.
+        """
+        return self.queue.get_nowait()
+
+    def __len__(self) -> int:
         return self.queue.qsize()
 
 

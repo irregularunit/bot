@@ -58,22 +58,24 @@ class VersionInfo(NamedTuple):
 
 
 def _generate_serial_number(major: int, minor: int) -> str:
-    def encode(number: int, alphabet: str) -> str:
+    def b62_encode(number: int, alphabet: str) -> str:
         if number == 0:
             return alphabet[0]
 
-        array: list[str] = [alphabet[divmod(number, len(alphabet))[1]]]
+        base = len(alphabet)
+        digits: list[str] = []
 
-        while number := divmod(number, len(alphabet))[0]:
-            array.append(alphabet[divmod(number, len(alphabet))[1]])
+        while number:
+            number, remainder = divmod(number, base)
+            digits.append(alphabet[remainder])
 
-        return "".join(reversed(array))
+        return "".join(reversed(digits))
 
-    return encode(major, BASE62) + encode(minor, BASE62)
+    return b62_encode(major * 100 + minor, BASE62)
 
 
 __major__: Final[int] = 0
-__minor__: Final[int] = 2
+__minor__: Final[int] = 0
 __version__: Final[str] = VersionInfo(
     major=__major__,
     minor=__minor__,

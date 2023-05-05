@@ -41,7 +41,10 @@ from pathlib import Path
 from typing import Generator
 from uuid import uuid4
 
+# pyright: reportMissingTypeStubs=false
+import numpy as np
 from PIL import Image, UnidentifiedImageError
+from skimage.metrics import structural_similarity as ssim  # type: ignore
 
 __all__: tuple[str, ...] = ("AvatarPointer", "FilePointers", "AvatarCollage")
 
@@ -50,7 +53,14 @@ _ROOT = Path("images")
 
 
 class AvatarPointer:
-    __slots__: tuple[str, ...] = ("_uid", "_name", "_mime_type", "_file", "root")
+    __slots__: tuple[str, ...] = (
+        "_uid",
+        "_name",
+        "_mime_type",
+        "_file",
+        "root",
+        "_ifloat1",
+    )
 
     def __init__(
         self,
@@ -62,6 +72,7 @@ class AvatarPointer:
         self._uid = uid
         self._mime_type = mime_type
         self._file = file
+        self._ifloat1 = np.asarray(self._file).astype("float")
 
         self.root = _ROOT
 
@@ -78,6 +89,17 @@ class AvatarPointer:
         """Returns a copy of the Image for reuse."""
         return deepcopy(self._file)
 
+    def _simmilar(self, image: Image.Image) -> bool:
+        """Returns the Mean Squared Error of two images."""
+        ifloat2 = np.asarray(image).astype("float")
+
+        mse = np.sum(np.square(np.subtract(self._ifloat1, ifloat2)))  # type: ignore
+        mse /= float(self._ifloat1.shape[0] * self._ifloat1.shape[1])
+
+        ssim_score: float = ssim(self._ifloat1, ifloat2, multichannel=True)
+
+        return mse < 100 and ssim_score > 0.9
+
     def _check_path(self) -> None:
         """Checks if the path exists, and creates it if it doesn't."""
         if not self.root.exists():
@@ -93,6 +115,13 @@ class AvatarPointer:
             return
 
         image = image.resize((256, 256))
+
+        for file in (self.root / str(self.uid)).iterdir():
+            # We don't want to save the same image twice.
+            # Saves us some space. :)
+            if self._simmilar(Image.open(file)):
+                return
+
         image.save(
             fp=self.root / str(self.uid) / f"{uuid4().hex}.png",
             format=image.format,
