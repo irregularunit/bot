@@ -78,7 +78,7 @@ SerenityT = TypeVar("SerenityT", bound="Serenity", covariant=True)
 SerenityContextT = TypeVar("SerenityContextT", bound="SerenityContext", covariant=True)
 
 
-class Serenity(SerenityMixin, commands.Bot):  # type: ignore
+class Serenity(SerenityMixin, commands.Bot):
     def __init__(
         self,
         loop: asyncio.AbstractEventLoop,
