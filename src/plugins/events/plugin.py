@@ -138,6 +138,10 @@ class Events(Plugin):
         members = await guild.chunk() if guild.chunked else guild.members
 
         for member in members:
+            # If you aren't on the latest 2.3.0a release or 
+            # commit:  252ac38 (1 parent 34a434b)
+            # Then you have to try and except this
+            # AttributeError: 'ClientUser' object has no attribute 'mutual_guilds'
             if len(member.mutual_guilds) > 1 or member.id == guild.me.id:
                 continue
 
