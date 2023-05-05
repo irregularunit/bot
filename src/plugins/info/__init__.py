@@ -33,34 +33,13 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
-from discord.ext import commands
-from discord.utils import async_all
-from typing_extensions import override
-
-from src.shared import Plugin
+from .plugin import Info
 
 if TYPE_CHECKING:
-    from src.models.discord import SerenityContext
     from src.models.serenity import Serenity
 
 
-__all__: tuple[str, ...] = ("Meta",)
-
-BotT = TypeVar("BotT", bound="commands.Bot")
-
-
-class Meta(Plugin):
-    """A plugin for meta commands."""
-    
-    @override
-    def __init__(self, serenity: Serenity) -> None:
-        self.serenity = serenity
-
-    @override
-    async def cog_check(self, ctx: SerenityContext) -> bool:
-        checks = (commands.guild_only(),)
-        return await async_all(
-            check(ctx) for check in checks
-        ) and await super().cog_check(ctx)
+async def setup(bot: Serenity) -> None:
+    await bot.add_cog(Info(bot))

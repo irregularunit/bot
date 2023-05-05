@@ -44,8 +44,8 @@ from src.shared import Plugin
 from .handlers import get_message
 
 if TYPE_CHECKING:
-    from src.models.discord import SerenityContext
-    from src.models.serenity import Serenity
+  from src.models.discord import SerenityContext
+  from src.models.serenity import Serenity
 
 
 __all__: tuple[str, ...] = ("Errors",)

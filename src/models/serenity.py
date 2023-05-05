@@ -194,7 +194,6 @@ class Serenity(SerenityMixin, commands.Bot):  # type: ignore
     @override
     async def get_prefix(self, message: discord.Message, /) -> list[str] | str:
         if message.guild is None:
-            # Our bot is not meant to be used in DMs.
             return commands.when_mentioned(self, message)
 
         if message.guild.id not in self.cached_prefixes:
@@ -231,6 +230,12 @@ class Serenity(SerenityMixin, commands.Bot):  # type: ignore
             self.user_cache.push(user.id, user)
 
         return user
+
+    def set_user(self, user: SerenityUser) -> None:
+        self.user_cache.push(user.id, user)
+
+    def set_guild(self, guild: SerenityGuild) -> None:
+        self.cached_guilds[guild.id] = guild
 
     @property
     def pool(self) -> Pool[Record]:

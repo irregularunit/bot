@@ -62,6 +62,7 @@ class GuildContext(Protocol):
     channel: GuildMessagable
 
 
+
 @runtime_checkable
 class GuildMessagable(Protocol):
     """A protocol for guild messageable objects."""
