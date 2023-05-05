@@ -59,7 +59,7 @@ class AvatarPointer:
         "_mime_type",
         "_file",
         "root",
-        "_ifloat1",
+        "ifloat2",
     )
 
     def __init__(
@@ -72,9 +72,11 @@ class AvatarPointer:
         self._uid = uid
         self._mime_type = mime_type
         self._file = file
-        self._ifloat1 = np.asarray(self._file).astype("float")
 
         self.root = _ROOT
+        self.ifloat2 = np.asarray(
+            Image.open(self._file).convert("L")).astype("float"
+        )
 
     @property
     def uid(self) -> int:
@@ -88,17 +90,6 @@ class AvatarPointer:
     def file(self) -> BytesIO:
         """Returns a copy of the Image for reuse."""
         return deepcopy(self._file)
-
-    def _simmilar(self, image: Image.Image) -> bool:
-        """Returns the Mean Squared Error of two images."""
-        ifloat2 = np.asarray(image).astype("float")
-
-        mse = np.sum(np.square(np.subtract(self._ifloat1, ifloat2)))  # type: ignore
-        mse /= float(self._ifloat1.shape[0] * self._ifloat1.shape[1])
-
-        ssim_score: float = ssim(self._ifloat1, ifloat2, multichannel=True)
-
-        return mse < 100 and ssim_score > 0.9
 
     def _check_path(self) -> None:
         """Checks if the path exists, and creates it if it doesn't."""
@@ -126,6 +117,21 @@ class AvatarPointer:
             fp=self.root / str(self.uid) / f"{uuid4().hex}.png",
             format=image.format,
         )
+
+    def _simmilar(self, image: Image.Image) -> bool:
+        """Checks if the image is simmilar to the one we're saving."""
+        ifloat1 = np.asarray(image.convert("L")).astype("float")
+
+        mse = np.mean((ifloat1 - self.ifloat2) ** 2)
+        mse /= float(ifloat1.shape[0] * ifloat1.shape[1])
+
+        ssim_score: float = ssim(
+            ifloat1,
+            self.ifloat2,
+            data_range=self.ifloat2.max() - self.ifloat2.min()  # type: ignore
+        )
+
+        return mse < 100 and ssim_score > 0.9  # type: ignore
 
     async def save(self) -> None:
         """Saves the file to the disk."""
