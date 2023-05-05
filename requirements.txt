@@ -5,6 +5,7 @@ git+https://github.com/gorialis/jishaku
 
 # Utility
 numpy>=1.24.2
+scikit-image==0.20.0
 matplotlib>=3.7.1
 uvloop==0.17.0; sys_platform != 'win32' and sys_platform != 'cygwin'
 orjson>=3.8.10
