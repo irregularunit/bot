@@ -18,3 +18,9 @@ venv/
 *$py.class
 *.log
 *.mixin
+
+images/*/
+logs/*/
+
+!images/
+!logs/

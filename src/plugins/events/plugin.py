@@ -37,8 +37,7 @@ from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Optional, Union
 
 import discord
-from discord.ext import commands, tasks
-from discord.utils import async_all
+from discord.ext import tasks
 from typing_extensions import override
 
 from src.shared import Plugin
@@ -46,7 +45,6 @@ from src.shared import Plugin
 from .utils import StoreQueue, StoreQueueItems, type_of
 
 if TYPE_CHECKING:
-    from src.models.discord import SerenityContext
     from src.models.serenity import Serenity
 
 
@@ -62,15 +60,10 @@ class Events(Plugin):
         self.queue: StoreQueue[StoreQueueItems] = StoreQueue()
 
     @override
-    async def cog_check(self, ctx: SerenityContext) -> bool:
-        checks = (commands.guild_only(),)
-        return await async_all(
-            check(ctx) for check in checks
-        ) and await super().cog_check(ctx)
-
     async def cog_load(self) -> None:
         self.empty_queue.start()
 
+    @override
     async def cog_unload(self) -> None:
         # Gracefully stops the task and waits
         # for it to finish before ejecting it
