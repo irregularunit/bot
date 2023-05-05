@@ -35,7 +35,7 @@ from __future__ import annotations
 
 from sys import version_info
 from time import perf_counter
-from typing import TYPE_CHECKING, TypeVar, Union
+from typing import TYPE_CHECKING, Union
 
 import discord
 from discord.ext import commands
@@ -54,8 +54,6 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = ("Info",)
-
-BotT = TypeVar("BotT", bound="commands.Bot")
 
 
 class Info(Plugin):

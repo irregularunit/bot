@@ -33,7 +33,7 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
 from discord.ext import commands
 from discord.utils import async_all
@@ -48,12 +48,10 @@ if TYPE_CHECKING:
 
 __all__: tuple[str, ...] = ("Meta",)
 
-BotT = TypeVar("BotT", bound="commands.Bot")
-
 
 class Meta(Plugin):
     """A plugin for meta commands."""
-    
+
     @override
     def __init__(self, serenity: Serenity) -> None:
         self.serenity = serenity

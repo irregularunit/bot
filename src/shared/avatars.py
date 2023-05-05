@@ -39,10 +39,11 @@ from io import BytesIO
 from logging import getLogger
 from pathlib import Path
 from typing import Generator
+from uuid import uuid4
 
 from PIL import Image, UnidentifiedImageError
 
-__all__: tuple[str, ...] = ("AvatarPointer", "Pointer", "AvatarCollage")
+__all__: tuple[str, ...] = ("AvatarPointer", "FilePointers", "AvatarCollage")
 
 _logger = getLogger(__name__)
 _ROOT = Path("images")
@@ -54,13 +55,11 @@ class AvatarPointer:
     def __init__(
         self,
         uid: int,
-        name: str,
         mime_type: str,
         *,
         file: BytesIO,
     ) -> None:
         self._uid = uid
-        self._name = name
         self._mime_type = mime_type
         self._file = file
 
@@ -69,10 +68,6 @@ class AvatarPointer:
     @property
     def uid(self) -> int:
         return self._uid
-
-    @property
-    def name(self) -> str:
-        return self._name
 
     @property
     def content_type(self) -> str:
@@ -98,14 +93,17 @@ class AvatarPointer:
             return
 
         image = image.resize((256, 256))
-        image.save(self.root / str(self.uid) / self._name, "PNG")
+        image.save(
+            fp=self.root / str(self.uid) / f"{uuid4().hex}.png",
+            format=image.format,
+        )
 
     async def save(self) -> None:
         """Saves the file to the disk."""
         await to_thread(self._check_path)
 
 
-class Pointer:
+class FilePointers:
     __slots__: tuple[str, ...] = ("uid", "root")
 
     def __init__(self, uid: int) -> None:
@@ -123,9 +121,6 @@ class Pointer:
     def __len__(self) -> int:
         return len(list(self.root.iterdir()))
 
-    def __contains__(self, name: str) -> bool:
-        return (self.root / str(self.uid) / name).exists()
-
     def __repr__(self) -> str:
         return f"<Files uid={self.uid} length={len(self)}>"
 
@@ -136,7 +131,7 @@ class Pointer:
 class AvatarCollage:
     __slots__: tuple[str, ...] = ("_pointer", "_images", "x", "y")
 
-    def __init__(self, pointer: Pointer) -> None:
+    def __init__(self, pointer: FilePointers) -> None:
         self._pointer = pointer
         self._images = [image for image in pointer]
         self.x = self.y = 0
