@@ -34,7 +34,7 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 __all__: tuple[str, ...] = ("check_owo_command",)
 
 
-owo_commands: tuple[str, ...] = (
+owo_commands: set[str] = {
     # battle folder
     "ab",
     "acceptbattle",
@@ -423,10 +423,8 @@ owo_commands: tuple[str, ...] = (
     "upg",
     "zoo",
     "z",
-)
-
-owo_command_set = set(owo_commands)
+}
 
 
 def check_owo_command(command: str) -> bool:
-    return command in owo_command_set
+    return command in owo_commands
