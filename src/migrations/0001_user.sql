@@ -1,13 +1,15 @@
 CREATE TABLE IF NOT EXISTS serenity_users (
-    snowflake BIGINT PRIMARY KEY NOT NULL,
-    timezone VARCHAR(255) NOT NULL DEFAULT 'UTC',
-    locale VARCHAR(255) NOT NULL DEFAULT 'en_US',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
-    emoji_server_snowflake BIGINT NOT NULL DEFAULT 0,
-    banned BOOLEAN NOT NULL DEFAULT FALSE,
-    pronouns VARCHAR(255) NOT NULL DEFAULT 'they/them',
-    CONSTRAINT serenity_users_pkey UNIQUE (snowflake)
+    snowflake               BIGINT PRIMARY KEY NOT NULL,
+    timezone                VARCHAR(255) NOT NULL DEFAULT 'UTC',
+    locale                  VARCHAR(255) NOT NULL DEFAULT 'en_US',
+    created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
+    emoji_server_snowflake  BIGINT NOT NULL DEFAULT 0,
+    banned                  BOOLEAN NOT NULL DEFAULT FALSE,
+    pronouns                VARCHAR(255) NOT NULL DEFAULT 'they/them',
+    CONSTRAINT serenity_users_pkey
+        UNIQUE (snowflake)
 );
+
 
 CREATE OR REPLACE FUNCTION set_default_settings() RETURNS TRIGGER AS $$
 BEGIN
@@ -21,6 +23,7 @@ BEGIN
     RETURN NEW;
 END $$ 
 LANGUAGE plpgsql;
+
 
 DO $$
 BEGIN
@@ -36,37 +39,53 @@ BEGIN
     END IF;
 END $$;
 
+
 CREATE TABLE IF NOT EXISTS serenity_user_settings (
-    snowflake BIGINT NOT NULL,
-    counter_message VARCHAR(2000) NOT NULL DEFAULT 'Your cooldown is up!',
-    hunt_battle_message VARCHAR(2000) NOT NULL DEFAULT 'You hunt/battle cooldown is up!',
-    CONSTRAINT serenity_user_settings_fkey FOREIGN KEY (snowflake) REFERENCES serenity_users(snowflake) ON DELETE CASCADE,
-    CONSTRAINT serenity_user_settings_pkey UNIQUE (snowflake)
+    snowflake            BIGINT PRIMARY KEY NOT NULL,
+    counter_message      VARCHAR(2000) NOT NULL DEFAULT 'Your cooldown is up!',
+    hunt_battle_message  VARCHAR(2000) NOT NULL DEFAULT 'You hunt/battle cooldown is up!',
+    CONSTRAINT serenity_user_settings_fkey
+        FOREIGN KEY (snowflake)
+        REFERENCES serenity_users(snowflake)
+        ON DELETE CASCADE,
+    CONSTRAINT serenity_user_settings_pkey
+        UNIQUE (snowflake)
 );
 
+
 CREATE TABLE IF NOT EXISTS serenity_user_avatars (
-    snowflake BIGINT NOT NULL,
-    uuid BIGINT NOT NULL,
-    mime_format VARCHAR(255) NOT NULL,
+    snowflake       BIGINT NOT NULL,
+    uuid            BIGINT NOT NULL,
+    mime_format     VARCHAR(255) NOT NULL,
     avatar_location TEXT NOT NULL,
-    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
-    CONSTRAINT serenity_user_avatars_fkey FOREIGN KEY (snowflake) REFERENCES serenity_users(snowflake) ON DELETE CASCADE
+    changed_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
+    CONSTRAINT serenity_user_avatars_fkey
+        FOREIGN KEY (snowflake)
+        REFERENCES serenity_users(snowflake)
+        ON DELETE CASCADE
 );
 
 
 CREATE TABLE IF NOT EXISTS serenity_user_history (
-    snowflake BIGINT NOT NULL,
-    item_name VARCHAR(255) NOT NULL,
-    item_value TEXT NOT NULL,
-    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
-    CONSTRAINT serenity_user_history_fkey FOREIGN KEY (snowflake) REFERENCES serenity_users(snowflake) ON DELETE CASCADE
+    snowflake   BIGINT NOT NULL,
+    item_name   VARCHAR(255) NOT NULL,
+    item_value  TEXT NOT NULL,
+    changed_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
+    CONSTRAINT serenity_user_history_fkey
+        FOREIGN KEY (snowflake)
+        REFERENCES serenity_users(snowflake)
+        ON DELETE CASCADE
 );
 
+
 CREATE TABLE IF NOT EXISTS serenity_user_presence (
-    snowflake BIGINT NOT NULL,
-    status TEXT NOT NULL,
-    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
-    CONSTRAINT serenity_user_presence_fkey FOREIGN KEY (snowflake) REFERENCES serenity_users(snowflake) ON DELETE CASCADE,
-    CONSTRAINT serenity_status_check CHECK (
-        status IN ('Online', 'Idle', 'DnD', 'Offline'))
+    snowflake   BIGINT NOT NULL,
+    status      TEXT NOT NULL,
+    changed_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
+    CONSTRAINT serenity_user_presence_fkey
+        FOREIGN KEY (snowflake)
+        REFERENCES serenity_users(snowflake)
+        ON DELETE CASCADE,
+    CONSTRAINT serenity_status_check
+        CHECK (status IN ('Online', 'Idle', 'DnD', 'Offline'))
 );
