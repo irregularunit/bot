@@ -34,6 +34,7 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 from __future__ import annotations
 
 import datetime as dt
+from asyncio import to_thread
 from io import BytesIO
 from typing import NamedTuple, TypedDict
 
@@ -98,7 +99,7 @@ class PresenceGraph:
 
         return buf
 
-    def buffer(self) -> BytesIO:
+    def _generate_image(self) -> BytesIO:
         buf = self._generate_donut_chart()
 
         with Image.new("RGBA", (580, 370), (0, 0, 0, 0)) as img:
@@ -134,6 +135,9 @@ class PresenceGraph:
             buf.seek(0)
             return buf
 
+    async def buffer(self) -> BytesIO:
+        return await to_thread(self._generate_image)
+
 
 if __name__ == "__main__":
     import asyncio
@@ -160,7 +164,7 @@ if __name__ == "__main__":
                 avatar = await resp.read()
 
         graph = PresenceGraph(data, avatar)
-        buf = graph.buffer()
+        buf = await graph.buffer()
 
         with open("test.png", "wb") as f:
             f.write(buf.read())

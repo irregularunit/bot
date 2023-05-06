@@ -31,6 +31,7 @@ This is a human-readable summary of the Legal Code. The full license is availabl
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
+from logging import getLogger
 from pathlib import Path
 
 __all__: tuple[str, ...] = (
@@ -44,6 +45,8 @@ BRANCH = "serenity/rewrite"
 GITHUB_URL = "https://github.com/irregularunit/bot"
 LICENSE = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
 
+_logger = getLogger(__name__)
+
 
 def count_source_lines() -> int:
     """Counts the number of lines of source code in the project.
@@ -56,8 +59,20 @@ def count_source_lines() -> int:
 
     def _count_lines(path: Path) -> int:
         if path.is_file():
+            ignored = (
+                ".png",
+            )
+
+            if path.suffix in ignored:
+                return 0
+
             with path.open("r", encoding="utf-8") as file:
-                return len(file.readlines())
+                try:
+                    return len(file.readlines())
+                except UnicodeDecodeError:
+                    _logger.warning(f"Failed to read {path} as UTF-8.")
+                    return 0
+
         elif path.is_dir():
             if path.name.startswith("__"):
                 return 0
@@ -65,5 +80,4 @@ def count_source_lines() -> int:
             return sum(_count_lines(child) for child in path.iterdir())
 
         return 0
-
     return _count_lines(Path("src"))
