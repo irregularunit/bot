@@ -90,6 +90,10 @@ class AvatarPointer:
         """Returns a copy of the Image for reusability."""
         return deepcopy(self._file)
 
+    @property
+    def current_path(self) -> Path:
+        return self.root / str(self.uid)
+
     def _save_to_path(self) -> None:
         if not self.root.exists():
             self.root.mkdir()
@@ -105,18 +109,18 @@ class AvatarPointer:
 
         image = image.resize((256, 256))
 
-        for file in (self.root / str(self.uid)).iterdir():
+        for file in self.current_path.iterdir():
             # Saves us some space. :)
             if self._is_simmilar(image, Image.open(file)):
                 return
         
         # Removes the oldest file if there are more than 100.
-        if len(list((self.root / str(self.uid)).iterdir())) >= 100:
-            oldest = min((self.root / str(self.uid)).iterdir(), key=lambda x: x.stat().st_mtime)
+        if len(list(self.current_path.iterdir())) >= 100:
+            oldest = min(self.current_path.iterdir(), key=lambda x: x.stat().st_mtime)
             oldest.unlink()
 
         image.save(
-            fp=self.root / str(self.uid) / f"{uuid4().hex}.png",
+            fp=self.current_path / f"{uuid4().hex}.png",
             format=image.format,
         )
 
@@ -150,13 +154,16 @@ class FilePointer:
     def empty(self) -> bool:
         return not bool(len(self))
 
+    @property
+    def current_path(self) -> Path:
+        return self.root / str(self.uid)
+
     def __iter__(self) -> Generator[Image.Image, None, None]:
-        for file in sorted((self.root / str(self.uid)).iterdir(), key=lambda x: x.stat().st_mtime):
+        for file in sorted(self.current_path.iterdir(), key=lambda x: x.stat().st_mtime):
             yield Image.open(file)
 
     def __len__(self) -> int:
-        uid_path = self.root / str(self.uid)
-        return len(list(uid_path.iterdir())) if uid_path.exists() else 0
+        return len(list(self.current_path.iterdir())) if self.current_path.exists() else 0
 
     def __repr__(self) -> str:
         return f"<Files uid={self.uid} length={len(self)}>"
