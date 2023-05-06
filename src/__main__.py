@@ -40,6 +40,7 @@ from contextlib import suppress
 from typing import TYPE_CHECKING, Any, Optional
 
 from aiohttp import ClientSession
+from discord import VoiceClient
 from discord.utils import setup_logging
 from redis.asyncio import Redis
 
@@ -48,6 +49,10 @@ from src.shared import SerenityConfig
 
 if TYPE_CHECKING:
     from asyncpg import Pool, Record
+
+
+# Disable the warning about the use of NaCl
+VoiceClient.warn_nacl = False
 
 
 def run_with_suppress(runner: Optional[asyncio.Runner]) -> None:

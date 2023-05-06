@@ -54,7 +54,7 @@ T = TypeVar("T")
 class SerenityMixin:
     """A mixin for the Serenity bot."""
 
-    plugins: dict[str, bool] = {}
+    _plugins: dict[str, bool] = {}
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -140,7 +140,7 @@ class SerenityMixin:
             file for file in os.listdir("src/plugins") if not file.startswith("_")
         ]
         for plugin in plugins:
-            SerenityMixin.plugins[plugin] = True
+            SerenityMixin._plugins[plugin] = True
 
             yield f"src.plugins.{plugin[:-3] if plugin.endswith('.py') else plugin}"
 
@@ -176,7 +176,7 @@ class SerenityMixin:
         `bool`
             Whether the plugin is enabled.
         """
-        return SerenityMixin.plugins.get(str(plugin).lower(), False)
+        return SerenityMixin._plugins.get(str(plugin).lower(), False)
 
     def enable_plugin(self, plugin: Plugin, /) -> None:
         """Enable a plugin.
@@ -186,7 +186,7 @@ class SerenityMixin:
         plugin : `Plugin`
             The plugin to enable.
         """
-        SerenityMixin.plugins[str(plugin).lower()] = True
+        SerenityMixin._plugins[str(plugin).lower()] = True
 
     def disable_plugin(self, plugin: Plugin, /) -> None:
         """Disable a plugin.
@@ -196,4 +196,4 @@ class SerenityMixin:
         plugin : `Plugin`
             The plugin to disable.
         """
-        SerenityMixin.plugins[str(plugin).lower()] = False
+        SerenityMixin._plugins[str(plugin).lower()] = False

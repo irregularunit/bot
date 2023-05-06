@@ -48,7 +48,8 @@ __all__: tuple[str, ...] = (
 )
 
 
-_VALID_MIME_TYPES = (
+ItemType = TypeVar("ItemType")
+VALID_MIME_TYPES = (
     "image/png",
     "image/jpeg",
     "image/gif",
@@ -68,20 +69,17 @@ class StoreQueueItems(NamedTuple):
         return AvatarPointer(self.id, self.mime_type, file=BytesIO(self.image))
 
 
-ItemsType = TypeVar("ItemsType", bound=StoreQueueItems)
-
-
-class StoreQueue(Generic[ItemsType]):
+class StoreQueue(Generic[ItemType]):
     """A queue for storing items to be sent to the store."""
 
     def __init__(self) -> None:
-        self.__queue: Queue[ItemsType] = Queue()
+        self.__queue: Queue[ItemType] = Queue()
 
     @property
-    def queue(self) -> Queue[ItemsType]:
+    def queue(self) -> Queue[ItemType]:
         return self.__queue
 
-    async def push(self, item: ItemsType) -> None:
+    async def push(self, item: ItemType) -> None:
         """Push an item into the queue.
 
         If the queue is full, wait until a free slot
@@ -89,7 +87,7 @@ class StoreQueue(Generic[ItemsType]):
         """
         await self.queue.put(item)
 
-    async def pop(self) -> ItemsType:
+    async def pop(self) -> ItemType:
         """Remove and return an item from the queue.
 
         If queue is empty, wait until an item is available.
@@ -102,7 +100,7 @@ class StoreQueue(Generic[ItemsType]):
     async def size(self) -> int:
         return self.queue.qsize()
 
-    def put_nowait(self, item: ItemsType) -> None:
+    def put_nowait(self, item: ItemType) -> None:
         """Put an item into the queue without blocking.
 
         If no free slot is immediately available.
@@ -114,7 +112,7 @@ class StoreQueue(Generic[ItemsType]):
         """
         self.queue.put_nowait(item)
 
-    def get_nowait(self) -> ItemsType:
+    def get_nowait(self) -> ItemType:
         """Remove and return an item from the queue.
 
         Return an item if one is immediately available.
@@ -132,7 +130,7 @@ class StoreQueue(Generic[ItemsType]):
 
 def type_of(data: bytes) -> str:
     mime = from_buffer(data, mime=True)
-    if mime in _VALID_MIME_TYPES:
+    if mime in VALID_MIME_TYPES:
         return mime
 
     raise ValueError(f"Invalid mime type: {mime}")

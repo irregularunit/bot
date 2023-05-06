@@ -168,9 +168,9 @@ class Serenity(SerenityMixin, commands.Bot):
 
         for _, r in zip(coros, results):
             if isinstance(r, Exception):
-                _logger.error(f"Failed to {what} with error: {r}")
+                self.logger.error(f"Failed to {what} with error: {r}")
             else:
-                _logger.info(f"Successfully loaded {what}.")
+                self.logger.info(f"Successfully loaded {what}.")
 
         return results
 

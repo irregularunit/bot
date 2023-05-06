@@ -39,6 +39,7 @@ from .plugin import Plugin
 from .scraped.emojis import get_random_emoji
 from .scraped.http import HTTP_STATUS_CODES
 from .scraped.mapping import check_owo_command
+from .timer import Stopwatch
 from .view import SerenityView
 
 __all__: tuple[str, ...] = (
@@ -52,6 +53,7 @@ __all__: tuple[str, ...] = (
     "Plugin",
     "FilePointers",
     "SerenityView",
+    "Stopwatch",
     "get_random_emoji",
     "check_owo_command",
     "HTTP_STATUS_CODES",

@@ -59,7 +59,6 @@ class AvatarPointer:
         "_mime_type",
         "_file",
         "root",
-        "ifloat2",
     )
 
     def __init__(
@@ -74,9 +73,9 @@ class AvatarPointer:
         self._file = file
 
         self.root = _ROOT
-        self.ifloat2 = np.asarray(
-            Image.open(self._file).convert("L")).astype("float"
-        )
+
+    def __repr__(self) -> str:
+        return f"<AvatarPointer uid={self.uid}>"
 
     @property
     def uid(self) -> int:
@@ -88,11 +87,10 @@ class AvatarPointer:
 
     @property
     def file(self) -> BytesIO:
-        """Returns a copy of the Image for reuse."""
+        """Returns a copy of the Image for reusability."""
         return deepcopy(self._file)
 
-    def _check_path(self) -> None:
-        """Checks if the path exists, and creates it if it doesn't."""
+    def _save_to_path(self) -> None:
         if not self.root.exists():
             self.root.mkdir()
 
@@ -108,9 +106,8 @@ class AvatarPointer:
         image = image.resize((256, 256))
 
         for file in (self.root / str(self.uid)).iterdir():
-            # We don't want to save the same image twice.
             # Saves us some space. :)
-            if self._simmilar(Image.open(file)):
+            if self._is_simmilar(image, Image.open(file)):
                 return
 
         image.save(
@@ -118,24 +115,23 @@ class AvatarPointer:
             format=image.format,
         )
 
-    def _simmilar(self, image: Image.Image) -> bool:
+    def _is_simmilar(self, original: Image.Image, other: Image.Image) -> bool:
         """Checks if the image is simmilar to the one we're saving."""
-        ifloat1 = np.asarray(image.convert("L")).astype("float")
+        ifloat1 = np.asarray(original.convert("L")).astype("float")
+        ifloat2 = np.asarray(other.convert("L")).astype("float")
 
-        mse = np.mean((ifloat1 - self.ifloat2) ** 2)
+        mse = np.mean((ifloat1 - ifloat2) ** 2)
         mse /= float(ifloat1.shape[0] * ifloat1.shape[1])
 
         ssim_score: float = ssim(
-            ifloat1,
-            self.ifloat2,
-            data_range=self.ifloat2.max() - self.ifloat2.min()  # type: ignore
+            ifloat1, ifloat2, data_range=ifloat2.max() - ifloat2.min()  # type: ignore
         )
 
         return mse < 100 and ssim_score > 0.9  # type: ignore
 
     async def save(self) -> None:
         """Saves the file to the disk."""
-        await to_thread(self._check_path)
+        await to_thread(self._save_to_path)
 
 
 class FilePointers:
@@ -154,7 +150,8 @@ class FilePointers:
             yield Image.open(file)
 
     def __len__(self) -> int:
-        return len(list(self.root.iterdir()))
+        uid_path = self.root / str(self.uid)
+        return len(list(uid_path.iterdir())) if uid_path.exists() else 0
 
     def __repr__(self) -> str:
         return f"<Files uid={self.uid} length={len(self)}>"
@@ -164,16 +161,15 @@ class FilePointers:
 
 
 class AvatarCollage:
-    __slots__: tuple[str, ...] = ("_pointer", "_images", "x", "y")
+    __slots__: tuple[str, ...] = ("_pointer", "x", "y")
 
     def __init__(self, pointer: FilePointers) -> None:
         self._pointer = pointer
-        self._images = [image for image in pointer]
         self.x = self.y = 0
 
     @property
     def images(self) -> list[Image.Image]:
-        return self._images
+        return list(self._pointer)
 
     def _get_grid_size(self) -> int:
         amount = len(self._pointer)
@@ -185,7 +181,7 @@ class AvatarCollage:
 
         with Image.new("RGBA", (width, height)) as canvas:
             fx = fy = 0
-            for avatar in self._images:
+            for avatar in self._pointer:
                 if self.x == size:
                     self.y += 1
                     self.x = 0

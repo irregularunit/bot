@@ -169,10 +169,6 @@ class Events(Plugin):
         members = await guild.chunk() if guild.chunked else guild.members
 
         for member in members:
-            # If you aren't on the latest 2.3.0a release or
-            # commit:  252ac38 (1 parent 34a434b)
-            # Then you have to try and except this
-            # AttributeError: 'ClientUser' object has no attribute 'mutual_guilds'
             if len(member.mutual_guilds) > 1 or member.id == guild.me.id:
                 continue
 
@@ -203,7 +199,9 @@ class Events(Plugin):
         logger = self._get_logger("_send_to_ts")
 
         if (channel := self.queue_channel) is None:
-            channel = self.serenity.get_channel(self.serenity.config.TS_CHANNEL_ID)
+            channel = await self.serenity.fetch_channel(
+                self.serenity.config.TS_CHANNEL_ID
+            )
 
             if not isinstance(channel, discord.TextChannel):
                 logger.error(
@@ -232,9 +230,7 @@ class Events(Plugin):
             )
             return
 
-        # We don't care about the user object here, but we need to
-        # ensure the relationship is created in the database
-        _ = await self.serenity.get_or_create_user(item.id)
+        await self.serenity.get_or_create_user(item.id)
 
         insert_statement = """
             INSERT INTO
@@ -273,9 +269,7 @@ class Events(Plugin):
             VALUES
                 ($1, $2, $3)
         """
-
-        # Same as above, we don't care about the user object
-        _ = await self.serenity.get_or_create_user(user.id)
+        await self.serenity.get_or_create_user(user.id)
 
         async with self.serenity.pool.acquire() as conn:
             async with conn.transaction():

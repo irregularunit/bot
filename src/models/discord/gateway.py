@@ -81,19 +81,19 @@ class MobileGateway(discord.gateway.DiscordWebSocket):
     async def identify(self) -> None:
         payload = IdentifyPayload(
             op=2,
-            d={
-                "token": self.token,
-                "properties": {
-                    "os": platform,
-                    "browser": "Discord Android",
-                    "device": "Discord Android",
-                    "referrer": "",
-                    "referring_domain": "",
-                },
-                "compress": True,
-                "large_threshold": 250,
-                "v": 10,
-            },
+            d=MobilePayload(
+                token=self.token,
+                properties=MobileProperties(
+                    os=platform,
+                    browser="Discord iOS",
+                    device="Discord iOS",
+                    referrer="",
+                    referring_domain="",
+                ),
+                compress=True,
+                large_threshold=250,
+                v=10,
+            ),
         )
 
         if self.shard_id is not None and self.shard_count is not None:

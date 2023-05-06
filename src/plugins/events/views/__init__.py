@@ -35,37 +35,35 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import discord
-from discord.ext import commands
+from discord import ButtonStyle, Interaction
+from discord.ui import Button
 
-from src.shared import Plugin
-
-from .handlers import get_message
+from src.shared import SerenityEmbed, SerenityView
 
 if TYPE_CHECKING:
     from src.models.discord import SerenityContext
-    from src.models.serenity import Serenity
+
+__all__: tuple[str, ...] = ("PartialMessageView",)
 
 
-__all__: tuple[str, ...] = ("Errors",)
-
-
-class Errors(Plugin):
-    def __init__(self, serenity: Serenity) -> None:
-        self.serenity = serenity
-
-    @Plugin.listener()
-    async def on_command_error(
-        self, ctx: SerenityContext, error: commands.CommandError
+class PartialMessageView(SerenityView):
+    def __init__(
+        self, embed: SerenityEmbed, /, *, jump_url: str, timeout: int = 60
     ) -> None:
-        if not ctx.guild:
-          return
-        
-        hint = get_message(ctx, error)
-        send = ctx.channel.permissions_for(ctx.guild.me).send_messages
+        super().__init__(timeout=timeout)
+        self.embed = embed
+        self.jump_url = jump_url
 
-        if send and hint is not None:
-            try:
-                await ctx.safe_send(hint)
-            except discord.HTTPException:
-                pass
+        self.add_item(
+            Button(
+                label="Jump to Message",
+                style=ButtonStyle.link,
+                url=self.jump_url,
+            )
+        )
+
+    async def send_to(self, destination: SerenityContext | Interaction) -> None:
+        if isinstance(destination, SerenityContext):
+            await destination.send(embed=self.embed, view=self)
+        else:
+            await destination.response.edit_message(embed=self.embed, view=self)

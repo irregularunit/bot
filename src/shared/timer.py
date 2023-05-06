@@ -33,39 +33,55 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from logging import Logger, getLogger
+from time import perf_counter
+from traceback import format_exc
+from types import TracebackType
+from typing import Optional
 
-import discord
-from discord.ext import commands
-
-from src.shared import Plugin
-
-from .handlers import get_message
-
-if TYPE_CHECKING:
-    from src.models.discord import SerenityContext
-    from src.models.serenity import Serenity
+__all__: tuple[str, ...] = ("Stopwatch",)
 
 
-__all__: tuple[str, ...] = ("Errors",)
+class Stopwatch:
+    def __init__(self) -> None:
+        self.start_time: float = 0.0
+        self.stop_time: float = 0.0
 
+        self._logger = getLogger(__name__)
 
-class Errors(Plugin):
-    def __init__(self, serenity: Serenity) -> None:
-        self.serenity = serenity
+    def start(self) -> None:
+        self.start_time = perf_counter()
 
-    @Plugin.listener()
-    async def on_command_error(
-        self, ctx: SerenityContext, error: commands.CommandError
+    def stop(self) -> None:
+        self.stop_time = perf_counter()
+
+    @property
+    def elapsed(self) -> float:
+        return perf_counter() - self.start_time
+
+    @property
+    def elapsed_ms(self) -> float:
+        return self.elapsed * 1000
+
+    @property
+    def total(self) -> float:
+        return self.stop_time - self.start_time
+
+    @property
+    def logger(self) -> Logger:
+        return self._logger
+
+    def __enter__(self) -> Stopwatch:
+        self.start()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
     ) -> None:
-        if not ctx.guild:
-          return
-        
-        hint = get_message(ctx, error)
-        send = ctx.channel.permissions_for(ctx.guild.me).send_messages
+        self.stop()
 
-        if send and hint is not None:
-            try:
-                await ctx.safe_send(hint)
-            except discord.HTTPException:
-                pass
+        if all((exc_type, exc_val, exc_tb)):
+            return self.logger.error(format_exc())

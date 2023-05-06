@@ -43,7 +43,14 @@ from discord.utils import async_all
 from typing_extensions import override
 
 from src.models.discord.converter import MaybeMember
-from src.shared import Plugin, SerenityEmbed
+from src.shared import (
+    AvatarCollage,
+    ExceptionFactory,
+    FilePointers,
+    Plugin,
+    SerenityEmbed,
+    Stopwatch,
+)
 
 from .utils import count_source_lines
 from .views import AboutSerenityView
@@ -160,9 +167,55 @@ class Info(Plugin):
                 )
             )
             .set_author(
-                name=f"{user.display_name}'s Avatar", icon_url=user.display_avatar
+                name=f"{user.display_name}'s avatar", icon_url=user.display_avatar
             )
             .set_image(url=user.display_avatar.url)
         )
 
         await ctx.send(embed=embed)
+
+    @commands.command(
+        name="avatarhistory",
+        aliases=("avhy", "avh"),
+        help="Shows the avatar history of a user.",
+    )
+    async def avatar_history_command(
+        self,
+        ctx: SerenityContext,
+        user: discord.User = commands.param(
+            converter=Union[discord.User, MaybeMember],
+            default=None,
+            displayed_default="you",
+        ),
+    ) -> None:
+        user = user or ctx.author
+
+        pointer = FilePointers(user.id)
+
+        if pointer.empty:
+            raise ExceptionFactory.create_warning_exception(
+                f"{user.display_name} has no avatar history."
+            )
+
+        with Stopwatch() as timer:
+            collage = await AvatarCollage(pointer).buffer()
+            elapes = timer.elapsed
+
+        file = discord.File(collage, filename="avatar_history.png")
+
+        embed = (
+            SerenityEmbed(
+                description=(
+                    f"> Generating took `{elapes:.2f}` seconds.\n"
+                    f"> Showing `{len(pointer)}` of up to `100` changes."
+                )
+            )
+            .set_author(
+                name=f"{user.display_name}'s avatar history",
+                icon_url=user.display_avatar,
+            )
+            .set_image(url="attachment://avatar_history.png")
+        )
+
+
+        await ctx.send(embed=embed, file=file)
