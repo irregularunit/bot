@@ -59,8 +59,8 @@ class Errors(Plugin):
         self, ctx: SerenityContext, error: commands.CommandError
     ) -> None:
         if not ctx.guild:
-          return
-        
+            return
+
         hint = get_message(ctx, error)
         send = ctx.channel.permissions_for(ctx.guild.me).send_messages
 

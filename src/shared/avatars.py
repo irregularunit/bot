@@ -46,7 +46,7 @@ import numpy as np
 from PIL import Image, UnidentifiedImageError
 from skimage.metrics import structural_similarity as ssim  # type: ignore
 
-__all__: tuple[str, ...] = ("AvatarPointer", "FilePointers", "AvatarCollage")
+__all__: tuple[str, ...] = ("AvatarPointer", "FilePointer", "AvatarCollage")
 
 _logger = getLogger(__name__)
 _ROOT = Path("images")
@@ -134,7 +134,7 @@ class AvatarPointer:
         await to_thread(self._save_to_path)
 
 
-class FilePointers:
+class FilePointer:
     __slots__: tuple[str, ...] = ("uid", "root")
 
     def __init__(self, uid: int) -> None:
@@ -163,7 +163,7 @@ class FilePointers:
 class AvatarCollage:
     __slots__: tuple[str, ...] = ("_pointer", "x", "y")
 
-    def __init__(self, pointer: FilePointers) -> None:
+    def __init__(self, pointer: FilePointer) -> None:
         self._pointer = pointer
         self.x = self.y = 0
 

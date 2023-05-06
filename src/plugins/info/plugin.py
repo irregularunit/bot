@@ -33,6 +33,7 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
+from uuid import uuid4
 from sys import version_info
 from time import perf_counter
 from typing import TYPE_CHECKING, Union
@@ -46,7 +47,7 @@ from src.models.discord.converter import MaybeMember
 from src.shared import (
     AvatarCollage,
     ExceptionFactory,
-    FilePointers,
+    FilePointer,
     Plugin,
     SerenityEmbed,
     Stopwatch,
@@ -189,8 +190,7 @@ class Info(Plugin):
         ),
     ) -> None:
         user = user or ctx.author
-
-        pointer = FilePointers(user.id)
+        pointer = FilePointer(user.id)
 
         if pointer.empty:
             raise ExceptionFactory.create_warning_exception(
@@ -199,14 +199,14 @@ class Info(Plugin):
 
         with Stopwatch() as timer:
             collage = await AvatarCollage(pointer).buffer()
-            elapes = timer.elapsed
+            elapsed = timer.elapsed
 
-        file = discord.File(collage, filename="avatar_history.png")
+        file = discord.File(collage, filename=f"{uuid4()}.png")
 
         embed = (
             SerenityEmbed(
                 description=(
-                    f"> Generating took `{elapes:.2f}` seconds.\n"
+                    f"> Generating took `{elapsed:.2f}` seconds.\n"
                     f"> Showing `{len(pointer)}` of up to `100` changes."
                 )
             )
@@ -214,8 +214,7 @@ class Info(Plugin):
                 name=f"{user.display_name}'s avatar history",
                 icon_url=user.display_avatar,
             )
-            .set_image(url="attachment://avatar_history.png")
+            .set_image(url=f"attachment://{file.filename}")
         )
-
 
         await ctx.send(embed=embed, file=file)

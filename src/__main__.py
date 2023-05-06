@@ -51,7 +51,6 @@ if TYPE_CHECKING:
     from asyncpg import Pool, Record
 
 
-# Disable the warning about the use of NaCl
 VoiceClient.warn_nacl = False
 
 

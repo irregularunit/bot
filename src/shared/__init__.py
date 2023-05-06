@@ -31,7 +31,7 @@ This is a human-readable summary of the Legal Code. The full license is availabl
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
-from .avatars import AvatarCollage, AvatarPointer, FilePointers
+from .avatars import AvatarCollage, AvatarPointer, FilePointer
 from .config import SerenityConfig
 from .embed import SerenityEmbed
 from .exceptions import ExceptionFactory, ExecptionLevel, UserFeedbackException
@@ -51,7 +51,7 @@ __all__: tuple[str, ...] = (
     "SerenityEmbed",
     "UserFeedbackException",
     "Plugin",
-    "FilePointers",
+    "FilePointer",
     "SerenityView",
     "Stopwatch",
     "get_random_emoji",

@@ -38,16 +38,16 @@ from time import perf_counter
 from traceback import format_exc
 from types import TracebackType
 from typing import Optional
+from operator import eq
 
 __all__: tuple[str, ...] = ("Stopwatch",)
 
 
 class Stopwatch:
     def __init__(self) -> None:
-        self.start_time: float = 0.0
-        self.stop_time: float = 0.0
-
-        self._logger = getLogger(__name__)
+        self.__start_time: float = 0.0
+        self.__stop_time: float = 0.0
+        self.__logger = getLogger(__name__)
 
     def start(self) -> None:
         self.start_time = perf_counter()
@@ -56,20 +56,37 @@ class Stopwatch:
         self.stop_time = perf_counter()
 
     @property
+    def start_time(self) -> float:
+        return self.__start_time
+
+    @start_time.setter
+    def start_time(self, value: float) -> None:
+        self.__start_time = value
+
+    @property
+    def stop_time(self) -> float:
+        return self.__stop_time
+
+    @stop_time.setter
+    def stop_time(self, value: float) -> None:
+        self.__stop_time = value
+
+    @property
     def elapsed(self) -> float:
-        return perf_counter() - self.start_time
+        if eq(self.start_time, 0.0):
+            return 0.0
 
-    @property
-    def elapsed_ms(self) -> float:
-        return self.elapsed * 1000
+        elapsed = (
+            self.stop_time - self.start_time
+            if self.stop_time
+            else perf_counter() - self.start_time
+        )
 
-    @property
-    def total(self) -> float:
-        return self.stop_time - self.start_time
+        return elapsed
 
     @property
     def logger(self) -> Logger:
-        return self._logger
+        return self.__logger
 
     def __enter__(self) -> Stopwatch:
         self.start()
