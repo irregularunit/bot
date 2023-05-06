@@ -49,9 +49,9 @@ END $$;
 
 
 CREATE TABLE IF NOT EXISTS serenity_guild_emotes (
-    snowflake BIGINT NOT NULL,
+    snowflake       BIGINT NOT NULL,
     emote_snowflake BIGINT NOT NULL,
-    emote_usage BIGINT NOT NULL DEFAULT 0,
+    emote_usage     BIGINT NOT NULL DEFAULT 0,
     CONSTRAINT serenity_guild_emotes_fkey
         FOREIGN KEY (snowflake)
         REFERENCES serenity_guilds(snowflake)
@@ -60,9 +60,9 @@ CREATE TABLE IF NOT EXISTS serenity_guild_emotes (
 
 
 CREATE TABLE IF NOT EXISTS serenity_guild_snipes (
-    snowflake BIGINT NOT NULL,
-    channel_snowflake BIGINT NOT NULL,
-    message_snowflake BIGINT NOT NULL,
+    snowflake           BIGINT NOT NULL,
+    channel_snowflake   BIGINT NOT NULL,
+    message_snowflake   BIGINT NOT NULL,
     message_jsonb JSONB NOT NULL,
     CONSTRAINT serenity_guild_snipes_fkey
         FOREIGN KEY (snowflake)
