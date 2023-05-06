@@ -39,7 +39,7 @@ from typing import Generic, NamedTuple, TypeVar
 
 from magic import from_buffer
 
-from src.shared import AvatarPointer
+from src.imaging import AvatarPointer
 
 __all__: tuple[str, ...] = (
     "StoreQueueItems",

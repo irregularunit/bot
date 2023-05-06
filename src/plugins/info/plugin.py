@@ -33,25 +33,19 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from uuid import uuid4
 from sys import version_info
 from time import perf_counter
 from typing import TYPE_CHECKING, Union
+from uuid import uuid4
 
 import discord
 from discord.ext import commands
 from discord.utils import async_all
 from typing_extensions import override
 
+from src.imaging import AvatarCollage, FilePointer
 from src.models.discord.converter import MaybeMember
-from src.shared import (
-    AvatarCollage,
-    ExceptionFactory,
-    FilePointer,
-    Plugin,
-    SerenityEmbed,
-    Stopwatch,
-)
+from src.shared import ExceptionFactory, Plugin, SerenityEmbed, Stopwatch
 
 from .utils import count_source_lines
 from .views import AboutSerenityView
@@ -218,3 +212,58 @@ class Info(Plugin):
         )
 
         await ctx.send(embed=embed, file=file)
+
+    @commands.command(
+        name="usernamehistory",
+        aliases=("names", "unh"),
+        help="Shows the username history of a user.",
+    )
+    async def username_history_command(
+        self,
+        ctx: SerenityContext,
+        user: discord.User = commands.param(
+            converter=Union[discord.User, MaybeMember],
+            default=None,
+            displayed_default="you",
+        ),
+    ) -> None:
+        user = user or ctx.author
+
+        async with self.serenity.pool.acquire() as conn:
+            async with conn.transaction(readonly=True):
+                rows = await conn.fetch(
+                    """
+                    SELECT
+                        item_value,
+                        changed_at
+                    FROM
+                        serenity_user_history
+                    WHERE
+                        snowflake = $1
+                        AND
+                        item_name = 'name'
+                    ORDER BY
+                        changed_at DESC
+                    LIMIT
+                        20
+                    """,
+                    user.id,
+                )
+
+        if not rows:
+            raise ExceptionFactory.create_warning_exception(
+                f"{user.display_name} has no username history."
+            )
+
+        embed = SerenityEmbed(
+            description=(
+                f"> Showing `{len(rows)}` of up to `20` changes.\n\n"
+                f"{', '.join([row['item_value'] for row in rows])}"
+            )
+        )
+        embed.set_author(
+            name=f"{user.display_name}'s username history",
+            icon_url=user.display_avatar,
+        )
+
+        await ctx.send(embed=embed)

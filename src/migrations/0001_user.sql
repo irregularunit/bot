@@ -62,25 +62,11 @@ CREATE TABLE IF NOT EXISTS serenity_user_history (
     CONSTRAINT serenity_user_history_fkey FOREIGN KEY (snowflake) REFERENCES serenity_users(snowflake) ON DELETE CASCADE
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM pg_type
-        WHERE typname = 'serenity_presence_type'
-    ) THEN
-        CREATE TYPE serenity_presence_type AS ENUM (
-            'online',
-            'idle',
-            'dnd',
-            'offline'
-        );
-    END IF;
-END $$;
-
 CREATE TABLE IF NOT EXISTS serenity_user_presence (
     snowflake BIGINT NOT NULL,
-    status serenity_presence_type NOT NULL DEFAULT 'offline',
+    status TEXT NOT NULL,
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
-    CONSTRAINT serenity_user_presence_fkey FOREIGN KEY (snowflake) REFERENCES serenity_users(snowflake) ON DELETE CASCADE
+    CONSTRAINT serenity_user_presence_fkey FOREIGN KEY (snowflake) REFERENCES serenity_users(snowflake) ON DELETE CASCADE,
+    CONSTRAINT serenity_status_check CHECK (
+        status IN ('Online', 'Idle', 'DnD', 'Offline'))
 );

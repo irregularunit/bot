@@ -34,11 +34,11 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 from __future__ import annotations
 
 from logging import Logger, getLogger
+from operator import eq
 from time import perf_counter
 from traceback import format_exc
 from types import TracebackType
 from typing import Optional
-from operator import eq
 
 __all__: tuple[str, ...] = ("Stopwatch",)
 
