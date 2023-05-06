@@ -151,7 +151,7 @@ class FilePointer:
         return not bool(len(self))
 
     def __iter__(self) -> Generator[Image.Image, None, None]:
-        for file in (self.root / str(self.uid)).iterdir():
+        for file in sorted((self.root / str(self.uid)).iterdir(), key=lambda x: x.stat().st_mtime):
             yield Image.open(file)
 
     def __len__(self) -> int:
