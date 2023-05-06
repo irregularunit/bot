@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS serenity_guild_prefixes (
         ON DELETE CASCADE
 );
 
+
 CREATE OR REPLACE FUNCTION insert_default_prefix() RETURNS TRIGGER AS $$
 BEGIN
     IF NOT EXISTS (
@@ -71,8 +72,10 @@ CREATE TABLE IF NOT EXISTS serenity_guild_snipes (
         UNIQUE (message_snowflake)
 );
 
+
 CREATE INDEX IF NOT EXISTS serenity_guild_snipes_channel_snowflake_index
     ON serenity_guild_snipes (channel_snowflake);
+
 
 CREATE INDEX IF NOT EXISTS serenity_guild_emotes_emote_usage_index
     ON serenity_guild_emotes (emote_usage);
