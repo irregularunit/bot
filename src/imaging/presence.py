@@ -41,6 +41,8 @@ from typing import NamedTuple, TypedDict
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw, ImageFont
 
+from .abc import SavableByteStream
+
 __all__: tuple[str, ...] = ("PresenceEntry", "PresenceData", "PresenceGraph")
 
 
@@ -55,7 +57,7 @@ class PresenceData(TypedDict):
     statuses: list[str]
 
 
-class PresenceGraph:
+class PresenceGraph(SavableByteStream):
     def __init__(self, data: PresenceData, avatar: bytes) -> None:
         self._data = data
         self._width = 0.2
@@ -103,7 +105,6 @@ class PresenceGraph:
         buf = self._generate_donut_chart()
 
         with Image.new("RGBA", (580, 370), (0, 0, 0, 0)) as img:
-            # paste it on the left side
             img.paste(Image.open(buf), (-150, -60))
             font = ImageFont.truetype("static/fonts/Lato-Black.ttf", 12)
             draw = ImageDraw.Draw(img)

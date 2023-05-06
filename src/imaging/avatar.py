@@ -46,13 +46,48 @@ import numpy as np
 from PIL import Image, UnidentifiedImageError
 from skimage.metrics import structural_similarity as ssim  # type: ignore
 
+from .abc import SavableByteStream
+
 __all__: tuple[str, ...] = ("AvatarPointer", "FilePointer", "AvatarCollage")
 
 _logger = getLogger(__name__)
 _ROOT = Path("images")
 
 
-class AvatarPointer:
+class FilePointer:
+    __slots__: tuple[str, ...] = ("uid", "root")
+
+    def __init__(self, uid: int) -> None:
+        self.uid = uid
+        self.root = _ROOT
+
+    @property
+    def empty(self) -> bool:
+        return not bool(len(self))
+
+    @property
+    def current_path(self) -> Path:
+        return self.root / str(self.uid)
+
+    def __iter__(self) -> Generator[Image.Image, None, None]:
+        for file in sorted(
+            self.current_path.iterdir(), key=lambda x: x.stat().st_mtime
+        ):
+            yield Image.open(file)
+
+    def __len__(self) -> int:
+        return (
+            len(list(self.current_path.iterdir())) if self.current_path.exists() else 0
+        )
+
+    def __repr__(self) -> str:
+        return f"<Files uid={self.uid} length={len(self)}>"
+
+    def __str__(self) -> str:
+        return repr(self)
+
+
+class AvatarPointer(SavableByteStream):
     __slots__: tuple[str, ...] = (
         "_uid",
         "_name",
@@ -113,7 +148,7 @@ class AvatarPointer:
             # Saves us some space. :)
             if self._is_simmilar(image, Image.open(file)):
                 return
-        
+
         # Removes the oldest file if there are more than 100.
         if len(list(self.current_path.iterdir())) >= 100:
             oldest = min(self.current_path.iterdir(), key=lambda x: x.stat().st_mtime)
@@ -143,36 +178,7 @@ class AvatarPointer:
         await to_thread(self._save_to_path)
 
 
-class FilePointer:
-    __slots__: tuple[str, ...] = ("uid", "root")
-
-    def __init__(self, uid: int) -> None:
-        self.uid = uid
-        self.root = _ROOT
-
-    @property
-    def empty(self) -> bool:
-        return not bool(len(self))
-
-    @property
-    def current_path(self) -> Path:
-        return self.root / str(self.uid)
-
-    def __iter__(self) -> Generator[Image.Image, None, None]:
-        for file in sorted(self.current_path.iterdir(), key=lambda x: x.stat().st_mtime):
-            yield Image.open(file)
-
-    def __len__(self) -> int:
-        return len(list(self.current_path.iterdir())) if self.current_path.exists() else 0
-
-    def __repr__(self) -> str:
-        return f"<Files uid={self.uid} length={len(self)}>"
-
-    def __str__(self) -> str:
-        return repr(self)
-
-
-class AvatarCollage:
+class AvatarCollage(SavableByteStream):
     __slots__: tuple[str, ...] = ("_pointer", "x", "y")
 
     def __init__(self, pointer: FilePointer) -> None:

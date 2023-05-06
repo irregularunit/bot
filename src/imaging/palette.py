@@ -38,12 +38,13 @@ from io import BytesIO
 
 from PIL import Image, ImageDraw, ImageFont
 
+from .abc import SavableByteStream
 from .utils import rgb_to_hex
 
 __all__: tuple[str, ...] = ("AvatarPallete",)
 
 
-class AvatarPallete:
+class AvatarPallete(SavableByteStream):
     def __init__(self, avatar: bytes) -> None:
         self.avatar = avatar
         self.font = ImageFont.truetype("static/fonts/BEBAS.ttf", 28)

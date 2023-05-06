@@ -31,7 +31,18 @@ This is a human-readable summary of the Legal Code. The full license is availabl
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
-from .avatar import *
-from .palette import *
-from .presence import *
-from .utils import *
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from io import BytesIO
+
+__all__: tuple[str, ...] = ("SavableByteStream",)
+
+
+class SavableByteStream(ABC):
+    """An abstract class representing a buffer that can be saved."""
+
+    @abstractmethod
+    async def buffer(self) -> BytesIO:
+        """Return the buffer as bytes."""
+        ...
