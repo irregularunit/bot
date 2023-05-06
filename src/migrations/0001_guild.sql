@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS serenity_guilds (
 
 
 CREATE TABLE IF NOT EXISTS serenity_guild_prefixes (
-    snowflake BIGINT NOT NULL,
-    prefix VARCHAR(2000) NOT NULL,
+    snowflake       BIGINT NOT NULL,
+    prefix          VARCHAR(2000) NOT NULL,
     CONSTRAINT serenity_guild_prefixes_fkey
         FOREIGN KEY (snowflake)
         REFERENCES serenity_guilds(snowflake)
