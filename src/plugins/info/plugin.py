@@ -36,16 +36,14 @@ from __future__ import annotations
 from sys import version_info
 from time import perf_counter
 from typing import TYPE_CHECKING, Union
-from uuid import uuid4
 
 import discord
 from discord.ext import commands
 from discord.utils import async_all
 from typing_extensions import override
 
-from src.imaging import AvatarCollage, FilePointer, AvatarPallete
 from src.models.discord.converter import MaybeMember
-from src.shared import ExceptionFactory, Plugin, SerenityEmbed, Stopwatch
+from src.shared import ExceptionFactory, Plugin, SerenityEmbed
 
 from .utils import count_source_lines
 from .views import AboutSerenityView
@@ -170,52 +168,8 @@ class Info(Plugin):
         await ctx.send(embed=embed)
 
     @commands.command(
-        name="avatarhistory",
-        aliases=("avhy", "avh"),
-        help="Shows the avatar history of a user.",
-    )
-    async def avatar_history_command(
-        self,
-        ctx: SerenityContext,
-        user: discord.User = commands.param(
-            converter=Union[discord.User, MaybeMember],
-            default=None,
-            displayed_default="you",
-        ),
-    ) -> None:
-        user = user or ctx.author
-        pointer = FilePointer(user.id)
-
-        if pointer.empty:
-            raise ExceptionFactory.create_warning_exception(
-                f"{user.display_name} has no avatar history."
-            )
-
-        with Stopwatch() as timer:
-            collage = await AvatarCollage(pointer).buffer()
-            elapsed = timer.elapsed
-
-        file = discord.File(collage, filename=f"{uuid4()}.png")
-
-        embed = (
-            SerenityEmbed(
-                description=(
-                    f"> Generating took `{elapsed:.2f}` seconds.\n"
-                    f"> Showing `{len(pointer)}` of up to `100` changes."
-                )
-            )
-            .set_author(
-                name=f"{user.display_name}'s avatar history",
-                icon_url=user.display_avatar,
-            )
-            .set_image(url=f"attachment://{file.filename}")
-        )
-
-        await ctx.send(embed=embed, file=file)
-
-    @commands.command(
-        name="usernamehistory",
-        aliases=("names", "unh"),
+        name="names",
+        aliases=("namehistory", "nh"),
         help="Shows the username history of a user.",
     )
     async def username_history_command(
@@ -267,47 +221,3 @@ class Info(Plugin):
         )
 
         await ctx.send(embed=embed)
-
-    @commands.command(
-        name="palette",
-        aliases=("pal",),
-        help="Shows the color palette of a user's avatar.",
-    )
-    async def palette_command(
-        self,
-        ctx: SerenityContext,
-        user: discord.User = commands.param(
-            converter=Union[discord.User, MaybeMember],
-            default=None,
-            displayed_default="you",
-        ),
-    ) -> None:
-        user = user or ctx.author
-
-        try:
-            avatar = await user.display_avatar.read()
-        except discord.HTTPException:
-            raise ExceptionFactory.create_error_exception(
-                f"Unable to read {user.display_name}'s avatar."
-            )
-
-        with Stopwatch() as timer:
-            pallete = await AvatarPallete(avatar).buffer()
-            elapsed = timer.elapsed
-
-        file = discord.File(pallete, filename=f"{uuid4()}.png")
-
-        embed = (
-            SerenityEmbed(
-                description=(
-                    f"> Generating took `{elapsed:.2f}` seconds.\n"
-                )
-            )
-            .set_author(
-                name=f"{user.display_name}'s avatar palette",
-                icon_url=user.display_avatar,
-            )
-            .set_image(url=f"attachment://{file.filename}")
-        )
-
-        await ctx.send(embed=embed, file=file)

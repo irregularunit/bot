@@ -59,9 +59,7 @@ def count_source_lines() -> int:
 
     def _count_lines(path: Path) -> int:
         if path.is_file():
-            ignored = (
-                ".png",
-            )
+            ignored = (".png",)
 
             if path.suffix in ignored:
                 return 0
@@ -80,4 +78,5 @@ def count_source_lines() -> int:
             return sum(_count_lines(child) for child in path.iterdir())
 
         return 0
+
     return _count_lines(Path("src"))

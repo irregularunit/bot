@@ -33,16 +33,14 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from io import BytesIO
 from asyncio import to_thread
+from io import BytesIO
 
 from PIL import Image, ImageDraw, ImageFont
 
 from .utils import rgb_to_hex
 
-
 __all__: tuple[str, ...] = ("AvatarPallete",)
-
 
 
 class AvatarPallete:
@@ -66,9 +64,6 @@ class AvatarPallete:
                 buffer.seek(0)
                 return buffer
 
-            if palette[:3] == [0, 0, 0]:
-                palette = palette[3:]
-
             with Image.new(
                 "RGBA", (int(width * (256 / height)) + 200, 256), color=(0, 0, 0, 0)
             ) as background:
@@ -78,7 +73,7 @@ class AvatarPallete:
                 for i in range(5):
                     x1, y1, x2, y2 = 10, 10 + (i * 50), 40, 40 + (i * 50)
 
-                    color = (palette[i*3], palette[i*3+1], palette[i*3+2])
+                    color = (palette[i * 3], palette[i * 3 + 1], palette[i * 3 + 2])
                     draw.rectangle((x1, y1, x2, y2), fill=color, outline=text_color)
 
                     text_position = (x2 + 10, y1 - 4)
@@ -86,8 +81,8 @@ class AvatarPallete:
                         text_position,
                         f"{rgb_to_hex(color)}",
                         font=self.font,
-                        fill=text_color
-                    ) 
+                        fill=text_color,
+                    )
 
                 background.paste(canvas, (200, 0))
 

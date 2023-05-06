@@ -31,8 +31,15 @@ This is a human-readable summary of the Legal Code. The full license is availabl
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
-__all__: tuple[str, ...] = ("rgb_to_hex",)
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from .plugin import Imaging
+
+if TYPE_CHECKING:
+    from src.models.serenity import Serenity
 
 
-def rgb_to_hex(rgb: tuple[int, int, int]) -> str:
-    return ('#%02x%02x%02x' % rgb).upper()
+async def setup(bot: Serenity) -> None:
+    await bot.add_cog(Imaging(bot))
