@@ -109,6 +109,11 @@ class AvatarPointer:
             # Saves us some space. :)
             if self._is_simmilar(image, Image.open(file)):
                 return
+        
+        # Removes the oldest file if there are more than 100.
+        if len(list((self.root / str(self.uid)).iterdir())) >= 100:
+            oldest = min((self.root / str(self.uid)).iterdir(), key=lambda x: x.stat().st_mtime)
+            oldest.unlink()
 
         image.save(
             fp=self.root / str(self.uid) / f"{uuid4().hex}.png",
