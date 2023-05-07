@@ -35,16 +35,14 @@ from __future__ import annotations
 
 from asyncio import to_thread
 from copy import deepcopy
+from functools import cached_property
 from io import BytesIO
 from logging import getLogger
 from pathlib import Path
 from typing import Generator
 from uuid import uuid4
 
-# pyright: reportMissingTypeStubs=false
-import numpy as np
 from PIL import Image, UnidentifiedImageError
-from skimage.metrics import structural_similarity as ssim  # type: ignore
 
 from .abc import SavableByteStream
 
@@ -61,11 +59,11 @@ class FilePointer:
         self.uid = uid
         self.root = _ROOT
 
-    @property
+    @cached_property
     def empty(self) -> bool:
         return not bool(len(self))
 
-    @property
+    @cached_property
     def current_path(self) -> Path:
         return self.root / str(self.uid)
 
@@ -120,12 +118,12 @@ class AvatarPointer(SavableByteStream):
     def content_type(self) -> str:
         return self._mime_type
 
-    @property
+    @cached_property
     def file(self) -> BytesIO:
         """Returns a copy of the Image for reusability."""
         return deepcopy(self._file)
 
-    @property
+    @cached_property
     def current_path(self) -> Path:
         return self.root / str(self.uid)
 
@@ -133,49 +131,36 @@ class AvatarPointer(SavableByteStream):
         if not self.root.exists():
             self.root.mkdir()
 
-        if not (self.root / str(self.uid)).exists():
-            (self.root / str(self.uid)).mkdir()
+        if not self.current_path.exists():
+            self.current_path.mkdir()
 
         try:
-            image = Image.open(self._file)
+            with Image.open(self._file) as image:
+                image = image.resize((256, 256))
+                image = image.resize((256, 256))
+                hash_new = hash(image.tobytes())  # type: ignore
         except UnidentifiedImageError:
             _logger.warning("Unable to open %s's file pointer.", self.uid)
             return
 
-        image = image.resize((256, 256))
+        path_files = list(self.current_path.iterdir())
+        hashes: set[int] = set()
 
-        for file in self.current_path.iterdir():
-            # Saves us some space. :)
-            if self._is_simmilar(image, Image.open(file)):
-                return
+        for file in path_files:
+            with Image.open(file) as image:
+                hashes.add(hash(image.tobytes()))  # type: ignore
 
-        # Removes the oldest file if there are more than 100.
-        if len(list(self.current_path.iterdir())) >= 100:
-            oldest = min(self.current_path.iterdir(), key=lambda x: x.stat().st_mtime)
+        # Saves us some space. :)
+        if hash_new in hashes:
+            return
+
+        if len(path_files) >= 100:
+            oldest = min(path_files, key=lambda x: x.stat().st_mtime)
             oldest.unlink()
 
-        image.save(
-            fp=self.current_path / f"{uuid4().hex}.png",
-            format=image.format,
-        )
-
-    def _is_simmilar(self, original: Image.Image, other: Image.Image) -> bool:
-        """Checks if the image is simmilar to the one we're saving."""
-        ifloat1 = np.asarray(original.convert("L")).astype("float")
-        ifloat2 = np.asarray(other.convert("L")).astype("float")
-
-        mse = np.mean((ifloat1 - ifloat2) ** 2)
-        mse /= float(ifloat1.shape[0] * ifloat1.shape[1])
-
-        ssim_score: float = ssim(
-            ifloat1, ifloat2, data_range=ifloat2.max() - ifloat2.min()  # type: ignore
-        )
-
-        return mse < 100 and ssim_score > 0.9  # type: ignore
-
-    async def save(self) -> None:
-        """Saves the file to the disk."""
-        await to_thread(self._save_to_path)
+        destination = self.current_path / f"{uuid4().hex}.png"
+        with destination.open("wb") as file:
+            file.write(self._file.getvalue())
 
 
 class AvatarCollage(SavableByteStream):
@@ -185,7 +170,7 @@ class AvatarCollage(SavableByteStream):
         self._pointer = pointer
         self.x = self.y = 0
 
-    @property
+    @cached_property
     def images(self) -> list[Image.Image]:
         return list(self._pointer)
 

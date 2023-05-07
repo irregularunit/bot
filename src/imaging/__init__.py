@@ -32,6 +32,6 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
 from .avatar import *
-from .palette import *
+from .canvas import *
 from .presence import *
 from .utils import *

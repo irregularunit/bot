@@ -31,8 +31,11 @@ This is a human-readable summary of the Legal Code. The full license is availabl
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
+from __future__ import annotations
+
 __all__: tuple[str, ...] = ("rgb_to_hex",)
 
 
 def rgb_to_hex(rgb: tuple[int, int, int]) -> str:
     return ('#%02x%02x%02x' % rgb).upper()
+

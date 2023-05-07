@@ -55,6 +55,12 @@ class Stopwatch:
     def stop(self) -> None:
         self.stop_time = perf_counter()
 
+    def reset(self) -> float:
+        elapsed = self.elapsed
+        self.start_time = 0.0
+        self.stop_time = 0.0
+        return elapsed
+
     @property
     def start_time(self) -> float:
         return self.__start_time

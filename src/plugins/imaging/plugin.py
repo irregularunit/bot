@@ -41,7 +41,7 @@ from discord.ext import commands
 from discord.utils import async_all
 from typing_extensions import override
 
-from src.imaging import AvatarCollage, AvatarPallete, FilePointer
+from src.imaging import AvatarCollage, Canvas, FilePointer
 from src.models.discord.converter import MaybeMember
 from src.shared import ExceptionFactory, Plugin, SerenityEmbed, Stopwatch
 
@@ -66,6 +66,14 @@ class Imaging(Plugin):
         return await async_all(
             check(ctx) for check in checks
         ) and await super().cog_check(ctx)
+
+    async def _read_avatar(self, user: discord.User | discord.Member) -> bytes:
+        try:
+            return await user.display_avatar.read()
+        except discord.HTTPException:
+            raise ExceptionFactory.create_error_exception(
+                f"Unable to read {user.display_name}'s avatar."
+            )
 
     @commands.command(
         name="avatarhistory",
@@ -126,24 +134,48 @@ class Imaging(Plugin):
         ),
     ) -> None:
         user = user or ctx.author
-
-        try:
-            avatar = await user.display_avatar.read()
-        except discord.HTTPException:
-            raise ExceptionFactory.create_error_exception(
-                f"Unable to read {user.display_name}'s avatar."
-            )
+        avatar = await self._read_avatar(user)
 
         with Stopwatch() as timer:
-            pallete = await AvatarPallete(avatar).buffer()
+            file = await Canvas(avatar).to_pallete()
             elapsed = timer.elapsed
-
-        file = discord.File(pallete, filename=f"{uuid4()}.png")
 
         embed = (
             SerenityEmbed(description=(f"> Generating took `{elapsed:.2f}` seconds.\n"))
             .set_author(
                 name=f"{user.display_name}'s avatar palette",
+                icon_url=user.display_avatar,
+            )
+            .set_image(url=f"attachment://{file.filename}")
+        )
+
+        await ctx.send(embed=embed, file=file)
+
+    @commands.command(
+        name="ascii",
+        aliases=("asc",),
+        help="Shows the ASCII representation of a user's avatar.",
+    )
+    async def ascii_command(
+        self,
+        ctx: SerenityContext,
+        user: discord.User = commands.param(
+            converter=Union[discord.User, MaybeMember],
+            default=None,
+            displayed_default="you",
+        ),
+    ) -> None:
+        user = user or ctx.author
+        avatar = await self._read_avatar(user)
+
+        with Stopwatch() as timer:
+            file = await Canvas(avatar).to_ascii()
+            elapsed = timer.elapsed
+
+        embed = (
+            SerenityEmbed(description=(f"> Generating took `{elapsed:.2f}` seconds.\n"))
+            .set_author(
+                name=f"{user.display_name}'s ascii avatar",
                 icon_url=user.display_avatar,
             )
             .set_image(url=f"attachment://{file.filename}")
