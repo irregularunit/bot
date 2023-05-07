@@ -35,6 +35,7 @@ from __future__ import annotations
 
 from asyncio import to_thread
 from copy import deepcopy
+from functools import cached_property
 from io import BytesIO
 from logging import getLogger
 from pathlib import Path
@@ -58,11 +59,11 @@ class FilePointer:
         self.uid = uid
         self.root = _ROOT
 
-    @property
+    @cached_property
     def empty(self) -> bool:
         return not bool(len(self))
 
-    @property
+    @cached_property
     def current_path(self) -> Path:
         return self.root / str(self.uid)
 
@@ -117,12 +118,12 @@ class AvatarPointer(SavableByteStream):
     def content_type(self) -> str:
         return self._mime_type
 
-    @property
+    @cached_property
     def file(self) -> BytesIO:
         """Returns a copy of the Image for reusability."""
         return deepcopy(self._file)
 
-    @property
+    @cached_property
     def current_path(self) -> Path:
         return self.root / str(self.uid)
 
@@ -157,10 +158,9 @@ class AvatarPointer(SavableByteStream):
             oldest = min(path_files, key=lambda x: x.stat().st_mtime)
             oldest.unlink()
 
-        image.save(
-            fp=self.current_path / f"{uuid4().hex}.png",
-            format=image.format,
-        )
+        destination = self.current_path / f"{uuid4().hex}.png"
+        with destination.open("wb") as file:
+            file.write(self._file.getvalue())
 
 
 class AvatarCollage(SavableByteStream):
@@ -170,7 +170,7 @@ class AvatarCollage(SavableByteStream):
         self._pointer = pointer
         self.x = self.y = 0
 
-    @property
+    @cached_property
     def images(self) -> list[Image.Image]:
         return list(self._pointer)
 

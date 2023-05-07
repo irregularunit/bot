@@ -68,6 +68,9 @@ class PresenceGraph(SavableByteStream):
             "DnD": "#808080",
         }
         self._avatar = avatar
+        self.font = ImageFont.truetype(
+            "static/fonts/Lato-Regular.ttf", 12
+        )
 
     @property
     def data(self) -> PresenceData:
@@ -106,7 +109,6 @@ class PresenceGraph(SavableByteStream):
 
         with Image.new("RGBA", (580, 370), (0, 0, 0, 0)) as img:
             img.paste(Image.open(buf), (-150, -60))
-            font = ImageFont.truetype("static/fonts/Lato-Black.ttf", 12)
             draw = ImageDraw.Draw(img)
 
             for i, (status, color) in enumerate(self._mapping.items()):
@@ -114,7 +116,7 @@ class PresenceGraph(SavableByteStream):
                     (430, 77.4 + (i * 50)),
                     status
                     + f" - {round(self.data['statuses'].count(status) / len(self.data['statuses']) * 100, 2)}%",
-                    font=font,
+                    font=self.font,
                     fill="white",
                 )
                 draw.rectangle(  # type: ignore
