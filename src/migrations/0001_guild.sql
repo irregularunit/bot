@@ -25,8 +25,8 @@ BEGIN
         FROM serenity_guild_prefixes
         WHERE snowflake = NEW.snowflake
     ) THEN
-        INSERT INTO serenity_guild_prefixes (snowflake, prefix) VALUES (NEW.snowflake, 's!');
-        INSERT INTO serenity_guild_prefixes (snowflake, prefix) VALUES (NEW.snowflake, 's?');
+        INSERT INTO serenity_guild_prefixes (snowflake, prefix)
+        VALUES (NEW.snowflake, 's!'), (NEW.snowflake, 's?');
     END IF;
     RETURN NEW;
 END

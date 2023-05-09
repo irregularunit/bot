@@ -69,8 +69,10 @@ class SerenityUserManager:
 
     async def create_user(self, snowflake: int, /) -> SerenityUser:
         query = """
-            INSERT INTO serenity_users (snowflake)
-            VALUES ($1)
+            INSERT INTO serenity_users 
+                (snowflake)
+            VALUES 
+                ($1)
             RETURNING *
         """
 

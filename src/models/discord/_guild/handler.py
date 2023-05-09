@@ -76,8 +76,10 @@ class SerenityGuildManager:
 
     async def create_guild(self, snowflake: int, /) -> SerenityGuild:
         query = """
-            INSERT INTO serenity_guilds (snowflake)
-            VALUES ($1)
+            INSERT INTO serenity_guilds 
+                (snowflake)
+            VALUES 
+                ($1)
             RETURNING *
         """
 

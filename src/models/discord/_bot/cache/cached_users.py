@@ -46,7 +46,7 @@ if TYPE_CHECKING:
 __all__: tuple[str, ...] = ("SerenityUserCache",)
 
 
-@dataclass
+@dataclass(slots=True)
 class CachedEntity:
     entity: SerenityUser
     timestamp: float
@@ -94,12 +94,8 @@ class SerenityUserCache:
         return f"<SerenityUserCache size={self.__size} length={len(self.__cache)} at {hex(id(self))}"
 
     def __evict(self) -> None:
-        while self.__cache:
-            _, cached = min(self.__cache.items(), key=lambda item: item[1].timestamp)
-
-            if cached.entity is not None:
-                del self.__cache[cached.entity.id]
-                break
+        _, cached = min(self.__cache.items(), key=lambda item: item[1].timestamp)
+        del self.__cache[cached.entity.id]
 
     @tasks.loop(minutes=5)
     async def __maintain(self) -> None:
@@ -115,8 +111,7 @@ class SerenityUserCache:
             if time.time() - cached.timestamp < 1_800:
                 break
 
-            if cached.entity is not None:
-                del self.__cache[cached.entity.id]
+            del self.__cache[cached.entity.id]
 
     @classmethod
     def from_none(cls: Type[Self], size: int = 100) -> Self:

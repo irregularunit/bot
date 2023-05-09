@@ -42,6 +42,7 @@ from io import BytesIO
 from uuid import uuid4
 from typing import List, Optional
 
+import numba as nb
 import numpy as np
 from discord import File
 from PIL import Image, ImageDraw, ImageFont
@@ -86,7 +87,7 @@ class Canvas:
             width, height = canvas.size
             canvas = self._mock_size(canvas, 256)
 
-            quantized = canvas.quantize(colors=5, method=2)
+            quantized = canvas.quantize(colors=6, method=2)
             palette = quantized.getpalette()
 
             if not palette:
@@ -94,6 +95,9 @@ class Canvas:
                 canvas.save(buffer, format="PNG")
                 buffer.seek(0)
                 return buffer
+
+            if palette[:3] == [0, 0, 0]:
+                palette = palette[3:]
 
             with Image.new(
                 "RGBA", (int(width * (256 / height)) + 200, 256), color=(0, 0, 0, 0)
@@ -130,69 +134,51 @@ class Canvas:
 
     def _create_ascii_canvas(
         self,
-        char_list: Optional[List[str]] = None,
-        scale_factor: float = 0.1,
+        ascii_chars: Optional[np.ndarray] = None,
+        scale: float = 0.1,
         gamma: float = 2.0,
-        background: tuple[int, ...] = (0, 0, 0),
+        background: tuple[int, ...] = (13, 2, 8),
     ) -> BytesIO:
-        if char_list is None:
-            char_list = list(
-                r"$@B%8&WM#*oahkbdpqwmZO0QLCJYXzcvunxrjft/\|()1{}[]?-+~<>i!lI;:,^`'."
-            )
+        with Image.open(BytesIO(self.image)) as image:
+            image = self._mock_size(image, 1024)
+            image_scaled = np.array(image.convert("RGB").resize((int(scale * image.width), int(scale * image.height))))
 
-        with Image.open(BytesIO(self.image)).convert("RGB") as canvas:
-            canvas = self._mock_size(canvas, 512)
-            image: np.ndarray[np.float64, np.dtype[np.float64]] = rgb2gray(np.array(canvas))
+        if not ascii_chars:
+            ascii_chars = np.asarray(list(r" .'`^\,:;Il!i><~+_-?][}{1)(|\/tfjrxn"
+                                        r"uvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"))
+        font = ImageFont.load_default()
+        letter_width, letter_height = font.getsize("x")
+        wcf = letter_height / letter_width
 
-            box = ImageFont.load_default().getbbox("x")  # type: ignore
-            char_width: int = box[2] - box[0] 
-            char_height: int = box[3] - box[1]
+        width_in_chars = round(image_scaled.shape[1] * wcf)
+        height_in_chars = round(image_scaled.shape[0])
+        image_sum = np.sum(image_scaled, axis=2)
+        image_sum -= image_sum.min()
+        image_normalized = (1.0 - image_sum / image_sum.max()) ** gamma * (len(ascii_chars) - 1)
 
-            width_by_char = round(image.shape[1] * scale_factor)
-            height_by_char = round(
-                image.shape[0] * scale_factor * char_width / char_height
-            )
+        ascii_image = np.array([ascii_chars[i] for i in image_normalized.astype(int)])
+        lines = "\n".join(["".join(row) for row in ascii_image])
 
-            image = np.power(image, gamma)
-            image = (
-                (image - image.min()) 
-                / (image.max() - image.min())
-                * (len(char_list) - 1)
-            )
-            image = image.astype(int)
+        new_img_width = letter_width * width_in_chars
+        new_img_height = letter_height * height_in_chars
 
-            lines: list[str] = []
-            for i in range(height_by_char):
-                line = ""
-                for j in range(width_by_char):
-                    try:
-                        line += char_list[
-                            image[
-                                round(i * image.shape[0] / height_by_char),
-                                round(j * image.shape[1] / width_by_char),
-                            ]
-                        ]
-                    except IndexError:
-                        line += " "
-                lines.append(line)
+        with Image.new("RGBA", (new_img_width, new_img_height), background) as new_img:
+            draw = ImageDraw.Draw(new_img)
+            y = 0
 
-            new_image_width: int = width_by_char * char_width
-            new_image_height: int = height_by_char * char_height
+            for line in lines.split("\n"):
+                draw.text((0, y), line, (0, 255, 65), font=font)
+                y += letter_height
 
-            with Image.new(
-                "RGBA", (new_image_width, new_image_height), background
-            ) as bg:
-                draw = ImageDraw.Draw(bg)
+            left_area = (0, 0, new_img_width // 2, new_img_height)
+            new_img = new_img.crop(left_area)
+            new_img = new_img.resize((512, 512), Image.ANTIALIAS)
 
-                for i, line in enumerate(lines):
-                    neon_green_color = (57, 255, 20)
-                    draw.text((0, i * char_height), line, fill=neon_green_color)
+            buffer = BytesIO()
+            new_img.save(buffer, format="PNG")
+            buffer.seek(0)
 
-                buffer = BytesIO()
-                bg.save(buffer, format="PNG")
-                buffer.seek(0)
-
-                return buffer
+            return buffer
 
     async def to_ascii(self) -> File:
         """Return the avatar as an ASCII image."""

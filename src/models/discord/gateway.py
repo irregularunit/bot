@@ -31,6 +31,10 @@ This is a human-readable summary of the Legal Code. The full license is availabl
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
+# pyright: reportUnknownMemberType=false, reportGeneralTypeIssues=false
+# pyright: reportUntypedBaseClass=false, reportUnknownVariableType=false
+# pyright: reportUnknownArgumentType=false, reportPrivateUsage=false
+# Monkey patched MobileGateway class to allow for mobile connections.
 from __future__ import annotations
 
 from sys import platform
@@ -73,10 +77,6 @@ class PresencePayload(TypedDict):
     afk: bool
 
 
-# pyright: reportUnknownMemberType=false, reportGeneralTypeIssues=false,
-# pyright: reportUntypedBaseClass=false, reportUnknownVariableType=false,
-# pyright: reportUnknownArgumentType=false, reportPrivateUsage=false,
-# Monkey patched MobileGateway class to allow for mobile connections.
 class MobileGateway(discord.gateway.DiscordWebSocket):
     async def identify(self) -> None:
         payload = IdentifyPayload(
