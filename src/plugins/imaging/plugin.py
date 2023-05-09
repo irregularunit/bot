@@ -41,7 +41,7 @@ from discord.ext import commands
 from discord.utils import async_all
 from typing_extensions import override
 
-from src.imaging import AvatarCollage, Canvas, FilePointer
+from src.imaging import AvatarCollage, Canvas, FilePointer, CanvasOption
 from src.models.discord.converter import MaybeMember
 from src.shared import ExceptionFactory, Plugin, SerenityEmbed, Stopwatch, for_command_callbacks
 
@@ -121,11 +121,11 @@ class Imaging(Plugin):
         await ctx.send(embed=embed, file=file)
 
     @commands.command(
-        name="palette",
+        name="pallete",
         aliases=("pal",),
         help="Shows the color palette of a user's avatar.",
     )
-    async def palette_command(
+    async def pallete_command(
         self,
         ctx: SerenityContext,
         user: discord.User = commands.param(
@@ -138,13 +138,13 @@ class Imaging(Plugin):
         avatar = await self._read_avatar(user)
 
         with Stopwatch() as timer:
-            file = await Canvas(avatar).to_pallete()
+            file = await Canvas(avatar).to_canvas(CanvasOption.PALLETE)
             elapsed = timer.elapsed
 
         embed = (
             SerenityEmbed(description=(f"> Generating took `{elapsed:.2f}` seconds.\n"))
             .set_author(
-                name=f"{user.display_name}'s avatar palette",
+                name=f"{user.display_name}'s avatar pallete",
                 icon_url=user.display_avatar,
             )
             .set_image(url=f"attachment://{file.filename}")
@@ -170,13 +170,77 @@ class Imaging(Plugin):
         avatar = await self._read_avatar(user)
 
         with Stopwatch() as timer:
-            file = await Canvas(avatar).to_ascii()
+            file = await Canvas(avatar).to_canvas(CanvasOption.ASCII)
             elapsed = timer.elapsed
 
         embed = (
             SerenityEmbed(description=(f"> Generating took `{elapsed:.2f}` seconds.\n"))
             .set_author(
                 name=f"{user.display_name}'s ascii avatar",
+                icon_url=user.display_avatar,
+            )
+            .set_image(url=f"attachment://{file.filename}")
+        )
+
+        await ctx.send(embed=embed, file=file)
+
+    @commands.command(
+        name="pixel",
+        aliases=("px",),
+        help="Shows the pixel representation of a user's avatar.",
+    )
+    async def paint_command(
+        self,
+        ctx: SerenityContext,
+        user: discord.User = commands.param(
+            converter=Union[discord.User, MaybeMember],
+            default=None,
+            displayed_default="you",
+        ),
+    ) -> None:
+        user = user or ctx.author
+        avatar = await self._read_avatar(user)
+
+        with Stopwatch() as timer:
+            file = await Canvas(avatar).to_canvas(CanvasOption.PIXEL)
+            elapsed = timer.elapsed
+
+        embed = (
+            SerenityEmbed(description=(f"> Generating took `{elapsed:.2f}` seconds.\n"))
+            .set_author(
+                name=f"{user.display_name}'s pixel avatar",
+                icon_url=user.display_avatar,
+            )
+            .set_image(url=f"attachment://{file.filename}")
+        )
+
+        await ctx.send(embed=embed, file=file)
+
+    @commands.command(
+        name="trigger",
+        aliases=("trg",),
+        help="Shows the triggered representation of a user's avatar.",
+    )
+    async def trigger_command(
+        self,
+        ctx: SerenityContext,
+        user: discord.User = commands.param(
+            converter=Union[discord.User, MaybeMember],
+            default=None,
+            displayed_default="you",
+        ),
+    ) -> None:
+        user = user or ctx.author
+        avatar = await self._read_avatar(user)
+
+        with Stopwatch() as timer:
+            file = await Canvas(avatar).to_canvas(CanvasOption.TRIGGER)
+            elapsed = timer.elapsed
+
+        embed = (
+            SerenityEmbed(description=(f"> Generating took `{elapsed:.2f}` seconds.\n"))
+            .set_author(
+                name=f"{user.display_name}'s triggered avatar",
                 icon_url=user.display_avatar,
             )
             .set_image(url=f"attachment://{file.filename}")

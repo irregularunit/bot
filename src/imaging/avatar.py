@@ -144,8 +144,8 @@ class AvatarPointer:
         hashes: set[int] = set()
 
         for file in path_files:
-            with Image.open(file) as image:
-                hashes.add(hash(image.tobytes()))  # type: ignore
+            with Image.open(file) as _copy:
+                hashes.add(hash(_copy.tobytes()))  # type: ignore
 
         # Saves us some space. :)
         if hash_new in hashes:

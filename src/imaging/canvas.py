@@ -37,10 +37,13 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
+from pathlib import Path
 from asyncio import to_thread
 from io import BytesIO
 from typing import Optional
 from uuid import uuid4
+from random import randint
+from enum import IntEnum
 
 import numpy as np
 from discord import File
@@ -48,21 +51,14 @@ from PIL import Image, ImageDraw, ImageFont
 
 from .utils import rgb_to_hex
 
-__all__: tuple[str, ...] = ("Canvas",)
+__all__: tuple[str, ...] = ("Canvas", "CanvasOption")
 
 
-class Canvas:
-    """A class with methods for manipulating images.
-
-    Attributes
-    ----------
-    image: `bytes`
-        The image to manipulate.
-    """
+class ImageManipulator:
+    """A base class for image manipulation."""
 
     def __init__(self, image: bytes) -> None:
         self.image = image
-        self.bebas = ImageFont.truetype("static/fonts/BEBAS.ttf", 28)
 
     def _mock_size(self, image: Image.Image, size: int) -> Image.Image:
         if image.width > image.height:
@@ -74,8 +70,14 @@ class Canvas:
 
         return image.resize((new_width, new_height), Image.ANTIALIAS)
 
-    def _to_discord_file(self, buffer: BytesIO) -> File:
-        return File(buffer, filename=f"{uuid4()}.png")
+    def _to_discord_file(self, buffer: BytesIO, fmt: str = "PNG") -> File:
+        return File(buffer, filename=f"{uuid4()}.{fmt.lower()}")
+    
+
+class PalleteCreator(ImageManipulator):
+    def __init__(self, image: bytes) -> None:
+        super().__init__(image)
+        self.bebas = ImageFont.truetype("static/fonts/BEBAS.ttf", 28)
 
     def _create_pallete_canvas(self) -> BytesIO:
         with Image.open(BytesIO(self.image)) as canvas:
@@ -126,6 +128,18 @@ class Canvas:
         """Return the avatar as a pallete."""
         buffer = await to_thread(self._create_pallete_canvas)
         return self._to_discord_file(buffer)
+    
+
+class AsciiCreator(ImageManipulator):
+    def __init__(self, image: bytes) -> None:
+        super().__init__(image)
+        self.ascii_chars = np.asarray(
+                list(
+                    r" .'`^\,:;Il!i><~+_-?][}{1)(|\/tfjrxn"
+                    r"uvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
+                )
+            )
+        self.font = ImageFont.load_default()
 
     def _create_ascii_canvas(
         self,
@@ -142,16 +156,7 @@ class Canvas:
                 )
             )
 
-        if not ascii_chars:
-            ascii_chars = np.asarray(
-                list(
-                    r" .'`^\,:;Il!i><~+_-?][}{1)(|\/tfjrxn"
-                    r"uvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
-                )
-            )
-
-        font = ImageFont.load_default()
-        letter_width, letter_height = font.getsize("x")
+        letter_width, letter_height = self.font.getsize("x")
         wcf = letter_height / letter_width
 
         width_in_chars = round(image_scaled.shape[1] * wcf)
@@ -159,10 +164,10 @@ class Canvas:
         image_sum = np.sum(image_scaled, axis=2)
         image_sum -= image_sum.min()
         image_normalized = (1.0 - image_sum / image_sum.max()) ** gamma * (
-            len(ascii_chars) - 1
+            len(self.ascii_chars) - 1
         )
 
-        ascii_image = np.array([ascii_chars[i] for i in image_normalized.astype(int)])
+        ascii_image = np.array([self.ascii_chars[i] for i in image_normalized.astype(int)])
         lines = "\n".join(["".join(row) for row in ascii_image])
 
         new_img_width = letter_width * width_in_chars
@@ -173,7 +178,7 @@ class Canvas:
             y = 0
 
             for line in lines.split("\n"):
-                draw.text((0, y), line, (0, 255, 65), font=font)
+                draw.text((0, y), line, (0, 255, 65), font=self.font)
                 y += letter_height
 
             left_area = (0, 0, new_img_width // 2, new_img_height)
@@ -187,6 +192,115 @@ class Canvas:
             return buffer
 
     async def to_ascii(self) -> File:
-        """Return the avatar as an ASCII image."""
         buffer = await to_thread(self._create_ascii_canvas)
         return self._to_discord_file(buffer)
+
+
+class PixelateCreator(ImageManipulator):
+    def __init__(self, image: bytes) -> None:
+        super().__init__(image)
+
+    def _create_pixel_canvas(self) -> BytesIO:
+        def shuffle(points: list[tuple[int, int]]) -> None:
+            for i in range(len(points)):
+                j = randint(0, len(points) - 1)
+                points[i], points[j] = points[j], points[i]
+
+        with Image.open(BytesIO(self.image)) as canvas:
+            canvas = self._mock_size(canvas, 512)
+
+            with Image.new("RGBA", canvas.size, (0, 0, 0, 0)) as background:
+                points = []
+                for x in range(0, canvas.width, 10):
+                    for y in range(0, canvas.height, 10):
+                        points.append((x, y))
+
+
+                shuffle(points)
+
+                for point in points:
+                    color = canvas.getpixel(point)
+                    draw = ImageDraw.Draw(background)
+                    draw.rectangle((point, (point[0] + 10, point[1] + 10)), fill=color)
+
+                buffer = BytesIO()
+                background.save(buffer, format="PNG")
+                buffer.seek(0)
+
+                return buffer
+            
+    async def to_pixel(self) -> File:
+        buffer = await to_thread(self._create_pixel_canvas)
+        return self._to_discord_file(buffer)
+    
+
+class TriggerCreator(ImageManipulator):
+    def __init__(self, image: bytes) -> None:
+        super().__init__(image)
+        self.trigger_path = Path(__file__).parent / "images" / "triggered.png"
+
+    def _create_triggerd_canvas(self) -> BytesIO:
+        with Image.open(BytesIO(self.image)) as canvas:
+            canvas = self._mock_size(canvas, 512)
+            frames: list[Image.Image] = []
+
+            for _ in range (30):
+                with Image.new("RGBA", (400, 400), (0, 0, 0, 0)) as layer:
+                    x = - 1 * randint(50, 100)
+                    y = - 1 * randint(50, 100)
+                    layer.paste(canvas, (x, y))
+
+                    with Image.new("RGBA", (400, 400), (255, 0, 0, 80)) as red:
+                        layer.paste(red, mask=red)
+
+                    with Image.open(self.trigger_path) as triggered:
+                        layer.paste(triggered, mask=triggered)
+
+                    frames.append(layer)
+
+            buffer = BytesIO()
+            frames[0].save(
+                buffer,
+                format="GIF",
+                save_all=True,
+                duration=60,
+                loop=0,
+                append_images=frames
+            )
+            buffer.seek(0)
+
+            return buffer
+        
+    async def to_triggerd(self) -> File:
+        buffer = await to_thread(self._create_triggerd_canvas)
+        return self._to_discord_file(buffer, fmt="gif")
+
+
+class CanvasOption(IntEnum):
+    ASCII = 0
+    PALLETE = 1
+    TRIGGER = 2
+    PIXEL = 3
+
+
+class Canvas(
+    *(  # type: ignore
+        AsciiCreator,
+        PalleteCreator,
+        TriggerCreator,
+        PixelateCreator
+    )
+):
+    def __init__(self, image: bytes) -> None:
+        super().__init__(image)
+        self.image = image
+
+        self.available_manipulators = {
+            CanvasOption.ASCII: self.to_ascii,
+            CanvasOption.PALLETE: self.to_pallete,
+            CanvasOption.TRIGGER: self.to_triggerd,
+            CanvasOption.PIXEL: self.to_pixel
+        }
+
+    async def to_canvas(self, canvas_type: CanvasOption) -> File:
+        return await self.available_manipulators[canvas_type]()
