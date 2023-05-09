@@ -39,18 +39,14 @@ from __future__ import annotations
 
 from asyncio import to_thread
 from io import BytesIO
+from typing import Optional
 from uuid import uuid4
-from typing import List, Optional
 
-import numba as nb
 import numpy as np
 from discord import File
 from PIL import Image, ImageDraw, ImageFont
-from skimage.color import rgb2gray  # type: ignore
-
 
 from .utils import rgb_to_hex
-
 
 __all__: tuple[str, ...] = ("Canvas",)
 
@@ -63,7 +59,6 @@ class Canvas:
     image: `bytes`
         The image to manipulate.
     """
-
 
     def __init__(self, image: bytes) -> None:
         self.image = image
@@ -134,18 +129,27 @@ class Canvas:
 
     def _create_ascii_canvas(
         self,
-        ascii_chars: Optional[np.ndarray] = None,
+        ascii_chars: Optional[np.ndarray] = None,  # type: ignore
         scale: float = 0.1,
         gamma: float = 2.0,
         background: tuple[int, ...] = (13, 2, 8),
     ) -> BytesIO:
         with Image.open(BytesIO(self.image)) as image:
             image = self._mock_size(image, 1024)
-            image_scaled = np.array(image.convert("RGB").resize((int(scale * image.width), int(scale * image.height))))
+            image_scaled = np.array(
+                image.convert("RGB").resize(
+                    (int(scale * image.width), int(scale * image.height))
+                )
+            )
 
         if not ascii_chars:
-            ascii_chars = np.asarray(list(r" .'`^\,:;Il!i><~+_-?][}{1)(|\/tfjrxn"
-                                        r"uvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"))
+            ascii_chars = np.asarray(
+                list(
+                    r" .'`^\,:;Il!i><~+_-?][}{1)(|\/tfjrxn"
+                    r"uvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
+                )
+            )
+
         font = ImageFont.load_default()
         letter_width, letter_height = font.getsize("x")
         wcf = letter_height / letter_width
@@ -154,7 +158,9 @@ class Canvas:
         height_in_chars = round(image_scaled.shape[0])
         image_sum = np.sum(image_scaled, axis=2)
         image_sum -= image_sum.min()
-        image_normalized = (1.0 - image_sum / image_sum.max()) ** gamma * (len(ascii_chars) - 1)
+        image_normalized = (1.0 - image_sum / image_sum.max()) ** gamma * (
+            len(ascii_chars) - 1
+        )
 
         ascii_image = np.array([ascii_chars[i] for i in image_normalized.astype(int)])
         lines = "\n".join(["".join(row) for row in ascii_image])

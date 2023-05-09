@@ -43,7 +43,6 @@ from uuid import uuid4
 
 from PIL import Image, UnidentifiedImageError
 
-
 __all__: tuple[str, ...] = ("AvatarPointer", "FilePointer", "AvatarCollage")
 
 _logger = getLogger(__name__)

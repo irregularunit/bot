@@ -33,57 +33,47 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import datetime as dt
+from typing import TYPE_CHECKING, Any, Optional, Union, AsyncGenerator
 
-import discord
-from discord.ext import commands
-
-from src.shared import Plugin
-
-from .handlers import get_message
+from discord import utils
+import redis.asyncio as redis
 
 if TYPE_CHECKING:
-    from src.models.discord import SerenityContext
     from src.models.serenity import Serenity
 
+__all__: tuple[str, ...] = ("Publisher", "Subscriber")
 
-__all__: tuple[str, ...] = ("Errors",)
 
-
-class Errors(Plugin):
+class Publisher:
     def __init__(self, serenity: Serenity) -> None:
         self.serenity = serenity
-        self.snail = "\N{SNAIL}"
+        self.redis: redis.Redis[Any] = serenity.redis
+        self.pubsub: Any= serenity.redis.pubsub()  # type: ignore
 
-    @Plugin.listener()
-    async def on_command_error(
-        self, ctx: SerenityContext, error: commands.CommandError
+    async def publish(self, channel: str, message: Any) -> None:
+        await self.redis.publish(channel, message)
+
+    async def publish_after(
+        self, channel: str, message: Any, delay: Union[int, float]
     ) -> None:
-        if not ctx.guild:
-            return
+        await utils.sleep_until(when=utils.utcnow() + dt.timedelta(seconds=delay))
+        
+        async with self.redis.pubsub() as ps:  # type: ignore
+            await ps.subscribe(channel)  # type: ignore
+            await self.redis.publish(channel, message)
 
-        if isinstance(error, commands.CommandOnCooldown):
-            if await self.serenity.redis.exists(
-                f"{ctx.author.id}:RateLimit:Command"
-            ):
-                return
 
-            await self.serenity.redis.setex(
-                f"{ctx.author.id}:RateLimit:Command",
-                int(error.retry_after) + 1,
-                "1",
-            )
+class Subscriber:
+    def __init__(self, serenity: Serenity) -> None:
+        self.serenity = serenity
+        self.redis = serenity.redis
+        self.pubsub = serenity.redis.pubsub()  # type: ignore
 
-            try:
-                return await ctx.message.add_reaction(self.snail)
-            except discord.HTTPException:
-                return
+    async def listener(self, channel: str) -> AsyncGenerator[Optional[str], None]:
+        await self.pubsub.subscribe(channel)  # type: ignore
 
-        hint = get_message(ctx, error)
-        send = ctx.channel.permissions_for(ctx.guild.me).send_messages
-
-        if send and hint is not None:
-            try:
-                await ctx.safe_send(hint)
-            except discord.HTTPException:
-                pass
+        while True:
+            async for message in self.pubsub.listen():
+                if message["type"] == "message":
+                    yield message["data"].decode("utf-8")

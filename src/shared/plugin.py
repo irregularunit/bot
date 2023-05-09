@@ -33,10 +33,11 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, Type
 from uuid import uuid4
 
 from discord.ext import commands
+from discord.app_commands import Command as AppCommand
 from typing_extensions import override
 
 if TYPE_CHECKING:
@@ -44,7 +45,12 @@ if TYPE_CHECKING:
     from src.models.serenity import Serenity
 
 
-__all__: tuple[str, ...] = ("Plugin",)
+__all__: tuple[str, ...] = ("Plugin", "for_command_callbacks")
+
+
+T = TypeVar("T")
+CogT_co = TypeVar("CogT_co", covariant=True, bound=commands.Cog)
+CommandT = AppCommand| commands.Command  # type: ignore
 
 
 class Plugin(commands.Cog):
@@ -69,3 +75,39 @@ class Plugin(commands.Cog):
 
     def __str__(self) -> str:
         return self.__class__.__name__
+
+
+def for_command_callbacks(
+    decorator: Callable[[Any], Callable[[Type[T]], Type[T]]]
+) -> Callable[[Type[T]], Type[T]]:
+    """Decorator for command callbacks.
+    
+    Example
+    -------
+    >>> @for_command_callbacks
+    >>> class MyPlugin(Plugin):
+    >>>     @command()
+    >>>     async def my_command(self, ctx: SerenityContext) -> None:
+    >>>         ....
+
+    Parameters
+    ----------
+    decorator : `Callable[[CommandT_co], Callable[[Type[T]], Type[T]]]`
+        The decorator to decorate the command callbacks with.
+
+    Returns
+    -------
+    `Callable[[Type[T]], Type[T]]`
+        The decorated command callback.
+    """
+    
+    def inner(cls: Type[T]) -> Type[T]:
+
+        for attr in dir(cls):
+            method = getattr(cls, attr)
+            if isinstance(method, CommandT):
+                setattr(cls, attr, decorator(method))  # type: ignore
+
+        return cls
+
+    return inner

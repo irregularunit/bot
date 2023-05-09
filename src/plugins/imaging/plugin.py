@@ -43,7 +43,7 @@ from typing_extensions import override
 
 from src.imaging import AvatarCollage, Canvas, FilePointer
 from src.models.discord.converter import MaybeMember
-from src.shared import ExceptionFactory, Plugin, SerenityEmbed, Stopwatch
+from src.shared import ExceptionFactory, Plugin, SerenityEmbed, Stopwatch, for_command_callbacks
 
 if TYPE_CHECKING:
     from src.models.discord import SerenityContext
@@ -53,6 +53,7 @@ if TYPE_CHECKING:
 __all__: tuple[str, ...] = ("Imaging",)
 
 
+@for_command_callbacks(commands.cooldown(1, 5, commands.BucketType.user))
 class Imaging(Plugin):
     """The Imaging plugin provides image manipulation commands."""
 

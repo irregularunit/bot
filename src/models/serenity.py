@@ -60,7 +60,7 @@ from src.models.discord import (
     SerenityUser,
 )
 from src.models.discord._bot.cache import SerenityUserCache
-from src.shared import ExceptionFactory, ExecptionLevel, SerenityConfig
+from src.shared import ExceptionFactory, ExecptionLevel, SerenityConfig, Subscriber, Publisher
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -108,6 +108,8 @@ class Serenity(SerenityMixin, commands.Bot):
 
         self._pool = pool
         self._redis = redis
+        self.subscriber = Subscriber(self)
+        self.publisher = Publisher(self)
 
     @cached_property
     def version(self) -> str:
@@ -208,7 +210,7 @@ class Serenity(SerenityMixin, commands.Bot):
         if message.guild.id not in self.cached_prefixes:
             guild = await self.get_or_create_guild(message.guild.id)
 
-            if guild.prefixes[0] is not None:
+            if guild.prefixes[0] is not None:  # type: ignore
                 pattern = self.compile_prefixes(guild.prefixes)
             else:
                 if self.user is None:
@@ -391,7 +393,7 @@ class Serenity(SerenityMixin, commands.Bot):
     async def close(self) -> None:
         to_close = (self.pool, self.session, self.redis)
         asyncio.gather(
-            *[resource.close() for resource in to_close if resource is not None]
+            *[resource.close() for resource in to_close if resource is not None]  # type: ignore
         )
 
         await super().close()

@@ -43,7 +43,7 @@ from discord.utils import async_all
 from typing_extensions import override
 
 from src.models.discord.converter import MaybeMember
-from src.shared import ExceptionFactory, Plugin, SerenityEmbed
+from src.shared import ExceptionFactory, Plugin, SerenityEmbed, for_command_callbacks
 
 from .utils import count_source_lines
 from .views import AboutSerenityView
@@ -56,6 +56,7 @@ if TYPE_CHECKING:
 __all__: tuple[str, ...] = ("Info",)
 
 
+@for_command_callbacks(commands.cooldown(1, 5, commands.BucketType.user))
 class Info(Plugin):
     """The Info plugin provides information about Discord and Serenity."""
 

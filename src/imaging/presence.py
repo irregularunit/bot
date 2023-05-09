@@ -68,9 +68,7 @@ class PresenceGraph(SavableByteStream):
             "DnD": "#808080",
         }
         self._avatar = avatar
-        self.font = ImageFont.truetype(
-            "static/fonts/Lato-Regular.ttf", 12
-        )
+        self.font = ImageFont.truetype("static/fonts/Lato-Regular.ttf", 12)
 
     @property
     def data(self) -> PresenceData:

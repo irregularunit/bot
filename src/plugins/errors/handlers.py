@@ -193,11 +193,13 @@ def null_handler(
 ) -> None:
     pass
 
+
 @register_handler(commands.BadUnionArgument)
 def bad_union_argument_handler(
     ctx: SerenityContext, error: commands.BadUnionArgument
 ) -> str:
     return str(error)
+
 
 @register_handler(UserFeedbackException)
 def user_feedback_handler(ctx: SerenityContext, error: UserFeedbackException) -> str:
