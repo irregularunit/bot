@@ -31,6 +31,9 @@ This is a human-readable summary of the Legal Code. The full license is availabl
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 # pyright: reportMissingTypeStubs=false
+# pyright: reportUnknownArgumentType=false
+# pyright: reportUnknownVariableType=false
+# pyright: reportUnknownMemberType=false
 
 from __future__ import annotations
 
@@ -142,7 +145,7 @@ class Canvas:
             image: np.ndarray[np.float64, np.dtype[np.float64]] = rgb2gray(np.array(canvas))
 
             box = ImageFont.load_default().getbbox("x")  # type: ignore
-            char_width: int = box[2] - box[0]
+            char_width: int = box[2] - box[0] 
             char_height: int = box[3] - box[1]
 
             width_by_char = round(image.shape[1] * scale_factor)
@@ -152,8 +155,8 @@ class Canvas:
 
             image = np.power(image, gamma)
             image = (
-                (image - image.min())  # type: ignore
-                / (image.max() - image.min())  # type: ignore
+                (image - image.min()) 
+                / (image.max() - image.min())
                 * (len(char_list) - 1)
             )
             image = image.astype(int)
@@ -183,7 +186,7 @@ class Canvas:
 
                 for i, line in enumerate(lines):
                     neon_green_color = (57, 255, 20)
-                    draw.text((0, i * char_height), line, fill=neon_green_color)  # type: ignore
+                    draw.text((0, i * char_height), line, fill=neon_green_color)
 
                 buffer = BytesIO()
                 bg.save(buffer, format="PNG")

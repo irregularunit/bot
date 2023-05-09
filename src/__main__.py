@@ -71,12 +71,7 @@ async def setup() -> tuple[Serenity, Pool[Record], ClientSession]:
 
     try:
         pool: Pool[Record] = await Serenity.create_pool(config.sql_dsn)
-
-        if pool is None:
-            raise RuntimeError("Failed to create database pool.")
-
         redis: Redis[Any] = Redis.from_url(config.redis_url)  # type: ignore
-
     except Exception as exc:
         raise exc
 

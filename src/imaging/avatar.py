@@ -35,7 +35,6 @@ from __future__ import annotations
 
 from asyncio import to_thread
 from copy import deepcopy
-from functools import cached_property
 from io import BytesIO
 from logging import getLogger
 from pathlib import Path
@@ -44,7 +43,6 @@ from uuid import uuid4
 
 from PIL import Image, UnidentifiedImageError
 
-from .abc import SavableByteStream
 
 __all__: tuple[str, ...] = ("AvatarPointer", "FilePointer", "AvatarCollage")
 
@@ -59,11 +57,11 @@ class FilePointer:
         self.uid = uid
         self.root = _ROOT
 
-    @cached_property
+    @property
     def empty(self) -> bool:
         return not bool(len(self))
 
-    @cached_property
+    @property
     def current_path(self) -> Path:
         return self.root / str(self.uid)
 
@@ -85,7 +83,7 @@ class FilePointer:
         return repr(self)
 
 
-class AvatarPointer(SavableByteStream):
+class AvatarPointer:
     __slots__: tuple[str, ...] = (
         "_uid",
         "_name",
@@ -118,12 +116,12 @@ class AvatarPointer(SavableByteStream):
     def content_type(self) -> str:
         return self._mime_type
 
-    @cached_property
+    @property
     def file(self) -> BytesIO:
         """Returns a copy of the Image for reusability."""
         return deepcopy(self._file)
 
-    @cached_property
+    @property
     def current_path(self) -> Path:
         return self.root / str(self.uid)
 
@@ -160,17 +158,20 @@ class AvatarPointer(SavableByteStream):
 
         destination = self.current_path / f"{uuid4().hex}.png"
         with destination.open("wb") as file:
-            file.write(self._file.getvalue())
+            image.save(file, format="PNG")
+
+    async def save(self) -> None:
+        await to_thread(self._save_to_path)
 
 
-class AvatarCollage(SavableByteStream):
+class AvatarCollage:
     __slots__: tuple[str, ...] = ("_pointer", "x", "y")
 
     def __init__(self, pointer: FilePointer) -> None:
         self._pointer = pointer
         self.x = self.y = 0
 
-    @cached_property
+    @property
     def images(self) -> list[Image.Image]:
         return list(self._pointer)
 
