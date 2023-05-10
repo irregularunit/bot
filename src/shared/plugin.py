@@ -82,17 +82,9 @@ def for_command_callbacks(
 ) -> Callable[[Type[T]], Type[T]]:
     """Decorator for command callbacks.
     
-    Example
-    -------
-    >>> @for_command_callbacks
-    >>> class MyPlugin(Plugin):
-    >>>     @command()
-    >>>     async def my_command(self, ctx: SerenityContext) -> None:
-    >>>         ....
-
     Parameters
     ----------
-    decorator : `Callable[[CommandT_co], Callable[[Type[T]], Type[T]]]`
+    decorator : `Callable[[Any], Callable[[Type[T]], Type[T]]]`
         The decorator to decorate the command callbacks with.
 
     Returns
