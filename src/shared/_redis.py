@@ -34,10 +34,10 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 from __future__ import annotations
 
 import datetime as dt
-from typing import TYPE_CHECKING, Any, Optional, Union, AsyncGenerator
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Optional, Union
 
-from discord import utils
 import redis.asyncio as redis
+from discord import utils
 
 if TYPE_CHECKING:
     from src.models.serenity import Serenity
@@ -49,7 +49,7 @@ class Publisher:
     def __init__(self, serenity: Serenity) -> None:
         self.serenity = serenity
         self.redis: redis.Redis[Any] = serenity.redis
-        self.pubsub: Any= serenity.redis.pubsub()  # type: ignore
+        self.pubsub: Any = serenity.redis.pubsub()  # type: ignore
 
     async def publish(self, channel: str, message: Any) -> None:
         await self.redis.publish(channel, message)
@@ -58,7 +58,7 @@ class Publisher:
         self, channel: str, message: Any, delay: Union[int, float]
     ) -> None:
         await utils.sleep_until(when=utils.utcnow() + dt.timedelta(seconds=delay))
-        
+
         async with self.redis.pubsub() as ps:  # type: ignore
             await ps.subscribe(channel)  # type: ignore
             await self.redis.publish(channel, message)

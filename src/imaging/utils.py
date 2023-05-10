@@ -37,4 +37,16 @@ __all__: tuple[str, ...] = ("rgb_to_hex",)
 
 
 def rgb_to_hex(rgb: tuple[int, int, int]) -> str:
+    """Converts an RGB tuple to a hex string.
+
+    Parameters
+    ----------
+    rgb : `tuple` [`int`, `int`, `int`]
+        The RGB tuple to convert.
+
+    Returns
+    -------
+    `str`
+        The hex string representation of the RGB tuple.
+    """
     return ('#%02x%02x%02x' % rgb).upper()

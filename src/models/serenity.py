@@ -60,7 +60,13 @@ from src.models.discord import (
     SerenityUser,
 )
 from src.models.discord._bot.cache import SerenityUserCache
-from src.shared import ExceptionFactory, ExecptionLevel, SerenityConfig, Subscriber, Publisher
+from src.shared import (
+    ExceptionFactory,
+    ExecptionLevel,
+    Publisher,
+    SerenityConfig,
+    Subscriber,
+)
 
 if TYPE_CHECKING:
     from datetime import datetime

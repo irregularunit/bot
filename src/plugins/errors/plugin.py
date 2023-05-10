@@ -63,9 +63,7 @@ class Errors(Plugin):
             return
 
         if isinstance(error, commands.CommandOnCooldown):
-            if await self.serenity.redis.exists(
-                f"{ctx.author.id}:RateLimit:Command"
-            ):
+            if await self.serenity.redis.exists(f"{ctx.author.id}:RateLimit:Command"):
                 return
 
             await self.serenity.redis.setex(

@@ -41,9 +41,15 @@ from discord.ext import commands
 from discord.utils import async_all
 from typing_extensions import override
 
-from src.imaging import AvatarCollage, Canvas, FilePointer, CanvasOption
+from src.imaging import AvatarCollage, Canvas, CanvasOption, FilePointer
 from src.models.discord.converter import MaybeMember
-from src.shared import ExceptionFactory, Plugin, SerenityEmbed, Stopwatch, for_command_callbacks
+from src.shared import (
+    ExceptionFactory,
+    Plugin,
+    SerenityEmbed,
+    Stopwatch,
+    for_command_callbacks,
+)
 
 if TYPE_CHECKING:
     from src.models.discord import SerenityContext

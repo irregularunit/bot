@@ -37,13 +37,13 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from pathlib import Path
 from asyncio import to_thread
+from enum import IntEnum
 from io import BytesIO
+from pathlib import Path
+from random import randint
 from typing import Optional
 from uuid import uuid4
-from random import randint
-from enum import IntEnum
 
 import numpy as np
 from discord import File
@@ -72,7 +72,7 @@ class ImageManipulator:
 
     def _to_discord_file(self, buffer: BytesIO, fmt: str = "PNG") -> File:
         return File(buffer, filename=f"{uuid4()}.{fmt.lower()}")
-    
+
 
 class PalleteCreator(ImageManipulator):
     def __init__(self, image: bytes) -> None:
@@ -128,17 +128,17 @@ class PalleteCreator(ImageManipulator):
         """Return the avatar as a pallete."""
         buffer = await to_thread(self._create_pallete_canvas)
         return self._to_discord_file(buffer)
-    
+
 
 class AsciiCreator(ImageManipulator):
     def __init__(self, image: bytes) -> None:
         super().__init__(image)
         self.ascii_chars = np.asarray(
-                list(
-                    r" .'`^\,:;Il!i><~+_-?][}{1)(|\/tfjrxn"
-                    r"uvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
-                )
+            list(
+                r" .'`^\,:;Il!i><~+_-?][}{1)(|\/tfjrxn"
+                r"uvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
             )
+        )
         self.font = ImageFont.load_default()
 
     def _create_ascii_canvas(
@@ -167,7 +167,9 @@ class AsciiCreator(ImageManipulator):
             len(self.ascii_chars) - 1
         )
 
-        ascii_image = np.array([self.ascii_chars[i] for i in image_normalized.astype(int)])
+        ascii_image = np.array(
+            [self.ascii_chars[i] for i in image_normalized.astype(int)]
+        )
         lines = "\n".join(["".join(row) for row in ascii_image])
 
         new_img_width = letter_width * width_in_chars
@@ -215,7 +217,6 @@ class PixelateCreator(ImageManipulator):
                     for y in range(0, canvas.height, 10):
                         points.append((x, y))
 
-
                 shuffle(points)
 
                 for point in points:
@@ -228,11 +229,11 @@ class PixelateCreator(ImageManipulator):
                 buffer.seek(0)
 
                 return buffer
-            
+
     async def to_pixel(self) -> File:
         buffer = await to_thread(self._create_pixel_canvas)
         return self._to_discord_file(buffer)
-    
+
 
 class TriggerCreator(ImageManipulator):
     def __init__(self, image: bytes) -> None:
@@ -244,10 +245,10 @@ class TriggerCreator(ImageManipulator):
             canvas = self._mock_size(canvas, 512)
             frames: list[Image.Image] = []
 
-            for _ in range (30):
+            for _ in range(30):
                 with Image.new("RGBA", (400, 400), (0, 0, 0, 0)) as layer:
-                    x = - 1 * randint(50, 100)
-                    y = - 1 * randint(50, 100)
+                    x = -1 * randint(50, 100)
+                    y = -1 * randint(50, 100)
                     layer.paste(canvas, (x, y))
 
                     with Image.new("RGBA", (400, 400), (255, 0, 0, 80)) as red:
@@ -265,12 +266,12 @@ class TriggerCreator(ImageManipulator):
                 save_all=True,
                 duration=60,
                 loop=0,
-                append_images=frames
+                append_images=frames,
             )
             buffer.seek(0)
 
             return buffer
-        
+
     async def to_triggerd(self) -> File:
         buffer = await to_thread(self._create_triggerd_canvas)
         return self._to_discord_file(buffer, fmt="gif")
@@ -284,12 +285,7 @@ class CanvasOption(IntEnum):
 
 
 class Canvas(
-    *(  # type: ignore
-        AsciiCreator,
-        PalleteCreator,
-        TriggerCreator,
-        PixelateCreator
-    )
+    *(AsciiCreator, PalleteCreator, TriggerCreator, PixelateCreator)  # type: ignore
 ):
     def __init__(self, image: bytes) -> None:
         super().__init__(image)
@@ -299,7 +295,7 @@ class Canvas(
             CanvasOption.ASCII: self.to_ascii,
             CanvasOption.PALLETE: self.to_pallete,
             CanvasOption.TRIGGER: self.to_triggerd,
-            CanvasOption.PIXEL: self.to_pixel
+            CanvasOption.PIXEL: self.to_pixel,
         }
 
     async def to_canvas(self, canvas_type: CanvasOption) -> File:
