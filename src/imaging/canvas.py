@@ -285,7 +285,10 @@ class CanvasOption(IntEnum):
 
 
 class Canvas(
-    *(AsciiCreator, PalleteCreator, TriggerCreator, PixelateCreator)  # type: ignore
+    PalleteCreator,
+    AsciiCreator,
+    PixelateCreator,
+    TriggerCreator,
 ):
     def __init__(self, image: bytes) -> None:
         super().__init__(image)

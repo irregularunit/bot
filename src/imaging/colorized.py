@@ -33,6 +33,7 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
+import asyncio
 import io
 import struct
 import zlib
@@ -116,7 +117,7 @@ class ColorRepresentation(SavableByteStream):
         ]
 
     @property
-    def rgb(self) -> RGB:
+    def colour(self) -> RGB:
         return self._rgb
 
     def __repr__(self) -> str:
@@ -153,7 +154,7 @@ class ColorRepresentation(SavableByteStream):
         # The filter byte is set to 0, indicating "None".
         # See: http://www.libpng.org/pub/png/spec/1.2/PNG-Compression.html
         raw_data = b''.join(
-            b'\x00' + bytes(self.rgb.rgb) * width for _ in range(height)
+            b'\x00' + bytes(self.colour.rgb) * width for _ in range(height)
         )
 
         compressed_data = zlib.compress(raw_data)
@@ -183,11 +184,3 @@ class ColorRepresentation(SavableByteStream):
             return buffer
 
         return await asyncio.to_thread(sync)  # type: ignore
-
-
-if __name__ == '__main__':
-    import random
-
-    rgb = RGB(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-    color = ColorRepresentation(256, 256, rgb)
-    color.save('image.png')

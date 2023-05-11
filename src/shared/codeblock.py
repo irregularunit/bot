@@ -67,7 +67,6 @@ class Codeblock:
     def __init__(
         self, content: AnyStr, *, language: Optional[str] = None, inline: bool = False
     ) -> None:
-
         if isinstance(content, str):
             self.content = content
         else:

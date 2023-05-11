@@ -58,6 +58,14 @@ class PresenceData(TypedDict):
 
 
 class PresenceGraph(SavableByteStream):
+    __slots__: tuple[str, ...] = ("_data", "_width", "_mapping", "_avatar", "font")
+
+    _data: PresenceData
+    _width: float
+    _mapping: dict[str, str]
+    _avatar: bytes
+    font: ImageFont.FreeTypeFont
+
     def __init__(self, data: PresenceData, avatar: bytes) -> None:
         self._data = data
         self._width = 0.2

@@ -192,7 +192,10 @@ class AvatarCollage:
                 x, y = self.x * 256, self.y * 256
                 canvas.paste(avatar, (x, y))
 
-                (fx, fy,) = max(
+                (
+                    fx,
+                    fy,
+                ) = max(
                     x, fx
                 ), max(y, fy)
                 self.x += 1
