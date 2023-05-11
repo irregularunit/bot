@@ -33,9 +33,9 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
+import io
 import struct
 import zlib
-import io
 
 from .abc import SavableByteStream
 
@@ -59,30 +59,30 @@ class RGB:
     def __post_init__(self) -> None:
         if not all(0 <= c <= 255 for c in (self.rgb)):
             raise ValueError('RGB values must be between 0 and 255.')
-        
+
     @property
     def r(self) -> int:
         return self._r
-    
+
     @property
     def g(self) -> int:
         return self._g
-    
+
     @property
     def b(self) -> int:
         return self._b
-    
+
     @property
     def rgb(self) -> tuple[int, int, int]:
         return self._r, self._g, self._b
-    
+
     def __repr__(self) -> str:
         return f'RGB(r={self._r}, g={self._g}, b={self._b})'
 
 
 class ColorRepresentation(SavableByteStream):
     """Represents a colorized image.
-    
+
     This class is super barebones and only supports PNGs with 8-bit color depth and 2 color channels.
     On the other hand, it's very fast and memory-efficient. It's also not very flexible, but that's
     not the point of this class.
@@ -112,21 +112,26 @@ class ColorRepresentation(SavableByteStream):
             b'\x89PNG\r\n\x1a\n',
             self._generate_header_chunk(width, height),
             self._generate_data_chunk(width, height),
-            self._generate_end_chunk()
+            self._generate_end_chunk(),
         ]
-    
+
     @property
     def rgb(self) -> RGB:
         return self._rgb
-    
+
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}(rgb={self._rgb})'
-    
+
     def _generate_chunk(self, chunk_type: bytes, data: bytes) -> bytes:
         """Generate a PNG chunk, including the 4-byte length prefix and the 4-byte chunk type."""
         chunk_header = struct.pack('!I', len(data))
-        return chunk_header + chunk_type + data + struct.pack('!I', zlib.crc32(chunk_type + data))
-    
+        return (
+            chunk_header
+            + chunk_type
+            + data
+            + struct.pack('!I', zlib.crc32(chunk_type + data))
+        )
+
     def _generate_header_chunk(self, width: int, height: int) -> bytes:
         """Generate the IHDR chunk, which contains information about the image."""
 
@@ -141,21 +146,23 @@ class ColorRepresentation(SavableByteStream):
         data = struct.pack('!IIBBBBB', width, height, 8, 2, 0, 0, 0)
 
         return self._generate_chunk(b'IHDR', data)
-    
+
     def _generate_data_chunk(self, width: int, height: int) -> bytes:
         """Generate the IDAT chunk, which contains the image data."""
 
         # The filter byte is set to 0, indicating "None".
         # See: http://www.libpng.org/pub/png/spec/1.2/PNG-Compression.html
-        raw_data = b''.join(b'\x00' + bytes(self.rgb.rgb) * width for _ in range(height))
+        raw_data = b''.join(
+            b'\x00' + bytes(self.rgb.rgb) * width for _ in range(height)
+        )
 
         compressed_data = zlib.compress(raw_data)
         return self._generate_chunk(b'IDAT', compressed_data)
-    
+
     def _generate_end_chunk(self) -> bytes:
         """Generate the IEND chunk, which indicates that the image is complete."""
         return self._generate_chunk(b'IEND', b'')
-    
+
     def save(self, file: str) -> None:
         """Save the image to a file."""
         buffer = io.BytesIO()
@@ -172,14 +179,15 @@ class ColorRepresentation(SavableByteStream):
 
             for instruction in self._instructions:
                 buffer.write(instruction)
-            
+
             return buffer
-        
+
         return await asyncio.to_thread(sync)  # type: ignore
 
 
 if __name__ == '__main__':
     import random
+
     rgb = RGB(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
     color = ColorRepresentation(256, 256, rgb)
     color.save('image.png')

@@ -32,7 +32,7 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
 from string import ascii_letters, digits
-from typing import Final, NamedTuple
+from typing import Final, Literal, NamedTuple
 
 __all__: tuple[str, ...] = (
     "__version__",
@@ -49,7 +49,7 @@ class VersionInfo(NamedTuple):
     major: int
     minor: int
     micro: int
-    releaselevel: str
+    releaselevel: Literal["a", "b", "rc", "zd", "zr", "f"]
     serial: str
 
     def to_string(self) -> str:
