@@ -164,16 +164,6 @@ class ColorRepresentation(SavableByteStream):
         """Generate the IEND chunk, which indicates that the image is complete."""
         return self._generate_chunk(b'IEND', b'')
 
-    def save(self, file: str) -> None:
-        """Save the image to a file."""
-        buffer = io.BytesIO()
-
-        for instruction in self._instructions:
-            buffer.write(instruction)
-
-        with open(file, 'wb') as f:
-            f.write(buffer.getvalue())
-
     async def buffer(self) -> io.BytesIO:
         def sync() -> io.BytesIO:
             buffer = io.BytesIO()
@@ -181,6 +171,16 @@ class ColorRepresentation(SavableByteStream):
             for instruction in self._instructions:
                 buffer.write(instruction)
 
+            buffer.seek(0)
             return buffer
 
-        return await asyncio.to_thread(sync)  # type: ignore
+        return await asyncio.to_thread(sync)
+
+    def raw(self) -> io.BytesIO:
+        buffer = io.BytesIO()
+
+        for instruction in self._instructions:
+            buffer.write(instruction)
+
+        buffer.seek(0)
+        return buffer

@@ -42,8 +42,15 @@ from discord.ext import commands
 from discord.utils import async_all
 from typing_extensions import override
 
+from src.imaging import RGB, ColorRepresentation
 from src.models.discord.converter import MaybeMember
-from src.shared import ExceptionFactory, Plugin, SerenityEmbed, for_command_callbacks
+from src.shared import (
+    ExceptionFactory,
+    Plugin,
+    SerenityEmbed,
+    Stopwatch,
+    for_command_callbacks,
+)
 
 from .utils import count_source_lines
 from .views import AboutSerenityView
@@ -222,3 +229,40 @@ class Info(Plugin):
         )
 
         await ctx.send(embed=embed)
+
+    @commands.command(
+        name="color",
+        aliases=("colour",),
+        help="Shows the color behind a hex code.",
+    )
+    async def color_command(
+        self,
+        ctx: SerenityContext,
+        color: discord.Color = commands.param(
+            converter=commands.ColorConverter,
+        ),
+    ) -> None:
+        rgbcolor = RGB(*color.to_rgb())
+
+        with Stopwatch() as timer:
+            buffer = await self.serenity.to_thread(
+                ColorRepresentation(512, 512, rgbcolor).raw
+            )
+            elapsed = timer.elapsed
+
+        file = discord.File(buffer, filename="color.png")
+
+        embed = SerenityEmbed(
+            description=(
+                f"**RGB**: `{color.r}, {color.g}, {color.b}`\n"
+                f"**HEX**: `#{color.value:0>6x}`\n"
+                f"> Rendered in `{elapsed:.2f}ms`"
+            )
+        )
+        embed.set_author(
+            name=f"Color: #{color.value:0>6x}",
+            icon_url=f"attachment://color.png",
+        )
+        embed.set_image(url=f"attachment://{file.filename}")
+
+        await ctx.send(file=file, embed=embed)
