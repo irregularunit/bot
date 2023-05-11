@@ -42,7 +42,7 @@ from enum import IntEnum
 from io import BytesIO
 from pathlib import Path
 from random import randint
-from typing import Optional
+from typing import Any, Optional
 from uuid import uuid4
 
 import numpy as np
@@ -277,11 +277,61 @@ class TriggerCreator(ImageManipulator):
         return self._to_discord_file(buffer, fmt="gif")
 
 
+class PrideCreator(ImageManipulator):
+    def __init__(self, image: bytes) -> None:
+        super().__init__(image)
+        self.size = (1024, 1024)
+
+    @staticmethod
+    def crop_avatar(avatar: Image.Image) -> Image.Image:
+        with Image.new("L", avatar.size, 0) as mask:
+            draw = ImageDraw.Draw(mask)
+            draw.ellipse((0, 0) + avatar.size, fill=255)
+
+            avatar.putalpha(mask)
+            return avatar
+
+    def crop_ring(self, ring: Image.Image, px: int) -> Image.Image:
+        with Image.new("L", self.size, 0) as mask:
+            draw = ImageDraw.Draw(mask)
+            draw.ellipse((0, 0) + self.size, fill=255)
+            draw.ellipse((px, px, self.size[0] - px, self.size[1] - px), fill=0)
+
+            ring.putalpha(mask)
+            return ring
+
+    def prideavatar(self, option: str, pixels: int) -> BytesIO:
+        pixels = max(0, min(512, pixels))
+        option = option.lower()
+
+        with Image.open(BytesIO(self.image)) as avatar:
+            avatar = avatar.convert("RGBA").resize(self.size)
+            avatar = self.crop_avatar(avatar)
+
+            with Image.open(
+                Path("src", "imaging", "images", "pride", f"{option}.png")
+            ).resize(self.size) as ring:
+                ring = ring.convert("RGBA")
+                ring = self.crop_ring(ring, pixels)
+                avatar.alpha_composite(ring, (0, 0))
+
+                buffer = BytesIO()
+                avatar.save(buffer, format="PNG")
+                buffer.seek(0)
+
+                return buffer
+
+    async def to_pride(self, option: str) -> File:
+        buffer = await to_thread(self.prideavatar, option, 64)
+        return self._to_discord_file(buffer)
+
+
 class CanvasOption(IntEnum):
     ASCII = 0
     PALLETE = 1
     TRIGGER = 2
     PIXEL = 3
+    PRIDE = 4
 
 
 class Canvas(
@@ -289,6 +339,7 @@ class Canvas(
     AsciiCreator,
     PixelateCreator,
     TriggerCreator,
+    PrideCreator,
 ):
     def __init__(self, image: bytes) -> None:
         super().__init__(image)
@@ -299,7 +350,8 @@ class Canvas(
             CanvasOption.PALLETE: self.to_pallete,
             CanvasOption.TRIGGER: self.to_triggerd,
             CanvasOption.PIXEL: self.to_pixel,
+            CanvasOption.PRIDE: self.to_pride,
         }
 
-    async def to_canvas(self, canvas_type: CanvasOption) -> File:
-        return await self.available_manipulators[canvas_type]()
+    async def to_canvas(self, canvas_type: CanvasOption, **kwargs: Any) -> File:
+        return await self.available_manipulators[canvas_type](**kwargs)

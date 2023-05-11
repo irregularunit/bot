@@ -33,7 +33,10 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-__all__: tuple[str, ...] = ("rgb_to_hex",)
+from difflib import get_close_matches
+from typing import Optional
+
+__all__: tuple[str, ...] = ("rgb_to_hex", "pride_options", "get_pride_type")
 
 
 def rgb_to_hex(rgb: tuple[int, int, int]) -> str:
@@ -50,3 +53,46 @@ def rgb_to_hex(rgb: tuple[int, int, int]) -> str:
         The hex string representation of the RGB tuple.
     """
     return ('#%02x%02x%02x' % rgb).upper()
+
+
+pride_options = {
+    'agender',
+    'bigender',
+    'transgender',
+    'pangender',
+    'trigender',
+    'androgyne',
+    'asexual',
+    'omnisexual',
+    'demisexual',
+    'intersex',
+    'lesbian',
+    'genderfluid',
+    'polyamory',
+    'aromantic',
+    'pansexual',
+    'demigirl',
+    'bisexual',
+    'demiboy',
+    'genderqueer',
+    'nonbinary',
+    'gay',
+    'polysexual',
+}
+
+
+def get_pride_type(option: str) -> Optional[str]:
+    """Gets the closest pride option to the given option.
+
+    Parameters
+    ----------
+    option : `str`
+        The option to get the closest pride option to.
+
+    Returns
+    -------
+    `str`
+        The closest pride option.
+    """
+    matches = get_close_matches(option, pride_options, 1, 0.5)
+    return matches[0] if matches else None

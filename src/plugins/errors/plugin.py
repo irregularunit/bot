@@ -69,7 +69,7 @@ class Errors(Plugin):
             await self.serenity.redis.setex(
                 f"{ctx.author.id}:RateLimit:Command",
                 int(error.retry_after) + 1,
-                "1",
+                "command cooldown",
             )
 
             try:

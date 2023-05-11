@@ -33,31 +33,36 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from asyncio import Queue
+from asyncio import Queue, QueueEmpty
+from datetime import datetime
 from io import BytesIO
 from typing import Generic, NamedTuple, TypeVar
 
+import discord
 from magic import from_buffer
 
 from src.imaging import AvatarPointer
 
 __all__: tuple[str, ...] = (
-    "StoreQueueItems",
+    "AssetEntitiy",
     "StoreQueue",
+    "PresenceEntry",
+    "PRESENCE_STATUSES",
     "type_of",
 )
 
 
-ItemType = TypeVar("ItemType")
-VALID_MIME_TYPES = (
-    "image/png",
-    "image/jpeg",
-    "image/gif",
-    "image/webp",
-)
+PRESENCE_STATUSES = {
+    discord.Status.online: "Online",
+    discord.Status.offline: "Offline",
+    discord.Status.idle: "Idle",
+    discord.Status.dnd: "Do Not Disturb",
+}
+
+T = TypeVar("T")
 
 
-class StoreQueueItems(NamedTuple):
+class AssetEntitiy(NamedTuple):
     """A named tuple for items in the send queue."""
 
     id: int
@@ -69,17 +74,23 @@ class StoreQueueItems(NamedTuple):
         return AvatarPointer(self.id, self.mime_type, file=BytesIO(self.image))
 
 
-class StoreQueue(Generic[ItemType]):
+class PresenceEntry(NamedTuple):
+    snowflake: int
+    status: str
+    changed_at: datetime
+
+
+class StoreQueue(Generic[T]):
     """A queue for storing items to be sent to the store."""
 
     def __init__(self) -> None:
-        self.__queue: Queue[ItemType] = Queue()
+        self.__queue: Queue[T] = Queue()
 
     @property
-    def queue(self) -> Queue[ItemType]:
+    def queue(self) -> Queue[T]:
         return self.__queue
 
-    async def push(self, item: ItemType) -> None:
+    async def push(self, item: T) -> None:
         """Push an item into the queue.
 
         If the queue is full, wait until a free slot
@@ -87,7 +98,7 @@ class StoreQueue(Generic[ItemType]):
         """
         await self.queue.put(item)
 
-    async def pop(self) -> ItemType:
+    async def pop(self) -> T:
         """Remove and return an item from the queue.
 
         If queue is empty, wait until an item is available.
@@ -100,7 +111,7 @@ class StoreQueue(Generic[ItemType]):
     async def size(self) -> int:
         return self.queue.qsize()
 
-    def put_nowait(self, item: ItemType) -> None:
+    def put_nowait(self, item: T) -> None:
         """Put an item into the queue without blocking.
 
         If no free slot is immediately available.
@@ -112,7 +123,7 @@ class StoreQueue(Generic[ItemType]):
         """
         self.queue.put_nowait(item)
 
-    def get_nowait(self) -> ItemType:
+    def get_nowait(self) -> T:
         """Remove and return an item from the queue.
 
         Return an item if one is immediately available.
@@ -124,13 +135,31 @@ class StoreQueue(Generic[ItemType]):
         """
         return self.queue.get_nowait()
 
+    def pop_fixed(self, n: int) -> list[T]:
+        """Remove and return n items from the queue.
+
+        Return a list of items if n items are immediately available.
+        """
+        items: list[T] = []
+
+        for _ in range(n):
+            try:
+                items.append(self.get_nowait())
+            except Exception:
+                break
+
+        if not items:
+            raise QueueEmpty
+
+        return items
+
     def __len__(self) -> int:
         return self.queue.qsize()
 
 
 def type_of(data: bytes) -> str:
     mime = from_buffer(data, mime=True)
-    if mime in VALID_MIME_TYPES:
+    if mime in ("image/png", "image/jpeg", "image/gif", "image/webp"):
         return mime
 
     raise ValueError(f"Invalid mime type: {mime}")

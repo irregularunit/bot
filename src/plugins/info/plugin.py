@@ -246,7 +246,7 @@ class Info(Plugin):
 
         with Stopwatch() as timer:
             buffer = await self.serenity.to_thread(
-                ColorRepresentation(512, 512, rgbcolor).raw
+                ColorRepresentation(256, 256, rgbcolor).raw
             )
             elapsed = timer.elapsed
 
@@ -254,7 +254,7 @@ class Info(Plugin):
 
         embed = SerenityEmbed(
             description=(
-                f"**RGB**: `{color.r}, {color.g}, {color.b}`\n"
+                f"**RGB**: `{color.r}`, `{color.g}`, `{color.b}`\n"
                 f"**HEX**: `#{color.value:0>6x}`\n"
                 f"> Rendered in `{elapsed:.2f}ms`"
             )

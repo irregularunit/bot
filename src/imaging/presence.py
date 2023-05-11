@@ -39,11 +39,12 @@ from io import BytesIO
 from typing import NamedTuple, TypedDict
 
 import matplotlib.pyplot as plt
-from PIL import Image, ImageDraw, ImageFont
+import numpy as np
+from PIL import Image
 
 from .abc import SavableByteStream
 
-__all__: tuple[str, ...] = ("PresenceEntry", "PresenceData", "PresenceGraph")
+__all__: tuple[str, ...] = ("PresenceEntry", "PresenceHistory", "PresenceGraph")
 
 
 class PresenceEntry(NamedTuple):
@@ -52,7 +53,7 @@ class PresenceEntry(NamedTuple):
     changed_at: dt.datetime
 
 
-class PresenceData(TypedDict):
+class PresenceHistory(TypedDict):
     dates: list[dt.datetime]
     statuses: list[str]
 
@@ -60,31 +61,23 @@ class PresenceData(TypedDict):
 class PresenceGraph(SavableByteStream):
     __slots__: tuple[str, ...] = ("_data", "_width", "_mapping", "_avatar", "font")
 
-    _data: PresenceData
+    _data: PresenceHistory
     _width: float
     _mapping: dict[str, str]
-    _avatar: bytes
-    font: ImageFont.FreeTypeFont
 
-    def __init__(self, data: PresenceData, avatar: bytes) -> None:
+    def __init__(self, data: PresenceHistory) -> None:
         self._data = data
         self._width = 0.2
         self._mapping = {
-            "Online": "#5cb85c",
-            "Offline": "#d9534f",
-            "Idle": "#f0ad4e",
-            "DnD": "#808080",
+            "Online": "#3ba55d",
+            "Offline": "#747f8d",
+            "Idle": "#faa81a",
+            "Do Not Disturb": "#ed4245",
         }
-        self._avatar = avatar
-        self.font = ImageFont.truetype("static/fonts/Lato-Regular.ttf", 12)
 
     @property
-    def data(self) -> PresenceData:
+    def data(self) -> PresenceHistory:
         return self._data
-
-    @property
-    def avatar(self) -> bytes:
-        return self._avatar
 
     def _generate_donut_chart(self) -> BytesIO:
         sizes = [self.data["statuses"].count(status) for status in self._mapping.keys()]
@@ -95,87 +88,61 @@ class PresenceGraph(SavableByteStream):
             )
         )
 
-        _, ax = plt.subplots(facecolor="none")  # type: ignore
-        ax.set(aspect="equal")  # type: ignore
+        _, ax = plt.subplots(  # type: ignore
+            facecolor="none",
+            figsize=(9, 7),
+        )
+
+        status_labels = list(self._mapping.keys())
+        status_colors = list(self._mapping.values())
+        square_y = np.linspace(0.9, 0.1, len(status_labels))
+        label_y = square_y + 0.035
+
+        for i in range(len(status_labels)):
+            ax.text(  # type: ignore
+                1.60,
+                label_y[i],
+                status_labels[i],
+                ha="left",
+                va="top",
+                color="white",
+            )
+            ax.scatter(  # type: ignore
+                1.45,
+                square_y[i],
+                s=300,
+                c=status_colors[i],
+                marker="s",  # type: ignore
+            )
 
         ax.pie(  # type: ignore
             sorted_sizes,
             colors=[self._mapping[label] for label in labels],  # type: ignore
             wedgeprops=dict(width=self._width, edgecolor="none"),
+            center=(0.25, 0.5),
+            startangle=90,
+            counterclock=True,
+            pctdistance=1.15,
+            textprops=dict(color="white"),
+            radius=1,
         )
 
-        buf = BytesIO()
-        plt.savefig(buf, format="png", facecolor="none")  # type: ignore
-        buf.seek(0)
+        canvas = BytesIO()
+        plt.savefig(canvas, format="png", facecolor="none", transparent=True)  # type: ignore
+        plt.close()  # type: ignore
+        canvas.seek(0)
 
-        return buf
+        with Image.open(canvas) as img:
+            img = img.crop((170, 100, 900, 600))
 
-    def _generate_image(self) -> BytesIO:
-        buf = self._generate_donut_chart()
+            buffer = BytesIO()
+            img.save(buffer, format="png")
+            buffer.seek(0)
 
-        with Image.new("RGBA", (580, 370), (0, 0, 0, 0)) as img:
-            img.paste(Image.open(buf), (-150, -60))
-            draw = ImageDraw.Draw(img)
-
-            for i, (status, color) in enumerate(self._mapping.items()):
-                draw.text(  # type: ignore
-                    (430, 77.4 + (i * 50)),
-                    status
-                    + f" - {round(self.data['statuses'].count(status) / len(self.data['statuses']) * 100, 2)}%",
-                    font=self.font,
-                    fill="white",
-                )
-                draw.rectangle(  # type: ignore
-                    (400, 75 + (i * 50), 420, 95 + (i * 50)),
-                    fill=color,
-                    outline="white",
-                )
-
-            with Image.open(BytesIO(self.avatar)) as avatar:
-                avatar = avatar.resize((240, 240))
-
-                with Image.new("L", avatar.size, 0) as mask:
-                    draw = ImageDraw.Draw(mask)
-                    draw.ellipse((0, 0) + avatar.size, fill=255)
-                    img.paste(avatar, (56, 61), mask=mask)
-
-            buf = BytesIO()
-            img.save(buf, format="png")
-            buf.seek(0)
-            return buf
+        return buffer
 
     async def buffer(self) -> BytesIO:
-        return await to_thread(self._generate_image)
+        return await to_thread(self._generate_donut_chart)
 
-
-if __name__ == "__main__":
-    import asyncio
-
-    import aiohttp
-    import numpy as np
-
-    dates = np.arange(  # type: ignore
-        np.datetime64("2021-01-01"), np.datetime64("2021-01-08"), dtype="datetime64[h]"
-    )
-    statuses = np.random.choice(
-        ["Online", "Offline", "Idle", "DnD"], size=100, p=[0.6, 0.2, 0.1, 0.1]
-    )
-
-    data = PresenceData(
-        dates=dates.tolist(),
-        statuses=statuses.tolist(),
-    )
-
-    async def main() -> None:
-        avatar = "https://cdn.discordapp.com/attachments/1094283696946827334/1104439322431717487/a2a0b1b2-24fe-4238-883a-e21a91510a90.png"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(avatar) as resp:
-                avatar = await resp.read()
-
-        graph = PresenceGraph(data, avatar)
-        buf = await graph.buffer()
-
-        with open("test.png", "wb") as f:
-            f.write(buf.read())
-
-    asyncio.run(main())
+    def raw(self) -> BytesIO:
+        return self._generate_donut_chart()

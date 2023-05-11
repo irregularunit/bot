@@ -203,37 +203,8 @@ class Codeblock:
     def __str__(self) -> str:
         return f"{self.language or ''}\n{self.content}"
 
-    def to_string(self) -> str:
+    def markup(self) -> str:
         if self.inline:
             return f"`{self.content}`"
         else:
             return f"```{self.language or ''}\n{self.content}\n```"
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    test_cases = [
-        "```python\nprint('hello world')\n```",
-        "```console\nhello world\n```",
-        "```rust\nfn main() {\n    println!(\"hello world\");\n}\n```",
-        "```go\npackage main\n\nimport \"fmt\"\n\nfunc main() {\n    fmt.Println(\"hello world\")\n}\n```",
-        "```c\n#include <stdio.h>\n\nint main() {\n    printf(\"hello world\");\n    return 0;\n}\n```",
-        "```c++\n#include <iostream>\n\nint main() {\n    std::cout << \"hello world\";\n    return 0;\n}\n```",
-    ]
-
-    async def main() -> None:
-        for case in test_cases:
-            print(await Codeblock.convert(None, case))
-
-    class_cases = [
-        Codeblock("hello world"),
-        Codeblock("hello world", language="python"),
-        Codeblock(b"hello world"),
-        Codeblock(b"hello world", language="python"),
-    ]
-
-    for case in class_cases:
-        print(case.to_string())
-
-    asyncio.run(main())

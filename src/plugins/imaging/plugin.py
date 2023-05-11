@@ -41,7 +41,15 @@ from discord.ext import commands
 from discord.utils import async_all
 from typing_extensions import override
 
-from src.imaging import AvatarCollage, Canvas, CanvasOption, FilePointer
+from src.imaging import (
+    AvatarCollage,
+    Canvas,
+    CanvasOption,
+    FilePointer,
+    PresenceGraph,
+    PresenceHistory,
+)
+from src.imaging.utils import get_pride_type, pride_options
 from src.models.discord.converter import MaybeMember
 from src.shared import (
     ExceptionFactory,
@@ -247,6 +255,112 @@ class Imaging(Plugin):
             SerenityEmbed(description=(f"> Generating took `{elapsed:.2f}` seconds.\n"))
             .set_author(
                 name=f"{user.display_name}'s triggered avatar",
+                icon_url=user.display_avatar,
+            )
+            .set_image(url=f"attachment://{file.filename}")
+        )
+
+        await ctx.send(embed=embed, file=file)
+
+    @commands.command(
+        name="presencegraph",
+        aliases=("ps", "presence"),
+        help="Shows the presence graph of a user.",
+    )
+    async def presence_graph_command(
+        self,
+        ctx: SerenityContext,
+        user: discord.User = commands.param(
+            converter=Union[discord.User, MaybeMember],
+            default=None,
+            displayed_default="you",
+        ),
+    ) -> None:
+        user = user or ctx.author
+
+        async with self.serenity.pool.acquire() as conn:
+            async with conn.transaction(readonly=True):
+                records = await conn.fetch(
+                    """
+                    SELECT
+                        status,
+                        changed_at
+                    FROM
+                        serenity_user_presence
+                    WHERE
+                        snowflake = $1
+                    AND
+                        changed_at > NOW() - INTERVAL '7 days'
+                    ORDER BY
+                        changed_at ASC
+                    """,
+                    user.id,
+                )
+
+        if not records:
+            raise ExceptionFactory.create_warning_exception(
+                f"{user.display_name} has no presence history."
+            )
+
+        dates = [record["changed_at"] for record in records]
+        statuses = [record["status"] for record in records]
+        data = PresenceHistory(dates=dates, statuses=statuses)
+
+        with Stopwatch() as timer:
+            buffer = await PresenceGraph(data).buffer()
+            elapsed = timer.elapsed
+
+        file = discord.File(buffer, filename=f"{uuid4()}.png")
+
+        embed = (
+            SerenityEmbed(
+                description=(
+                    f"> Generating took `{elapsed:.2f}` seconds.\n"
+                    f"> Showing your `weekly` presence history."
+                )
+            )
+            .set_author(
+                name=f"{user.display_name}'s presence history",
+                icon_url=user.display_avatar,
+            )
+            .set_image(url=f"attachment://{file.filename}")
+        )
+
+        await ctx.send(embed=embed, file=file)
+
+    @commands.command(
+        name="pride",
+        aliases=("pr",),
+        help="Converts your avatar to a pride one.",
+    )
+    async def pride_command(
+        self,
+        ctx: SerenityContext,
+        option: str,
+        user: discord.User = commands.param(
+            converter=Union[discord.User, MaybeMember],
+            default=None,
+            displayed_default="you",
+        ),
+    ) -> None:
+        user = user or ctx.author
+        avatar = await self._read_avatar(user)
+        flag = get_pride_type(option)
+
+        if flag is None:
+            options = ", ".join(f"`{k}`" for k in pride_options)
+            raise ExceptionFactory.create_error_exception(
+                f"Invalid pride option. Try one of these: `{options}`."
+            )
+
+        with Stopwatch() as timer:
+            file = await Canvas(avatar).to_canvas(CanvasOption.PRIDE, option=flag)
+            elapsed = timer.elapsed
+
+        embed = (
+            SerenityEmbed(description=(f"> Generating took `{elapsed:.2f}` seconds.\n"))
+            .set_author(
+                name=f"{user.display_name}'s pride avatar",
                 icon_url=user.display_avatar,
             )
             .set_image(url=f"attachment://{file.filename}")

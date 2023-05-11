@@ -77,6 +77,37 @@ class RGB:
     def rgb(self) -> tuple[int, int, int]:
         return self._r, self._g, self._b
 
+    @property
+    def hsl(self) -> tuple[float, float, float]:
+        """Convert the color to HSL format."""
+
+        r, g, b = self.rgb
+        r /= 255
+        g /= 255
+        b /= 255
+
+        cmax = max(r, g, b)
+        cmin = min(r, g, b)
+        delta = cmax - cmin
+
+        if delta == 0:
+            hue = 0
+        elif cmax == r:
+            hue = 60 * (((g - b) / delta) % 6)
+        elif cmax == g:
+            hue = 60 * (((b - r) / delta) + 2)
+        else:  # cmax == b
+            hue = 60 * (((r - g) / delta) + 4)
+
+        lightness = (cmax + cmin) * 0.5
+
+        if delta == 0:
+            saturation = 0
+        else:
+            saturation = delta / (1 - abs(2 * lightness - 1))
+
+        return hue, saturation, lightness
+
     def __repr__(self) -> str:
         return f'RGB(r={self._r}, g={self._g}, b={self._b})'
 
@@ -165,16 +196,7 @@ class ColorRepresentation(SavableByteStream):
         return self._generate_chunk(b'IEND', b'')
 
     async def buffer(self) -> io.BytesIO:
-        def sync() -> io.BytesIO:
-            buffer = io.BytesIO()
-
-            for instruction in self._instructions:
-                buffer.write(instruction)
-
-            buffer.seek(0)
-            return buffer
-
-        return await asyncio.to_thread(sync)
+        return await asyncio.to_thread(self.raw)
 
     def raw(self) -> io.BytesIO:
         buffer = io.BytesIO()

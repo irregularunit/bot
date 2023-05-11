@@ -3,9 +3,9 @@ CREATE TABLE IF NOT EXISTS serenity_users (
     timezone                VARCHAR(255) NOT NULL DEFAULT 'UTC',
     locale                  VARCHAR(255) NOT NULL DEFAULT 'en_US',
     created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
-    emoji_server_snowflake  BIGINT NOT NULL DEFAULT 0,
     banned                  BOOLEAN NOT NULL DEFAULT FALSE,
     pronouns                VARCHAR(255) NOT NULL DEFAULT 'they/them',
+    emoji_server_snowflake  BIGINT NOT NULL DEFAULT 0,
     CONSTRAINT serenity_users_pkey
         UNIQUE (snowflake)
 );
@@ -77,7 +77,6 @@ CREATE TABLE IF NOT EXISTS serenity_user_history (
         ON DELETE CASCADE
 );
 
-
 CREATE TABLE IF NOT EXISTS serenity_user_presence (
     snowflake   BIGINT NOT NULL,
     status      TEXT NOT NULL,
@@ -87,5 +86,5 @@ CREATE TABLE IF NOT EXISTS serenity_user_presence (
         REFERENCES serenity_users(snowflake)
         ON DELETE CASCADE,
     CONSTRAINT serenity_status_check
-        CHECK (status IN ('Online', 'Idle', 'DnD', 'Offline'))
+        CHECK (status IN ('Online', 'Idle', 'Do Not Disturb', 'Offline'))
 );

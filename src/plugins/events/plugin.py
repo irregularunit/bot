@@ -45,7 +45,7 @@ from typing_extensions import override
 
 from src.shared import Plugin
 
-from .utils import StoreQueue, StoreQueueItems, type_of
+from .utils import PRESENCE_STATUSES, AssetEntitiy, PresenceEntry, StoreQueue, type_of
 
 if TYPE_CHECKING:
     from src.models.serenity import Serenity
@@ -57,12 +57,28 @@ __all__: tuple[str, ...] = ("Events",)
 class Events(Plugin):
     """A plugin for discord events."""
 
+    logger: Logger
+    _status_queue_running: bool
+    queue_channel: Optional[discord.TextChannel]
+    asset_queue: StoreQueue[AssetEntitiy]
+    status_queue: StoreQueue[PresenceEntry]
+
     @override
     def __init__(self, serenity: Serenity) -> None:
         self.serenity = serenity
-        self.queue: StoreQueue[StoreQueueItems] = StoreQueue()
-        self.queue_channel: Optional[discord.TextChannel] = None
-        self.logger = self.serenity.logger.getChild("events")
+        self.queue_channel = None
+        self.logger = serenity.logger.getChild("events")
+        self.asset_queue = StoreQueue()
+        self.status_queue = StoreQueue()
+        self._status_queue_running = False
+
+    @property
+    def status_queue_running(self) -> bool:
+        return self._status_queue_running
+
+    @status_queue_running.setter
+    def status_queue_running(self, value: bool) -> None:
+        self._status_queue_running = value
 
     def _get_logger(self, event_name: str) -> Logger:
         return self.logger.getChild(event_name)
@@ -70,12 +86,14 @@ class Events(Plugin):
     @override
     async def cog_load(self) -> None:
         self.empty_queue.start()
+        self.empty_status_queue.start()
 
     @override
     async def cog_unload(self) -> None:
         # Gracefully stops the task and waits
         # for it to finish before ejecting it
         self.empty_queue.stop()
+        self.empty_status_queue.stop()
 
     async def _read_avatar_asset(
         self, target: Union[discord.Member, discord.User]
@@ -128,8 +146,8 @@ class Events(Plugin):
             )
             return
 
-        await self.queue.push(
-            StoreQueueItems(
+        await self.asset_queue.push(
+            AssetEntitiy(
                 id=user_id,
                 image=avatar,
                 mime_type=mime_type,
@@ -184,9 +202,9 @@ class Events(Plugin):
         logger = self._get_logger("empty_queue")
         logger.debug("Emptying queue")
 
-        while not await self.queue.empty():
+        while not await self.asset_queue.empty():
             try:
-                item = self.queue.get_nowait()
+                item = self.asset_queue.get_nowait()
             except QueueEmpty:
                 break
 
@@ -195,7 +213,7 @@ class Events(Plugin):
             await item.to_pointer().save()
             await self._send_to_ts(item)
 
-    async def _send_to_ts(self, item: StoreQueueItems) -> None:
+    async def _send_to_ts(self, item: AssetEntitiy) -> None:
         logger = self._get_logger("_send_to_ts")
 
         if (channel := self.queue_channel) is None:
@@ -324,3 +342,72 @@ class Events(Plugin):
 
             if avatar is not None:
                 await self._store_avatar(after.id, avatar)
+
+    @Plugin.listener("on_presence_update")
+    async def presence_update_event(
+        self, before: discord.Member, after: discord.Member
+    ) -> None:
+        if before.status == after.status:
+            return
+
+        if await self.serenity.redis.exists(f"{after.id}:RateLimit:PresenceUpdate"):
+            return
+
+        await self.serenity.redis.setex(
+            f"{after.id}:RateLimit:PresenceUpdate",
+            5,
+            "presence update",
+        )
+
+        if self.serenity.user_cache.get(after.id) is None:
+            await self.serenity.get_or_create_user(after.id)
+
+        if not (status := PRESENCE_STATUSES.get(after.status)):
+            return
+
+        await self.status_queue.push(
+            PresenceEntry(
+                snowflake=after.id,
+                status=status,
+                changed_at=discord.utils.utcnow(),
+            )
+        )
+
+    @tasks.loop(minutes=3)
+    async def empty_status_queue(self) -> None:
+        logger = self._get_logger("empty_status_queue")
+        logger.debug("Emptying status queue")
+
+        if self.status_queue_running:
+            logger.debug("Status queue is already running")
+            return
+
+        self.status_queue_running = True
+
+        while not await self.status_queue.empty():
+            try:
+                items = self.status_queue.pop_fixed(40)
+            except QueueEmpty:
+                self.status_queue_running = False
+                return
+            else:
+                logger.debug("Popped %s items", len(items))
+
+                insert_statement = """
+                    INSERT INTO
+                        serenity_user_presence (snowflake, status, changed_at)
+                    VALUES
+                        ($1, $2, $3)
+                    """
+
+                async with self.serenity.pool.acquire() as conn:
+                    async with conn.transaction():
+                        await conn.executemany(
+                            insert_statement,
+                            (
+                                (item.snowflake, item.status, item.changed_at)
+                                for item in items
+                            ),
+                        )
+
+        self.status_queue_running = False
