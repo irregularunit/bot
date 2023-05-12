@@ -1,9 +1,9 @@
-# Discord related
+# Base requirements linked to discord.py
 aiohttp[speedups]>=3.7.4,<4
 git+https://github.com/Rapptz/discord.py@master
 git+https://github.com/gorialis/jishaku
 
-# Utility
+# Performance and utility functions
 numpy>=1.24.2
 scikit-image==0.20.0
 matplotlib>=3.7.1
@@ -11,14 +11,14 @@ uvloop==0.17.0; sys_platform != 'win32' and sys_platform != 'cygwin'
 orjson>=3.8.10
 pydantic[dotenv]==1.10.4
 
-# Useful
+# Cosmetic and useful
 coloredlogs==15.0.1
 python-magic>=0.4.27
 python-magic-bin==0.4.14; sys_platform == 'win32' or sys_platform == 'cygwin'
 Pillow==9.5.0
 typing-extensions==4.5.0
 
-# Database
+# Storage and cache related drivers and typings
 asyncpg>=0.27.0
 redis>=4.2.2
 git+https://github.com/bryanforbes/asyncpg-stubs
