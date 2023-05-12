@@ -31,12 +31,17 @@ This is a human-readable summary of the Legal Code. The full license is availabl
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
-from ._redis import *
-from .codeblock import *
-from .config import *
-from .embed import *
-from .exceptions import *
-from .plugin import *
-from .timer import *
-from .view import *
-from .options import *
+from typing import NamedTuple
+
+__all__: tuple[str, ...] = ("CommandOption",)
+
+
+class CommandOption(NamedTuple):
+    option: str
+    description: str
+
+    def __str__(self) -> str:
+        return f"・`{self.option}` - {self.description}\n"
+    
+    def markup(self) -> str:
+        return str(self)

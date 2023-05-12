@@ -56,6 +56,7 @@ from src.shared import (
     Plugin,
     SerenityEmbed,
     Stopwatch,
+    CommandOption,
     for_command_callbacks,
 )
 
@@ -65,6 +66,10 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = ("Imaging",)
+
+
+MaybeGuildMember = Union[discord.User, MaybeMember]
+default_example = "`{0}{1} {2}`"
 
 
 @for_command_callbacks(commands.cooldown(1, 5, commands.BucketType.user))
@@ -93,15 +98,23 @@ class Imaging(Plugin):
     @commands.command(
         name="avatarhistory",
         aliases=("avhy", "avh"),
-        help="Shows the avatar history of a user.",
+        extras={
+            "options": (
+                CommandOption(
+                    option="user",
+                    description="The user to show the avatar history of.",
+                ),
+            ),
+            "example": default_example
+        },
     )
     async def avatar_history_command(
         self,
         ctx: SerenityContext,
         user: discord.User = commands.param(
-            converter=Union[discord.User, MaybeMember],
+            converter=MaybeGuildMember,
             default=None,
-            displayed_default="you",
+            displayed_default="yourself",
         ),
     ) -> None:
         user = user or ctx.author
@@ -137,15 +150,23 @@ class Imaging(Plugin):
     @commands.command(
         name="pallete",
         aliases=("pal",),
-        help="Shows the color palette of a user's avatar.",
+        extras={
+            "options": (
+                CommandOption(
+                    option="user",
+                    description="The user to show the pallete of.",
+                ),
+            ),
+            "example": default_example
+        },
     )
     async def pallete_command(
         self,
         ctx: SerenityContext,
         user: discord.User = commands.param(
-            converter=Union[discord.User, MaybeMember],
+            converter=MaybeGuildMember,
             default=None,
-            displayed_default="you",
+            displayed_default="yourself",
         ),
     ) -> None:
         user = user or ctx.author
@@ -169,13 +190,21 @@ class Imaging(Plugin):
     @commands.command(
         name="ascii",
         aliases=("asc",),
-        help="Shows the ASCII representation of a user's avatar.",
+        extras={
+            "options": (
+                CommandOption(
+                    option="user",
+                    description="The user to show the ascii avatar of.",
+                ),
+            ),
+            "example": default_example
+        },
     )
     async def ascii_command(
         self,
         ctx: SerenityContext,
         user: discord.User = commands.param(
-            converter=Union[discord.User, MaybeMember],
+            converter=MaybeGuildMember,
             default=None,
             displayed_default="you",
         ),
@@ -201,15 +230,23 @@ class Imaging(Plugin):
     @commands.command(
         name="pixel",
         aliases=("px",),
-        help="Shows the pixel representation of a user's avatar.",
+        extras={
+            "options": (
+                CommandOption(
+                    option="user",
+                    description="The user to pixelate the avatar of.",
+                ),
+            ),
+            "example": default_example
+        },
     )
     async def paint_command(
         self,
         ctx: SerenityContext,
         user: discord.User = commands.param(
-            converter=Union[discord.User, MaybeMember],
+            converter=MaybeGuildMember,
             default=None,
-            displayed_default="you",
+            displayed_default="yourself",
         ),
     ) -> None:
         user = user or ctx.author
@@ -233,15 +270,23 @@ class Imaging(Plugin):
     @commands.command(
         name="trigger",
         aliases=("trg",),
-        help="Shows the triggered representation of a user's avatar.",
+        extras={
+            "options": (
+                CommandOption(
+                    option="user",
+                    description="Triggers the user's avatar.",
+                ),
+            ),
+            "example": default_example
+        },
     )
     async def trigger_command(
         self,
         ctx: SerenityContext,
         user: discord.User = commands.param(
-            converter=Union[discord.User, MaybeMember],
+            converter=MaybeGuildMember,
             default=None,
-            displayed_default="you",
+            displayed_default="yourself",
         ),
     ) -> None:
         user = user or ctx.author
@@ -265,15 +310,23 @@ class Imaging(Plugin):
     @commands.command(
         name="presencegraph",
         aliases=("ps", "presence"),
-        help="Shows the presence graph of a user.",
+        extras={
+            "options": (
+                CommandOption(
+                    option="user",
+                    description="The user to generate the graph for.",
+                ),
+            ),
+            "example": default_example
+        },
     )
     async def presence_graph_command(
         self,
         ctx: SerenityContext,
         user: discord.User = commands.param(
-            converter=Union[discord.User, MaybeMember],
+            converter=MaybeGuildMember,
             default=None,
-            displayed_default="you",
+            displayed_default="yourself",
         ),
     ) -> None:
         user = user or ctx.author
@@ -316,7 +369,7 @@ class Imaging(Plugin):
             SerenityEmbed(
                 description=(
                     f"> Generating took `{elapsed:.2f}` seconds.\n"
-                    f"> Showing your `weekly` presence history."
+                    f"> Showing your `weekly` presence history.\n\n"
                 )
             )
             .set_author(
@@ -331,14 +384,26 @@ class Imaging(Plugin):
     @commands.command(
         name="pride",
         aliases=("pr",),
-        help="Converts your avatar to a pride one.",
+        extras={
+            "options": (
+                CommandOption(
+                    option="option",
+                    description="Which pride flag to use.",
+                ),
+                CommandOption(
+                    option="user",
+                    description="The user to use the avatar of.",
+                ),
+            ),
+            "example": "`{0}{1} nonbinary {2}`"
+        },
     )
     async def pride_command(
         self,
         ctx: SerenityContext,
         option: str,
         user: discord.User = commands.param(
-            converter=Union[discord.User, MaybeMember],
+            converter=MaybeGuildMember,
             default=None,
             displayed_default="you",
         ),
@@ -350,7 +415,7 @@ class Imaging(Plugin):
         if flag is None:
             options = ", ".join(f"`{k}`" for k in pride_options)
             raise ExceptionFactory.create_error_exception(
-                f"Invalid pride option. Try one of these: `{options}`."
+                f"Invalid pride option. Try one of these: {options}."
             )
 
         with Stopwatch() as timer:

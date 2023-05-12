@@ -49,6 +49,7 @@ from src.shared import (
     Plugin,
     SerenityEmbed,
     Stopwatch,
+    CommandOption,
     for_command_callbacks,
 )
 
@@ -61,6 +62,10 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = ("Info",)
+
+
+MaybeGuildMember = Union[discord.User, MaybeMember]
+default_example = "`{0}{1} {2}`"
 
 
 @for_command_callbacks(commands.cooldown(1, 5, commands.BucketType.user))
@@ -84,7 +89,15 @@ class Info(Plugin):
             "about",
             "botinfo",
         ),
-        help="Shows information about Serenity.",
+        extras={
+            "options": (
+                CommandOption(
+                    option="None",
+                    description="Shows information about Serenity.",
+                ),
+            ),
+            "examples": default_example,
+        },
     )
     async def info_command(self, ctx: SerenityContext) -> None:
         python_version = (
@@ -143,7 +156,15 @@ class Info(Plugin):
     @commands.command(
         name="avatar",
         aliases=("av",),
-        help="Shows the avatar of a user.",
+        extras={
+            "options": (
+                CommandOption(
+                    option="user",
+                    description="The user whose avatar to show.",
+                ),
+            ),
+            "examples": default_example,
+        },
     )
     async def avatar_command(
         self,
@@ -178,7 +199,15 @@ class Info(Plugin):
     @commands.command(
         name="names",
         aliases=("namehistory", "nh"),
-        help="Shows the username history of a user.",
+        extras={
+            "options": (
+                CommandOption(
+                    option="user",
+                    description="The user whose username history to show.",
+                ),
+            ),
+            "examples": default_example,
+        },
     )
     async def username_history_command(
         self,
@@ -233,7 +262,15 @@ class Info(Plugin):
     @commands.command(
         name="color",
         aliases=("colour",),
-        help="Shows the color behind a hex code.",
+        extras={
+            "options": (
+                CommandOption(
+                    option="color",
+                    description="The color to display.",
+                ),
+            ),
+            "examples": default_example,
+        },
     )
     async def color_command(
         self,
