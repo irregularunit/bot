@@ -96,9 +96,7 @@ class PalleteCreator(ImageManipulator):
             if palette[:3] == [0, 0, 0]:
                 palette = palette[3:]
 
-            with Image.new(
-                "RGBA", (int(width * (256 / height)) + 200, 256), color=(0, 0, 0, 0)
-            ) as background:
+            with Image.new("RGBA", (int(width * (256 / height)) + 200, 256), color=(0, 0, 0, 0)) as background:
                 draw = ImageDraw.Draw(background)
                 text_color = (255, 255, 255)
 
@@ -134,10 +132,7 @@ class AsciiCreator(ImageManipulator):
     def __init__(self, image: bytes) -> None:
         super().__init__(image)
         self.ascii_chars = np.asarray(
-            list(
-                r" .'`^\,:;Il!i><~+_-?][}{1)(|\/tfjrxn"
-                r"uvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
-            )
+            list(r" .'`^\,:;Il!i><~+_-?][}{1)(|\/tfjrxn" r"uvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$")
         )
         self.font = ImageFont.load_default()
 
@@ -150,11 +145,7 @@ class AsciiCreator(ImageManipulator):
     ) -> BytesIO:
         with Image.open(BytesIO(self.image)) as image:
             image = self._mock_size(image, 1024)
-            image_scaled = np.array(
-                image.convert("RGB").resize(
-                    (int(scale * image.width), int(scale * image.height))
-                )
-            )
+            image_scaled = np.array(image.convert("RGB").resize((int(scale * image.width), int(scale * image.height))))
 
         letter_width, letter_height = self.font.getsize("x")
         wcf = letter_height / letter_width
@@ -163,13 +154,9 @@ class AsciiCreator(ImageManipulator):
         height_in_chars = round(image_scaled.shape[0])
         image_sum = np.sum(image_scaled, axis=2)
         image_sum -= image_sum.min()
-        image_normalized = (1.0 - image_sum / image_sum.max()) ** gamma * (
-            len(self.ascii_chars) - 1
-        )
+        image_normalized = (1.0 - image_sum / image_sum.max()) ** gamma * (len(self.ascii_chars) - 1)
 
-        ascii_image = np.array(
-            [self.ascii_chars[i] for i in image_normalized.astype(int)]
-        )
+        ascii_image = np.array([self.ascii_chars[i] for i in image_normalized.astype(int)])
         lines = "\n".join(["".join(row) for row in ascii_image])
 
         new_img_width = letter_width * width_in_chars
@@ -308,9 +295,7 @@ class PrideCreator(ImageManipulator):
             avatar = avatar.convert("RGBA").resize(self.size)
             avatar = self.crop_avatar(avatar)
 
-            with Image.open(
-                Path("src", "imaging", "images", "pride", f"{option}.png")
-            ).resize(self.size) as ring:
+            with Image.open(Path("src", "imaging", "images", "pride", f"{option}.png")).resize(self.size) as ring:
                 ring = ring.convert("RGBA")
                 ring = self.crop_ring(ring, pixels)
                 avatar.alpha_composite(ring, (0, 0))
@@ -328,7 +313,7 @@ class PrideCreator(ImageManipulator):
 
 class CanvasOption(IntEnum):
     ASCII = 0
-    PALLETE = 1
+    PALETTE = 1
     TRIGGER = 2
     PIXEL = 3
     PRIDE = 4
@@ -347,7 +332,7 @@ class Canvas(
 
         self.available_manipulators = {
             CanvasOption.ASCII: self.to_ascii,
-            CanvasOption.PALLETE: self.to_pallete,
+            CanvasOption.PALETTE: self.to_pallete,
             CanvasOption.TRIGGER: self.to_triggerd,
             CanvasOption.PIXEL: self.to_pixel,
             CanvasOption.PRIDE: self.to_pride,

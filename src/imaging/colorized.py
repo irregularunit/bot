@@ -157,12 +157,7 @@ class ColorRepresentation(SavableByteStream):
     def _generate_chunk(self, chunk_type: bytes, data: bytes) -> bytes:
         """Generate a PNG chunk, including the 4-byte length prefix and the 4-byte chunk type."""
         chunk_header = struct.pack('!I', len(data))
-        return (
-            chunk_header
-            + chunk_type
-            + data
-            + struct.pack('!I', zlib.crc32(chunk_type + data))
-        )
+        return chunk_header + chunk_type + data + struct.pack('!I', zlib.crc32(chunk_type + data))
 
     def _generate_header_chunk(self, width: int, height: int) -> bytes:
         """Generate the IHDR chunk, which contains information about the image."""
@@ -184,9 +179,7 @@ class ColorRepresentation(SavableByteStream):
 
         # The filter byte is set to 0, indicating "None".
         # See: http://www.libpng.org/pub/png/spec/1.2/PNG-Compression.html
-        raw_data = b''.join(
-            b'\x00' + bytes(self.colour.rgb) * width for _ in range(height)
-        )
+        raw_data = b''.join(b'\x00' + bytes(self.colour.rgb) * width for _ in range(height))
 
         compressed_data = zlib.compress(raw_data)
         return self._generate_chunk(b'IDAT', compressed_data)

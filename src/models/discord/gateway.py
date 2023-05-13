@@ -112,9 +112,7 @@ class MobileGateway(discord.gateway.DiscordWebSocket):
         if state._intents is not None:
             payload["d"]["intents"] = state._intents.value
 
-        await self.call_hooks(
-            "before_identify", self.shard_id, initial=self._initial_identify
-        )
+        await self.call_hooks("before_identify", self.shard_id, initial=self._initial_identify)
         await self.send_as_json(payload)
 
     @classmethod
@@ -139,9 +137,7 @@ class MobileGateway(discord.gateway.DiscordWebSocket):
         gateway = gateway or cls.DEFAULT_GATEWAY
 
         if zlib:
-            url = gateway.with_query(
-                v=INTERNAL_API_VERSION, encoding=encoding, compress='zlib-stream'
-            )
+            url = gateway.with_query(v=INTERNAL_API_VERSION, encoding=encoding, compress='zlib-stream')
         else:
             url = gateway.with_query(v=INTERNAL_API_VERSION, encoding=encoding)
 

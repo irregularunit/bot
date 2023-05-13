@@ -33,37 +33,44 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from asyncio import AbstractEventLoop, Queue, QueueEmpty, get_event_loop
+from typing import Optional, Tuple, TypeVar
 
-from discord import ButtonStyle, Interaction
-from discord.ui import Button
+__all__: Tuple[str, ...] = ("SerenityQueue",)
 
-from src.shared import SerenityEmbed, SerenityView
-
-if TYPE_CHECKING:
-    from src.models.discord import SerenityContext
-
-__all__: tuple[str, ...] = ("PartialMessageView",)
+T = TypeVar("T")
 
 
-class PartialMessageView(SerenityView):
-    def __init__(
-        self, embed: SerenityEmbed, /, *, jump_url: str, timeout: int = 60
-    ) -> None:
-        super().__init__(timeout=timeout)
-        self.embed = embed
-        self.jump_url = jump_url
+class SerenityQueue(Queue[T]):
+    __loop: AbstractEventLoop
 
-        self.add_item(
-            Button(
-                label="Jump to Message",
-                style=ButtonStyle.link,
-                url=self.jump_url,
-            )
-        )
+    def __init__(self, maxsize: int = 0, loop: Optional[AbstractEventLoop] = None) -> None:
+        super().__init__(maxsize=maxsize)
 
-    async def send_to(self, destination: SerenityContext | Interaction) -> None:
-        if isinstance(destination, SerenityContext):
-            await destination.send(embed=self.embed, view=self)
+        if loop is None:
+            self.__loop = get_event_loop()
         else:
-            await destination.response.edit_message(embed=self.embed, view=self)
+            self.__loop = loop
+
+    @property
+    def loop(self) -> AbstractEventLoop:
+        return self.__loop
+
+    @property
+    def size(self) -> int:
+        return self.qsize()
+
+    async def insert_many(self, *items: T) -> None:
+        for item in items:
+            await self.put(item)
+
+    async def get_many(self, count: int) -> list[T]:
+        items: list[T] = []
+
+        for _ in range(count):
+            try:
+                items.append(await self.get())
+            except QueueEmpty:
+                break
+
+        return items

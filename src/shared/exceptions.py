@@ -164,42 +164,32 @@ class ExceptionFactory:
         `UserFeedbackException`
             The exception that was created.
         """
-        return UserFeedbackException(
-            message, ExceptionFactory.strategies[level], formatters
-        )
+        return UserFeedbackException(message, ExceptionFactory.strategies[level], formatters)
 
     @staticmethod
     def create_info_exception(
         message: str,
         formatters: tuple[Callable[[str], str], ...] = (),
     ) -> UserFeedbackException:
-        return ExceptionFactory.create_exception(
-            ExecptionLevel.INFO, message, formatters
-        )
+        return ExceptionFactory.create_exception(ExecptionLevel.INFO, message, formatters)
 
     @staticmethod
     def create_warning_exception(
         message: str,
         formatters: tuple[Callable[[str], str], ...] = (),
     ) -> UserFeedbackException:
-        return ExceptionFactory.create_exception(
-            ExecptionLevel.WARNING, message, formatters
-        )
+        return ExceptionFactory.create_exception(ExecptionLevel.WARNING, message, formatters)
 
     @staticmethod
     def create_error_exception(
         message: str,
         formatters: tuple[Callable[[str], str], ...] = (),
     ) -> UserFeedbackException:
-        return ExceptionFactory.create_exception(
-            ExecptionLevel.ERROR, message, formatters
-        )
+        return ExceptionFactory.create_exception(ExecptionLevel.ERROR, message, formatters)
 
     @staticmethod
     def create_critical_exception(
         message: str,
         formatters: tuple[Callable[[str], str], ...] = (),
     ) -> UserFeedbackException:
-        return ExceptionFactory.create_exception(
-            ExecptionLevel.CRITICAL, message, formatters
-        )
+        return ExceptionFactory.create_exception(ExecptionLevel.CRITICAL, message, formatters)

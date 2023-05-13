@@ -90,9 +90,7 @@ class SerenityUser:
         )
 
     @classmethod
-    def from_default(
-        cls: Type[Self], record: Record, settings: CountingSettings
-    ) -> Self:
+    def from_default(cls: Type[Self], record: Record, settings: CountingSettings) -> Self:
         return cls(
             id=record["snowflake"],
             created_at=record["created_at"],

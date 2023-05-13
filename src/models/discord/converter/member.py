@@ -30,6 +30,7 @@ Under the following terms:
 This is a human-readable summary of the Legal Code. The full license is available
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
+# pyright: reportPrivateUsage=false
 
 from __future__ import annotations
 
@@ -44,12 +45,10 @@ if TYPE_CHECKING:
     from src.models.discord import SerenityContext
     from src.models.serenity import Serenity
 
-__all__: tuple[str, ...] = ("MaybeMember",)
+__all__: tuple[str, ...] = ("MaybeConverter",)
 
 
-CUSTOM_EMOJI_REGEX: re.Pattern[str] = re.compile(
-    r"<(?P<a>a)?:(?P<name>[a-zA-Z0-9_~]{1,}):(?P<id>[0-9]{15,19})>"
-)
+CUSTOM_EMOJI_REGEX: re.Pattern[str] = re.compile(r"<(?P<a>a)?:(?P<name>[a-zA-Z0-9_~]{1,}):(?P<id>[0-9]{15,19})>")
 ID_REGEX = re.compile(r'([0-9]{15,20})$')
 
 
@@ -62,8 +61,7 @@ def get_from_guilds(bot: Serenity, getter: str, argument: Any) -> Any:
     return result
 
 
-# pyright: reportPrivateUsage=false
-class MaybeMember(commands.Converter[discord.Member]):
+class MaybeConverter(commands.Converter[discord.Member]):
     """Converter that converts to discord.Member.
 
     All lookups are via the local guild. If in a DM context, then the lookup
@@ -86,9 +84,7 @@ class MaybeMember(commands.Converter[discord.Member]):
         return ID_REGEX.match(argument)
 
     @staticmethod
-    async def query_member_named(
-        guild: discord.Guild, argument: str
-    ) -> Optional[discord.Member]:
+    async def query_member_named(guild: discord.Guild, argument: str) -> Optional[discord.Member]:
         """Queries a member by name and discriminator.
 
         Parameters
@@ -107,20 +103,14 @@ class MaybeMember(commands.Converter[discord.Member]):
         if len(argument) > 5 and argument[-5] == '#':
             username, _, discriminator = argument.rpartition('#')
             members = await guild.query_members(username, limit=100, cache=cache)
-            return discord.utils.get(
-                members, name=username, discriminator=discriminator
-            )
+            return discord.utils.get(members, name=username, discriminator=discriminator)
 
         members = await guild.query_members(argument, limit=100, cache=cache)
-        maybre_result = discord.utils.find(
-            lambda m: argument in (m.name, m.nick), members
-        )
+        maybre_result = discord.utils.find(lambda m: argument in (m.name, m.nick), members)
         return maybre_result or members[0] if members else None
 
     @staticmethod
-    async def query_member_by_id(
-        bot: Serenity, guild: discord.Guild, user_id: int
-    ) -> Optional[discord.Member]:
+    async def query_member_by_id(bot: Serenity, guild: discord.Guild, user_id: int) -> Optional[discord.Member]:
         """Queries a member by ID.
 
         Parameters
@@ -182,9 +172,7 @@ class MaybeMember(commands.Converter[discord.Member]):
             If the member could not be found.
         """
         bot = ctx.bot
-        match = self.get_id_match(argument) or re.match(
-            r'<@!?([0-9]{15,20})>$', argument
-        )
+        match = self.get_id_match(argument) or re.match(r'<@!?([0-9]{15,20})>$', argument)
         guild = ctx.guild
         result = None
         user_id = None
@@ -198,9 +186,7 @@ class MaybeMember(commands.Converter[discord.Member]):
         else:
             user_id = int(match.group(1))
             if guild:
-                result = guild.get_member(user_id) or discord.utils.get(
-                    ctx.message.mentions, id=user_id
-                )
+                result = guild.get_member(user_id) or discord.utils.get(ctx.message.mentions, id=user_id)
             else:
                 result = get_from_guilds(bot, 'get_member', user_id)
 

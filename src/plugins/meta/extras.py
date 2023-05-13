@@ -33,13 +33,16 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from src.shared import CommandExtras, CommandOption, DefaultExample
 
-from .plugin import Info
+bot_info_extra = CommandExtras(
+    description="Get information about the bot.",
+    options=(),
+    example="{1}{2}",
+)
 
-if TYPE_CHECKING:
-    from src.models.serenity import Serenity
-
-
-async def setup(bot: Serenity) -> None:
-    await bot.add_cog(Info(bot))
+avatar_info_extra = CommandExtras(
+    description="Get information about an user's avatar.",
+    options=(CommandOption("user", "The user to get the avatar information for."),),
+    example=DefaultExample,
+)

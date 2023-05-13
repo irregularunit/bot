@@ -33,31 +33,24 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from logging import getLogger
 from pathlib import Path
+from typing import Final, Tuple
 
-__all__: tuple[str, ...] = (
+__all__: Tuple[str, ...] = (
     "BRANCH",
-    "count_source_lines",
     "GITHUB_URL",
     "LICENSE",
+    "count_source_lines",
 )
 
-BRANCH = "serenity/rewrite"
-GITHUB_URL = "https://github.com/irregularunit/bot"
-LICENSE = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
+BRANCH: Final[str] = "master"
+GITHUB_URL: Final[str] = "https://github.com/irregularunit/bot"
+LICENSE: Final[str] = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
 
 _logger = getLogger(__name__)
 
 
 def count_source_lines() -> int:
-    """Counts the number of lines of source code in the project.
-
-    Returns:
-    --------
-    `int`
-        The number of lines of source code in the project.
-    """
-
-    def _count_lines(path: Path) -> int:
+    def count_lines(path: Path) -> int:
         if path.is_file():
             ignored = (".png",)
 
@@ -75,8 +68,8 @@ def count_source_lines() -> int:
             if path.name.startswith("__"):
                 return 0
 
-            return sum(_count_lines(child) for child in path.iterdir())
+            return sum(count_lines(child) for child in path.iterdir())
 
         return 0
 
-    return _count_lines(Path("src"))
+    return count_lines(Path("src"))

@@ -60,16 +60,14 @@ class SerenityContext(commands.Context["Serenity"]):
         mention_author: bool = False,
         **kwargs: Any,
     ) -> Optional[discord.Message]:
-        resolved_message = self.message.reference and getattr(
-            self.message.reference, "resolved", None
-        )
+        resolved_message = self.message.reference and getattr(self.message.reference, "resolved", None)
 
         if isinstance(resolved_message, discord.DeletedReferencedMessage):
             resolved_message = None
         try:
-            return await (
-                resolved_message.reply if resolved_message else self.message.reply
-            )(content, mention_author=mention_author, **kwargs)
+            return await (resolved_message.reply if resolved_message else self.message.reply)(
+                content, mention_author=mention_author, **kwargs
+            )
         except discord.HTTPException:
             self.bot.logger.debug(
                 "Failed to reply to message %d to user %d.",
@@ -102,9 +100,7 @@ class SerenityContext(commands.Context["Serenity"]):
         command = command or getattr(self, "command", None)
         await super().send_help(command, *args)
 
-    async def safe_send(
-        self, content: str = "", **kwargs: Any
-    ) -> Optional[discord.Message]:
+    async def safe_send(self, content: str = "", **kwargs: Any) -> Optional[discord.Message]:
         if kwargs.pop("file", None) is not None:
             raise ValueError("Files are incompatible with safe_send.")
 

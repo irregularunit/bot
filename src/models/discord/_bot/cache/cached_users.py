@@ -58,7 +58,7 @@ class SerenityUserCache:
             user.id: CachedEntity(entity=user, timestamp=time.time()) for user in users
         }
         self.__size = size
-        self.__maintain.start()
+        self.__invalidate.start()
 
     def get(self, snowflake: int, /) -> Optional[SerenityUser]:
         cached = self.__cache.get(snowflake)
@@ -97,8 +97,10 @@ class SerenityUserCache:
         _, cached = min(self.__cache.items(), key=lambda item: item[1].timestamp)
         del self.__cache[cached.entity.id]
 
+        # TODO: combine with pop
+
     @tasks.loop(minutes=5)
-    async def __maintain(self) -> None:
+    async def __invalidate(self) -> None:
         if len(self.__cache) < self.__size - (self.__size // 10):
             # No need to evict if we're not at capacity yet
             # We'll evict when we're at 90% capacity

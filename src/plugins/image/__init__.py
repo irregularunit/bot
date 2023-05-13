@@ -35,11 +35,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .plugin import Imaging
+from .plugin import ImageManipulation
 
 if TYPE_CHECKING:
     from src.models.serenity import Serenity
 
 
 async def setup(bot: Serenity) -> None:
-    await bot.add_cog(Imaging(bot))
+    await bot.add_cog(ImageManipulation(bot))

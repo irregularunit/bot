@@ -64,9 +64,7 @@ class Codeblock:
     language: Optional[str]
     inline: bool = False
 
-    def __init__(
-        self, content: AnyStr, *, language: Optional[str] = None, inline: bool = False
-    ) -> None:
+    def __init__(self, content: AnyStr, *, language: Optional[str] = None, inline: bool = False) -> None:
         if isinstance(content, str):
             self.content = content
         else:
@@ -101,14 +99,11 @@ class Codeblock:
             True if the codeblock would be closed, False otherwise.
         """
         return argument[cursor:].startswith("`" * backticks) and (
-            cursor + backticks == len(argument)
-            or argument[cursor + backticks].isspace()
+            cursor + backticks == len(argument) or argument[cursor + backticks].isspace()
         )
 
     @staticmethod
-    def _parse_codeblock(
-        argument: str, start: int, end: int, backticks: int
-    ) -> tuple[str, str]:
+    def _parse_codeblock(argument: str, start: int, end: int, backticks: int) -> tuple[str, str]:
         """Parse a codeblock and return its language and content.
 
         Parameters:
@@ -186,9 +181,7 @@ class Codeblock:
             elif current == "\n":
                 if state is State.first_line:
                     state = State.content
-                elif state is State.content and cls._would_close(
-                    argument, cursor, backticks
-                ):
+                elif state is State.content and cls._would_close(argument, cursor, backticks):
                     language, content = cls._parse_codeblock(argument, first_line_start, cursor, backticks)  # type: ignore
                     return Codeblock(content, language=language)
 

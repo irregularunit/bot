@@ -60,13 +60,7 @@ from src.models.discord import (
     SerenityUser,
 )
 from src.models.discord._bot.cache import SerenityUserCache
-from src.shared import (
-    ExceptionFactory,
-    ExecptionLevel,
-    Publisher,
-    SerenityConfig,
-    Subscriber,
-)
+from src.shared import ExceptionFactory, Publisher, SerenityConfig, Subscriber
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -150,9 +144,7 @@ class Serenity(SerenityMixin, commands.Bot):
         pool: Pool[Record] | None = await create_pool(*args, init=_init, **kwargs)
 
         if pool is None:
-            raise ExceptionFactory.create_exception(
-                ExecptionLevel.ERROR, "Failed to create database pool."
-            )
+            raise ExceptionFactory.create_error_exception("Failed to create database pool.")
 
         return pool
 
@@ -169,9 +161,7 @@ class Serenity(SerenityMixin, commands.Bot):
     ) -> SerenityContext:
         return await super().get_context(message, cls=cls or commands.Context[Self])
 
-    async def gather_and_log(
-        self, coros: list[Coroutine[Any, Any, Any]], what: str
-    ) -> list[Any]:
+    async def gather_and_log(self, coros: list[Coroutine[Any, Any, Any]], what: str) -> list[Any]:
         results = await asyncio.gather(*coros, return_exceptions=True)
 
         for _, r in zip(coros, results):
@@ -198,9 +188,7 @@ class Serenity(SerenityMixin, commands.Bot):
                 await self.load_schema(file.read_text())
                 self.logger.info(f"Successfully loaded schema {file.name!r}.")
             except Exception as e:
-                self.logger.error(
-                    f"Failed to load schema {file.name!r} with error: {e}"
-                )
+                self.logger.error(f"Failed to load schema {file.name!r} with error: {e}")
 
         users = await self.model_manager.gather_users()
         guilds = await self.model_manager.gather_guilds()
@@ -216,7 +204,7 @@ class Serenity(SerenityMixin, commands.Bot):
         if message.guild.id not in self.cached_prefixes:
             guild = await self.get_or_create_guild(message.guild.id)
 
-            if guild.prefixes[0] is not None:  # type: ignore
+            if not guild.prefixes[0]:
                 pattern = self.compile_prefixes(guild.prefixes)
             else:
                 if self.user is None:
@@ -283,16 +271,12 @@ class Serenity(SerenityMixin, commands.Bot):
             return
 
         if ctx.guild:
-            if not isinstance(ctx.channel, GuildMessagable) or not isinstance(
-                ctx.me, discord.Member
-            ):
+            if not isinstance(ctx.channel, GuildMessagable) or not isinstance(ctx.me, discord.Member):
                 return
 
             if not ctx.channel.permissions_for(ctx.me).send_messages:
                 if await self.is_owner(ctx.author):
-                    await ctx.author.send(
-                        "I don't have permission to send messages in that channel."
-                    )
+                    await ctx.author.send("I don't have permission to send messages in that channel.")
 
                 return
 
@@ -300,7 +284,7 @@ class Serenity(SerenityMixin, commands.Bot):
 
     @override
     async def connect(self, *, reconnect: bool = True) -> None:
-        def _get_or_zero(obj: Any, attr: str) -> int:
+        def get_or_zero(obj: Any, attr: str) -> int:
             return getattr(obj, attr, 0)
 
         backoff = ExponentialBackoff()
@@ -341,10 +325,7 @@ class Serenity(SerenityMixin, commands.Bot):
 
                 if not reconnect:
                     await self.close()
-                    if (
-                        isinstance(exc, discord.ConnectionClosed)
-                        and _get_or_zero(exc, "code") == 1000
-                    ):
+                    if isinstance(exc, discord.ConnectionClosed) and get_or_zero(exc, "code") == 1000:
                         # Clean close, don't re-raise this
                         return
                     raise
@@ -367,17 +348,16 @@ class Serenity(SerenityMixin, commands.Bot):
                 # sometimes, discord sends us 1000 for unknown reasons so we should reconnect
                 # regardless and rely on is_closed instead
                 if isinstance(exc, discord.ConnectionClosed):
-                    if _get_or_zero(exc, "code") == 4014:
-                        raise discord.PrivilegedIntentsRequired(
-                            _get_or_zero(exc, "shard_id")
-                        ) from None
-                    if _get_or_zero(exc, "code") != 1000:
+                    if get_or_zero(exc, "code") == 4014:
+                        raise discord.PrivilegedIntentsRequired(get_or_zero(exc, "shard_id")) from None
+                    if get_or_zero(exc, "code") != 1000:
                         await self.close()
                         raise
 
                 retry = backoff.delay()
                 self.logger.exception("Attempting a reconnect in %.2fs.", retry)
                 await asyncio.sleep(retry)
+
                 # Always try to RESUME the connection
                 # If the connection is not RESUME-able then the gateway will invalidate the session.
                 # This is apparently what the official Discord client does.
@@ -398,8 +378,6 @@ class Serenity(SerenityMixin, commands.Bot):
     @override
     async def close(self) -> None:
         to_close = (self.pool, self.session, self.redis)
-        asyncio.gather(
-            *[resource.close() for resource in to_close if resource is not None]  # type: ignore
-        )
+        asyncio.gather(*[resource.close() for resource in to_close if resource is not None])  # type: ignore
 
         await super().close()

@@ -34,54 +34,55 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from uuid import uuid4
 
 import discord
 from discord.ext import commands
+from discord.utils import async_all
+from typing_extensions import override
 
-from src.shared import Plugin
-
-from .handlers import get_message
+from src.shared import ExceptionFactory, Plugin, SerenityEmbed
 
 if TYPE_CHECKING:
     from src.models.discord import SerenityContext
     from src.models.serenity import Serenity
 
 
-__all__: tuple[str, ...] = ("Errors",)
+__all__: tuple[str, ...] = ("BaseImageManipulation",)
 
 
-class Errors(Plugin):
+class BaseImageManipulation(Plugin):
+    serenity: Serenity
+
+    @override
     def __init__(self, serenity: Serenity) -> None:
         self.serenity = serenity
-        self.snail = "\N{SNAIL}"
 
-    @Plugin.listener()
-    async def on_command_error(
-        self, ctx: SerenityContext, error: commands.CommandError
-    ) -> None:
-        if not ctx.guild:
-            return
+    @override
+    async def cog_check(self, ctx: SerenityContext) -> bool:
+        checks = (commands.guild_only(),)
+        return await async_all(check(ctx) for check in checks) and await super().cog_check(ctx)
 
-        if isinstance(error, commands.CommandOnCooldown):
-            if await self.serenity.redis.exists(f"{ctx.author.id}:RateLimit:Command"):
-                return
+    async def get_avatar(self, user: discord.User | discord.Member) -> bytes:
+        try:
+            return await user.display_avatar.read()
+        except discord.HTTPException:
+            raise ExceptionFactory.create_critical_exception(f"Unable to retrieve avatar for {user}")
 
-            await self.serenity.redis.setex(
-                f"{ctx.author.id}:RateLimit:Command",
-                int(error.retry_after) + 1,
-                "command cooldown",
-            )
+    def get_file_embed(
+        self,
+        user: discord.User | discord.Member,
+        file_name: str,
+        *,
+        title: str,
+        description: str = "",
+    ) -> SerenityEmbed:
+        embed = (
+            SerenityEmbed(description=description)
+            .set_author(name=f"{user}'s {title}", icon_url=user.display_avatar.url)
+            .set_image(url=f"attachment://{file_name}")
+        )
+        return embed
 
-            try:
-                return await ctx.message.add_reaction(self.snail)
-            except discord.HTTPException:
-                return
-
-        hint = get_message(ctx, error)
-        send = ctx.channel.permissions_for(ctx.guild.me).send_messages
-
-        if send and hint is not None:
-            try:
-                await ctx.safe_send(hint)
-            except discord.HTTPException:
-                pass
+    def generate_file_name(self, file_extension: str = ".png") -> str:
+        return f"{uuid4()}{file_extension}"

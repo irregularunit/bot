@@ -136,9 +136,7 @@ class SerenityMixin:
         `str`
             The fully qualified name of the plugin.
         """
-        plugins = [
-            file for file in os.listdir("src/plugins") if not file.startswith("_")
-        ]
+        plugins = [file for file in os.listdir("src/plugins") if not file.startswith("_")]
         for plugin in plugins:
             SerenityMixin._plugins[plugin] = True
 
@@ -153,9 +151,7 @@ class SerenityMixin:
         `pathlib.Path`
             The path to the schema.^
         """
-        schemas = [
-            file for file in os.listdir("src/migrations") if not file.startswith("_")
-        ]
+        schemas = [file for file in os.listdir("src/migrations") if not file.startswith("_")]
 
         def _sort_key(schema: str) -> int:
             return int(schema.split("_")[0])

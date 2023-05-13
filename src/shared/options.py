@@ -31,9 +31,29 @@ This is a human-readable summary of the Legal Code. The full license is availabl
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
-from typing import NamedTuple
+from typing import NamedTuple, Tuple, TypedDict, Union
 
-__all__: tuple[str, ...] = ("CommandOption",)
+import discord
+from discord.ext import commands
+
+from src.models.discord.converter import MaybeConverter
+
+__all__: tuple[str, ...] = (
+    "CommandOption",
+    "CommandExtras",
+    "DefaultExample",
+    "MaybeMember",
+    "MaybeMemberParam",
+)
+
+
+MaybeMember = Union[discord.User, MaybeConverter]
+MaybeMemberParam = commands.param(
+    converter=MaybeConverter(),
+    displayed_default="author",
+    default=None,
+)
+DefaultExample: str = "{1}{2} {3}"
 
 
 class CommandOption(NamedTuple):
@@ -42,6 +62,12 @@ class CommandOption(NamedTuple):
 
     def __str__(self) -> str:
         return f"・`{self.option}` - {self.description}\n"
-    
+
     def markup(self) -> str:
         return str(self)
+
+
+class CommandExtras(TypedDict):
+    description: str
+    options: Tuple[CommandOption, ...]
+    example: str

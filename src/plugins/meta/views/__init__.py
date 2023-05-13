@@ -33,7 +33,6 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from operator import eq
 from typing import Self
 
 from discord import ButtonStyle, Interaction
@@ -76,9 +75,8 @@ class AboutSerenityView(SerenityView):
         await interaction.delete_original_response()
 
     async def interaction_check(self, interaction: Interaction) -> bool:
-        if not eq(interaction.user.id, self.owner):
-            await interaction.response.send_message(
-                "Only the bot owner can use this view.", ephemeral=True
-            )
+        if not interaction.user.id != self.owner:
+            await interaction.response.send_message("Only the bot owner can use this view.", ephemeral=True)
+            return False
 
         return True

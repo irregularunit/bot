@@ -65,15 +65,11 @@ class FilePointer:
         return self.root / str(self.uid)
 
     def __iter__(self) -> Generator[Image.Image, None, None]:
-        for file in sorted(
-            self.current_path.iterdir(), key=lambda x: x.stat().st_mtime
-        ):
+        for file in sorted(self.current_path.iterdir(), key=lambda x: x.stat().st_mtime):
             yield Image.open(file)
 
     def __len__(self) -> int:
-        return (
-            len(list(self.current_path.iterdir())) if self.current_path.exists() else 0
-        )
+        return len(list(self.current_path.iterdir())) if self.current_path.exists() else 0
 
     def __repr__(self) -> str:
         return f"<Files uid={self.uid} length={len(self)}>"

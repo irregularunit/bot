@@ -77,9 +77,7 @@ class Plugin(commands.Cog):
         return self.__class__.__name__
 
 
-def for_command_callbacks(
-    decorator: Callable[[Any], Callable[[Type[T]], Type[T]]]
-) -> Callable[[Type[T]], Type[T]]:
+def for_command_callbacks(decorator: Callable[[Any], Callable[[Type[T]], Type[T]]]) -> Callable[[Type[T]], Type[T]]:
     """Decorator for command callbacks.
 
     Parameters

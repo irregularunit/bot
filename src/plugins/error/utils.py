@@ -1,0 +1,91 @@
+# -*- coding: utf-8 -*-
+
+"""
+Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
+
+You are free to:
+
+  - Share: copy and redistribute the material in any medium or format.
+  - Adapt: remix, transform, and build upon the material.
+
+The licensor cannot revoke these freedoms as long as you follow the license
+terms.
+
+Under the following terms:
+
+  - Attribution: You must give appropriate credit, provide a link to the
+    license, and indicate if changes were made. You may do so in any reasonable
+    manner, but not in any way that suggests the licensor endorses you or your
+    use.
+  
+  - Non-Commercial: You may not use the material for commercial purposes.
+  
+  - Share Alike: If you remix, transform, or build upon the material, you must
+    distribute your contributions under the same license as the original.
+  
+  - No Additional Restrictions: You may not apply legal terms or technological
+    measures that legally restrict others from doing anything the license
+    permits.
+
+This is a human-readable summary of the Legal Code. The full license is available
+at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+"""
+
+from __future__ import annotations
+
+from re import sub
+from typing import TYPE_CHECKING, Any, Callable, Tuple, Union
+
+from discord.ext import commands
+
+from src.shared import ExceptionFactory
+
+if TYPE_CHECKING:
+    from src.models.discord import SerenityContext
+
+
+__all__: Tuple[str, ...] = (
+    "INTERNAL_EXCEPTION",
+    "converter_name",
+    "get_failed_param",
+    "get_raisable_context",
+)
+
+INTERNAL_EXCEPTION = ExceptionFactory.create_critical_exception(
+    'An internal error occurred. Please contact the bot owner.'
+).to_string()
+
+
+def converter_name(converter: Union[Callable[..., Any], commands.Converter[Any]]) -> str:
+    return type(converter).__name__
+
+
+def get_failed_param(ctx: SerenityContext) -> commands.Parameter:
+    if ctx.command is None:
+        raise commands.CommandError(INTERNAL_EXCEPTION)
+
+    params = tuple(ctx.command.params.values())
+    handles = (*ctx.args, *ctx.kwargs.values())
+
+    return params[len(handles) - 2]
+
+
+def get_raisable_context(ctx: SerenityContext) -> Tuple[commands.Parameter, str]:
+    if ctx.command is None:
+        raise commands.CommandError(INTERNAL_EXCEPTION)
+
+    param = get_failed_param(ctx)
+
+    name = ctx.command.qualified_name
+    prefix = ctx.clean_prefix
+
+    usage = sub(
+        fr'(\s*[<\[]{param.name}[.=\w]*[>\]]\s*)',
+        '`**`\u200b\\1\u200b`**`',
+        ctx.command.signature,
+    )
+    usage = usage.rstrip('`') if usage.endswith('`') else f'{usage}`'
+
+    signature = f'\n\nUsage: `{prefix}{name} {usage}\n' f"Type `{prefix}help {name}` for more information."
+
+    return param, signature

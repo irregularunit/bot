@@ -54,9 +54,7 @@ class Publisher:
     async def publish(self, channel: str, message: Any) -> None:
         await self.redis.publish(channel, message)
 
-    async def publish_after(
-        self, channel: str, message: Any, delay: Union[int, float]
-    ) -> None:
+    async def publish_after(self, channel: str, message: Any, delay: Union[int, float]) -> None:
         await utils.sleep_until(when=utils.utcnow() + dt.timedelta(seconds=delay))
 
         async with self.redis.pubsub() as ps:  # type: ignore

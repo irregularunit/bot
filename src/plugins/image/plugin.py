@@ -33,49 +33,25 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from datetime import datetime
-from io import BytesIO
-from typing import NamedTuple, Tuple
+from typing import TYPE_CHECKING
 
-import discord
-from magic import from_buffer
+from discord.ext import commands
 
-from src.imaging import AvatarPointer
+from src.shared import for_command_callbacks
 
-__all__: Tuple[str, ...] = (
-    "PRESENCE_STATUS",
-    "PresenceEntitiy",
-    "AssetEntity",
-    "type_of",
-)
+from .activity import ActivityHistory
+from .fun import FunImageManipulation
+
+if TYPE_CHECKING:
+    from src.models.serenity import Serenity
 
 
-PRESENCE_STATUS = {
-    discord.Status.online: "Online",
-    discord.Status.idle: "Idle",
-    discord.Status.dnd: "Do Not Disturb",
-    discord.Status.offline: "Offline",
-}
+__all__: tuple[str, ...] = ("ImageManipulation",)
 
 
-class PresenceEntitiy(NamedTuple):
-    snowflake: int
-    status: str
-    changed_at: datetime
+@for_command_callbacks(commands.cooldown(1, 5, commands.BucketType.user))
+class ImageManipulation(ActivityHistory, FunImageManipulation):
+    serenity: Serenity
 
-
-class AssetEntity(NamedTuple):
-    snowfalke: int
-    image_data: bytes
-    mime_type: str
-
-    def to_pointer(self) -> AvatarPointer:
-        return AvatarPointer(self.snowfalke, self.mime_type, file=BytesIO(self.image_data))
-
-
-def type_of(data: bytes) -> str:
-    mime = from_buffer(data, mime=True)
-    if mime in ("image/png", "image/jpeg", "image/gif", "image/webp"):
-        return mime
-
-    raise ValueError(f"Invalid mime type: {mime}")
+    def __init__(self, serenity: Serenity) -> None:
+        self.serenity = serenity

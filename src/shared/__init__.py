@@ -36,7 +36,8 @@ from .codeblock import *
 from .config import *
 from .embed import *
 from .exceptions import *
+from .options import *
 from .plugin import *
+from .queue import *
 from .timer import *
 from .view import *
-from .options import *
