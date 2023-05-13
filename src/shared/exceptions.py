@@ -101,6 +101,12 @@ class UserFeedbackException(commands.CommandError):
             buffer.write(self.message)
 
         return f"{self.strategy.get_emoji()} | {buffer.getvalue()}"
+    
+    def __str__(self) -> str:
+        return self.to_string()
+    
+    def __repr__(self) -> str:
+        return self.to_string()
 
 
 class UserFeedbackStrategy(ABC):

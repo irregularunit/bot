@@ -126,6 +126,7 @@ class Events(EventExtensionMixin, Plugin):
             logger.info("Pushing asset %s to IO", asset.snowflake)
 
             await asset.to_pointer().save()
+            await self.send_to_transcript(asset)
 
     @tasks.loop(minutes=5)
     async def empty_presence_queue(self) -> None:

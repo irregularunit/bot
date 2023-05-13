@@ -285,9 +285,6 @@ class Serenity(SerenityMixin, commands.Bot):
 
     @override
     async def connect(self, *, reconnect: bool = True) -> None:
-        def get_or_zero(obj: Any, attr: str) -> int:
-            return getattr(obj, attr, 0)
-
         backoff = ExponentialBackoff()
         ws_params: dict[str, Any] = {
             "initial": True,
@@ -303,10 +300,7 @@ class Serenity(SerenityMixin, commands.Bot):
                 while True:
                     await self.ws.poll_event()
             except discord.client.ReconnectWebSocket as e:
-                self.logger.info(
-                    "Got a request to %s the websocket.",
-                    getattr(e, "op", None),
-                )
+                self.logger.info("Got a request to %s the websocket.", getattr(e, "op", None))
                 self.dispatch("disconnect")
 
                 ws_params.update(
@@ -326,7 +320,7 @@ class Serenity(SerenityMixin, commands.Bot):
 
                 if not reconnect:
                     await self.close()
-                    if isinstance(exc, discord.ConnectionClosed) and get_or_zero(exc, "code") == 1000:
+                    if isinstance(exc, discord.ConnectionClosed) and getattr(exc, "code", None) == 1000:
                         # Clean close, don't re-raise this
                         return
                     raise
@@ -349,9 +343,9 @@ class Serenity(SerenityMixin, commands.Bot):
                 # sometimes, discord sends us 1000 for unknown reasons so we should reconnect
                 # regardless and rely on is_closed instead
                 if isinstance(exc, discord.ConnectionClosed):
-                    if get_or_zero(exc, "code") == 4014:
-                        raise discord.PrivilegedIntentsRequired(get_or_zero(exc, "shard_id")) from None
-                    if get_or_zero(exc, "code") != 1000:
+                    if getattr(exc, "code", None) == 4014:
+                        raise discord.PrivilegedIntentsRequired(getattr(exc, "shard_id", None)) from None
+                    if getattr(exc, "code", None) != 1000:
                         await self.close()
                         raise
 
