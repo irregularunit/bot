@@ -1,32 +1,24 @@
-# * Bot for Discord
-# * Copyright (C) 2023 Irregular Unit
-# * This software is licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
-# * For more information, see README.md and LICENSE
-
-# Discord Related
-aiohttp[speedup]>=3.7.4,<4
-discord.py==2.2.2
+# Base requirements linked to discord.py
+aiohttp[speedups]>=3.7.4,<4
+git+https://github.com/Rapptz/discord.py@master
 git+https://github.com/gorialis/jishaku
 
-# Enhancments and Utilities
-pympler==1.0.1 
-orjson==3.8.11
-uvloop==0.17.0; sys_platform != "win32"
-numpy==1.24.3
+# Performance and utility functions
+numpy>=1.24.2
+scikit-image==0.20.0
+matplotlib>=3.7.1
+uvloop==0.17.0; sys_platform != 'win32' and sys_platform != 'cygwin'
+orjson>=3.8.10
+pydantic[dotenv]==1.10.4
 
-# Useful and Cosmetic
-aiofiles==23.1.0
-simpleeval==0.9.13 
-emoji==1.7.0
+# Cosmetic and useful
 coloredlogs==15.0.1
-python-magic==0.4.27
-python-magic-bin==0.4.14; os_name == "nt"
+python-magic>=0.4.27
+python-magic-bin==0.4.14; sys_platform == 'win32' or sys_platform == 'cygwin'
 Pillow==9.5.0
+typing-extensions==4.5.0
 
-# Database Related and Stubs
+# Storage and cache related drivers and typings
 asyncpg>=0.27.0
-redis>=4.2.0rc1
+redis>=4.2.2
 git+https://github.com/bryanforbes/asyncpg-stubs
-
-# Base Requirements
-pydantic[dotenv]>=1.10.4

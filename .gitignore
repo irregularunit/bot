@@ -17,3 +17,10 @@ venv/
 *.py[cod]
 *$py.class
 *.log
+*.mixin
+
+images/*/
+logs/*/
+
+!images/
+!logs/
