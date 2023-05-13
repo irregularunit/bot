@@ -1,0 +1,30 @@
+version = 2
+
+[[analyzers]]
+name = "bandit"
+enabled = true
+
+[[analyzers]]
+name = "black"
+enabled = true
+
+[[analyzers]]
+name = "pylance"
+enabled = true
+
+[tool.black]
+version = "21.4b0"
+exclude = '''
+/(
+  \.git
+| \.hg
+| \.mypy_cache
+| \.tox
+| \.venv
+| _build
+| buck-out
+| build
+| dist
+)/
+'''
+line-length = 120
