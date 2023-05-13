@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -109,7 +108,8 @@ class Meta(Plugin):
 
         await ctx.maybe_reply(
             embed=embed,
-            view=AboutSerenityView(ctx.author.id, self.serenity.config.invite, "Invite"),
+            view=AboutSerenityView(
+                ctx.author.id, self.serenity.config.invite, "Invite"),
         )
 
     @commands.command(name="avatar", aliases=("av", "pfp"), extras=avatar_info_extra)
@@ -122,9 +122,11 @@ class Meta(Plugin):
         gif = user.display_avatar.url if user.display_avatar.is_animated() else None
 
         embed = SerenityEmbed(
-            description=(f"[webp]({webp}) | [png]({png}) | [jpg]({jpg}) {'| [gif]({})'.format(gif) if gif else ''}")
+            description=(
+                f"[webp]({webp}) | [png]({png}) | [jpg]({jpg}) {'| [gif]({})'.format(gif) if gif else ''}")
         )
-        embed.set_author(name=f"{user.display_name}'s avatar", icon_url=user.display_avatar)
+        embed.set_author(
+            name=f"{user.display_name}'s avatar", icon_url=user.display_avatar)
         embed.set_image(url=user.display_avatar.url)
 
         await ctx.maybe_reply(embed=embed)

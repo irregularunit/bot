@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -62,7 +61,8 @@ class ActivityHistory(BaseImageManipulation):
         pointer = FilePointer(user.id)
 
         if pointer.empty:
-            raise ExceptionFactory.create_warning_exception(f"{user.display_name} has no avatar history.")
+            raise ExceptionFactory.create_warning_exception(
+                f"{user.display_name} has no avatar history.")
 
         with Stopwatch() as sw:
             buffered_io = await AvatarCollage(pointer).buffer()
@@ -110,7 +110,8 @@ class ActivityHistory(BaseImageManipulation):
                 results = await conn.fetch(query, user.id)
 
         if not results:
-            raise ExceptionFactory.create_warning_exception(f"{user.display_name} has no presence history.")
+            raise ExceptionFactory.create_warning_exception(
+                f"{user.display_name} has no presence history.")
 
         dates: list[datetime] = [result["created_at"] for result in results]
         statuses: list[str] = [result["status"] for result in results]
@@ -128,7 +129,8 @@ class ActivityHistory(BaseImageManipulation):
             user,
             filename,
             title="presence history",
-            description=(f"> Generating took `{elapsed_time:.2f}` seconds.\n> Showing your `weekly` presence history."),
+            description=(
+                f"> Generating took `{elapsed_time:.2f}` seconds.\n> Showing your `weekly` presence history."),
         )
 
         await ctx.send(file=file, embed=embed)

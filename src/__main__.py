@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -49,7 +48,6 @@ from src.shared import SerenityConfig
 
 if TYPE_CHECKING:
     from asyncpg import Pool, Record
-
 
 VoiceClient.warn_nacl = False
 

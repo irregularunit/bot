@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -42,9 +41,7 @@ if TYPE_CHECKING:
 
     from asyncpg import Pool, Record
 
-
 __all__: tuple[str, ...] = ("SerenityGuild", "SERENITY_GUILDS_LINKED_TABLE")
-
 
 _logger = getLogger(__name__)
 
@@ -91,7 +88,8 @@ class SerenityGuild:
                 self.id,
             )
 
-        _logger.getChild("delete").info("Deleted guild %s from database", self.id)
+        _logger.getChild("delete").info(
+            "Deleted guild %s from database", self.id)
 
     @property
     def link_tables(self) -> tuple[str, ...]:

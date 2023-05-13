@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -82,7 +81,8 @@ class Stopwatch:
         if eq(self.start_time, 0.0):
             return 0.0
 
-        elapsed = self.stop_time - self.start_time if self.stop_time else perf_counter() - self.start_time
+        elapsed = self.stop_time - self.start_time if self.stop_time else perf_counter() - \
+            self.start_time
 
         return elapsed
 

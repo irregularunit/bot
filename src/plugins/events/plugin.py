@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -49,7 +48,6 @@ from .utils import PRESENCE_STATUS, AssetEntity, PresenceEntitiy
 if TYPE_CHECKING:
     from src.models.serenity import Serenity
 
-
 __all__: tuple[str, ...] = ("Events",)
 
 
@@ -75,7 +73,8 @@ class Events(EventExtensionMixin, Plugin):
             channel = await self.serenity.fetch_channel(self.serenity.config.TS_CHANNEL_ID)
 
             if not isinstance(channel, discord.TextChannel):
-                raise TypeError("Expected a text channel got %s", type(channel))
+                raise TypeError(
+                    "Expected a text channel got %s", type(channel))
 
             self.asset_channel = channel
 
@@ -210,7 +209,8 @@ class Events(EventExtensionMixin, Plugin):
     @Plugin.listener("on_guild_join")
     async def new_guild_event(self, guild: discord.Guild) -> None:
         logger = self.get_logger("new_guild_event")
-        logger.info("Joined new guild %s with %s members", guild.name, guild.member_count)
+        logger.info("Joined new guild %s with %s members",
+                    guild.name, guild.member_count)
 
         if guild.id not in self.serenity.cached_guilds:
             await self.serenity.get_or_create_guild(guild.id)

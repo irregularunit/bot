@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -50,16 +49,16 @@ __all__: tuple[str, ...] = (
 # fmt: off
 class ExecptionLevel(Enum):
     """An enum for exception levels.
-    
+
     This is used to notify the user of the severity of the exception.
-    
+
     Notes
     -----
     - Info: The exception is not severe and can be ignored.
     - Warning: The exception is not severe, but should be noted.
     - Error: The exception is severe and should be noted.
     - Critical: The exception is severe and should be noted immediately.
-    
+
     +----------------+-------------------+
     | Level          | Emoji             |
     +================+===================+
@@ -101,10 +100,10 @@ class UserFeedbackException(commands.CommandError):
             buffer.write(self.message)
 
         return f"{self.strategy.get_emoji()} | {buffer.getvalue()}"
-    
+
     def __str__(self) -> str:
         return self.to_string()
-    
+
     def __repr__(self) -> str:
         return self.to_string()
 

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -39,7 +38,6 @@ from .model import SerenityGuild
 
 if TYPE_CHECKING:
     from asyncpg import Pool, Record
-
 
 __all__: tuple[str, ...] = ("SerenityGuildManager",)
 

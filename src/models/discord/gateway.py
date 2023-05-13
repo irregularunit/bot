@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -137,7 +136,8 @@ class MobileGateway(discord.gateway.DiscordWebSocket):
         gateway = gateway or cls.DEFAULT_GATEWAY
 
         if zlib:
-            url = gateway.with_query(v=INTERNAL_API_VERSION, encoding=encoding, compress='zlib-stream')
+            url = gateway.with_query(
+                v=INTERNAL_API_VERSION, encoding=encoding, compress='zlib-stream')
         else:
             url = gateway.with_query(v=INTERNAL_API_VERSION, encoding=encoding)
 

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -37,13 +36,15 @@ from src.shared import CommandExtras, CommandOption, DefaultExample
 
 avatar_history_extra = CommandExtras(
     description="Generate a collage of a user's avatar history.",
-    options=(CommandOption("user", "The user to generate the avatar history for."),),
+    options=(CommandOption(
+        "user", "The user to generate the avatar history for."),),
     example=DefaultExample,
 )
 
 presence_graph_extra = CommandExtras(
     description="Generate a graph of a user's presence history.",
-    options=(CommandOption("user", "The user to generate the presence history for."),),
+    options=(CommandOption(
+        "user", "The user to generate the presence history for."),),
     example=DefaultExample,
 )
 
@@ -61,7 +62,8 @@ ascii_extra = CommandExtras(
 
 pixelate_extra = CommandExtras(
     description="Generate a pixelated image from an user's avatar.",
-    options=(CommandOption("user", "The user to generate the pixelated image for."),),
+    options=(CommandOption(
+        "user", "The user to generate the pixelated image for."),),
     example=DefaultExample,
 )
 
@@ -76,7 +78,8 @@ pride_extra = CommandExtras(
 
 triggered_extra = CommandExtras(
     description="Generate a triggered image from an user's avatar.",
-    options=(CommandOption("user", "The user to generate the triggered image for."),),
+    options=(CommandOption(
+        "user", "The user to generate the triggered image for."),),
     example=DefaultExample,
 )
 

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -44,7 +43,8 @@ from PIL import Image
 
 from .abc import SavableByteStream
 
-__all__: tuple[str, ...] = ("PresenceEntry", "PresenceHistory", "PresenceGraph")
+__all__: tuple[str, ...] = (
+    "PresenceEntry", "PresenceHistory", "PresenceGraph")
 
 
 class PresenceEntry(NamedTuple):
@@ -59,7 +59,8 @@ class PresenceHistory(TypedDict):
 
 
 class PresenceGraph(SavableByteStream):
-    __slots__: tuple[str, ...] = ("_data", "_width", "_mapping", "_avatar", "font")
+    __slots__: tuple[str, ...] = (
+        "_data", "_width", "_mapping", "_avatar", "font")
 
     _data: PresenceHistory
     _width: float
@@ -80,7 +81,8 @@ class PresenceGraph(SavableByteStream):
         return self._data
 
     def _generate_donut_chart(self) -> BytesIO:
-        sizes = [self.data["statuses"].count(status) for status in self._mapping.keys()]
+        sizes = [self.data["statuses"].count(
+            status) for status in self._mapping.keys()]
         labels, sorted_sizes = zip(
             *sorted(
                 zip(self._mapping.keys(), sizes),
@@ -128,7 +130,8 @@ class PresenceGraph(SavableByteStream):
         )
 
         canvas = BytesIO()
-        plt.savefig(canvas, format="png", facecolor="none", transparent=True)  # type: ignore
+        plt.savefig(canvas, format="png", facecolor="none",
+                    transparent=True)  # type: ignore
         plt.close()  # type: ignore
         canvas.seek(0)
 

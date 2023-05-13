@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -45,9 +44,7 @@ if TYPE_CHECKING:
     from src.models.discord import SerenityContext
     from src.models.serenity import Serenity
 
-
 __all__: tuple[str, ...] = ("Plugin", "for_command_callbacks")
-
 
 T = TypeVar("T")
 CogT_co = TypeVar("CogT_co", covariant=True, bound=commands.Cog)

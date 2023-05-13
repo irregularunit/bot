@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -71,7 +70,8 @@ class Codeblock:
             try:
                 self.content = content.decode("utf-8")
             except UnicodeDecodeError:
-                raise ValueError("Content must be a string or bytes-like object.")
+                raise ValueError(
+                    "Content must be a string or bytes-like object.")
 
         self.language = language
         self.inline = inline
@@ -99,7 +99,9 @@ class Codeblock:
             True if the codeblock would be closed, False otherwise.
         """
         return argument[cursor:].startswith("`" * backticks) and (
-            cursor + backticks == len(argument) or argument[cursor + backticks].isspace()
+            cursor +
+            backticks == len(
+                argument) or argument[cursor + backticks].isspace()
         )
 
     @staticmethod
@@ -123,7 +125,7 @@ class Codeblock:
             The language and content of the codeblock.
         """
 
-        language = argument[start + backticks : end].strip()
+        language = argument[start + backticks: end].strip()
         content_start = argument.find("\n", end) + 1
         content_end = argument.rfind("`" * backticks, content_start, -1)
         content = argument[content_start:content_end]
@@ -181,13 +183,16 @@ class Codeblock:
                 if state is State.first_line:
                     state = State.content
                 elif state is State.content and cls._would_close(argument, cursor, backticks):
-                    language, content = cls._parse_codeblock(argument, first_line_start, cursor, backticks)  # type: ignore
+                    language, content = cls._parse_codeblock(
+                        argument, first_line_start, cursor, backticks
+                    )  # type: ignore
                     return Codeblock(content, language=language)
 
             cursor += 1
 
         if state is State.content and cls._would_close(argument, cursor, backticks):
-            language, content = cls._parse_codeblock(argument, first_line_start, cursor, backticks)  # type: ignore
+            language, content = cls._parse_codeblock(
+                argument, first_line_start, cursor, backticks)  # type: ignore
             return Codeblock(content, language=language)
 
         return Codeblock(argument)

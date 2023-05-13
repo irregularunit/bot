@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -71,7 +70,8 @@ class SerenityMixin:
             The compiled regular expression.
         """
         return re.compile(
-            r"|".join(re.escape(prefix) + r"\s*" for prefix in prefixes if prefix),
+            r"|".join(re.escape(prefix) +
+                      r"\s*" for prefix in prefixes if prefix),
             re.IGNORECASE,
         )
 
@@ -120,7 +120,7 @@ class SerenityMixin:
             The chunks of the list.
         """
         for i in range(0, len(items), size):
-            yield items[i : i + size]
+            yield items[i: i + size]
 
     @staticmethod
     def walk_plugins() -> Generator[str, None, None]:
@@ -131,7 +131,8 @@ class SerenityMixin:
         `str`
             The fully qualified name of the plugin.
         """
-        plugins = [file for file in os.listdir("src/plugins") if not file.startswith("_")]
+        plugins = [file for file in os.listdir(
+            "src/plugins") if not file.startswith("_")]
         for plugin in plugins:
             yield f"src.plugins.{plugin[:-3] if plugin.endswith('.py') else plugin}"
 
@@ -144,7 +145,8 @@ class SerenityMixin:
         `pathlib.Path`
             The path to the schema.^
         """
-        schemas = [file for file in os.listdir("src/migrations") if not file.startswith("_")]
+        schemas = [file for file in os.listdir(
+            "src/migrations") if not file.startswith("_")]
 
         def _sort_key(schema: str) -> int:
             return int(schema.split("_")[0])

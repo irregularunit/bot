@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -41,7 +40,6 @@ from pydantic.fields import ModelField
 from typing_extensions import override
 
 __all__: tuple[str, ...] = ("SerenityConfig",)
-
 
 _logger: Logger = getLogger(__name__)
 GeneratorType: Type[Generator[int, None, None]] = type(1 for _ in range(1))
@@ -111,8 +109,10 @@ class SerenityConfig(BaseSettings):
         def prepare_field(cls, field: ModelField) -> None:
             env_names: list[str] | AbstractSet[str]
 
-            field_info_from_config: dict[str, Any] = cls.get_field_info(field.name)
-            env: Any | None = field_info_from_config.get("env") or field.field_info.extra.get("env")
+            field_info_from_config: dict[str,
+                                         Any] = cls.get_field_info(field.name)
+            env: Any | None = field_info_from_config.get(
+                "env") or field.field_info.extra.get("env")
             if env is None:
                 if field.has_alias:
                     _logger.warning(
@@ -128,7 +128,8 @@ class SerenityConfig(BaseSettings):
             elif cls._sequence_like(env):
                 env_names = list(env)
             else:
-                raise TypeError(f"Invalid field env type {type(env)} for field {field.name}")
+                raise TypeError(
+                    f"Invalid field env type {type(env)} for field {field.name}")
 
             if not cls.case_sensitive:
                 env_names = env_names.__class__(n.lower() for n in env_names)

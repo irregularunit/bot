@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -42,7 +41,6 @@ from src.shared import ExceptionFactory
 
 if TYPE_CHECKING:
     from src.models.discord import SerenityContext
-
 
 __all__: Tuple[str, ...] = (
     "INTERNAL_EXCEPTION",

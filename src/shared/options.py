@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -45,7 +44,6 @@ __all__: tuple[str, ...] = (
     "MaybeMember",
     "MaybeMemberParam",
 )
-
 
 MaybeMember = Union[discord.User, MaybeMemberConverter]
 MaybeMemberParam = commands.param(

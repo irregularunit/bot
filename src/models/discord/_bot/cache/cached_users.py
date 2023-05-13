@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -42,7 +41,6 @@ from discord.ext import tasks
 if TYPE_CHECKING:
     from src.models.discord import SerenityUser
 
-
 __all__: tuple[str, ...] = ("SerenityUserCache",)
 
 
@@ -73,7 +71,8 @@ class SerenityUserCache:
         if len(self.__cache) >= self.__size:
             self.__evict()
 
-        self.__cache[snowflake] = CachedEntity(entity=entity, timestamp=time.time())
+        self.__cache[snowflake] = CachedEntity(
+            entity=entity, timestamp=time.time())
 
     def insert_many(self, *entities: SerenityUser) -> None:
         for entity in entities:
@@ -94,7 +93,8 @@ class SerenityUserCache:
         return f"<SerenityUserCache size={self.__size} length={len(self.__cache)} at {hex(id(self))}"
 
     def __evict(self) -> None:
-        _, cached = min(self.__cache.items(), key=lambda item: item[1].timestamp)
+        _, cached = min(self.__cache.items(),
+                        key=lambda item: item[1].timestamp)
         del self.__cache[cached.entity.id]
 
         # TODO: combine with pop
@@ -107,7 +107,8 @@ class SerenityUserCache:
             return
 
         while self.__cache:
-            _, cached = min(self.__cache.items(), key=lambda item: item[1].timestamp)
+            _, cached = min(self.__cache.items(),
+                            key=lambda item: item[1].timestamp)
 
             # Remove all cached entities that are older than 30 minutes
             if time.time() - cached.timestamp < 1_800:

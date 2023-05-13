@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -48,7 +47,6 @@ __all__: Tuple[str, ...] = (
     "get_handler",
     "get_message",
 )
-
 
 logger = getLogger(__name__)
 T_co = TypeVar("T_co", covariant=True)
@@ -188,7 +186,8 @@ def missing_permissions_handler(
     s = "s" if len(perms) > 1 else ""
     missing = formatted.replace("_", " ").replace("guild", "server")
 
-    me_or_you = "I\'m" if isinstance(exc, commands.BotMissingPermissions) else "You\'re"
+    me_or_you = "I\'m" if isinstance(
+        exc, commands.BotMissingPermissions) else "You\'re"
 
     return f"{me_or_you} missing the `{missing}` permission{s} required to run this command."
 

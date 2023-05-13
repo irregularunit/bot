@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -179,7 +178,8 @@ class ColorRepresentation(SavableByteStream):
 
         # The filter byte is set to 0, indicating "None".
         # See: http://www.libpng.org/pub/png/spec/1.2/PNG-Compression.html
-        raw_data = b''.join(b'\x00' + bytes(self.colour.rgb) * width for _ in range(height))
+        raw_data = b''.join(b'\x00' + bytes(self.colour.rgb)
+                            * width for _ in range(height))
 
         compressed_data = zlib.compress(raw_data)
         return self._generate_chunk(b'IDAT', compressed_data)

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -103,8 +102,10 @@ class PalleteCreator(ImageManipulator):
                 for i in range(5):
                     x1, y1, x2, y2 = 10, 10 + (i * 50), 40, 40 + (i * 50)
 
-                    color = (palette[i * 3], palette[i * 3 + 1], palette[i * 3 + 2])
-                    draw.rectangle((x1, y1, x2, y2), fill=color, outline=text_color)
+                    color = (palette[i * 3], palette[i *
+                             3 + 1], palette[i * 3 + 2])
+                    draw.rectangle((x1, y1, x2, y2), fill=color,
+                                   outline=text_color)
 
                     text_position = (x2 + 10, y1 - 4)
                     draw.text(  # type: ignore
@@ -132,7 +133,8 @@ class AsciiCreator(ImageManipulator):
     def __init__(self, image: bytes) -> None:
         super().__init__(image)
         self.ascii_chars = np.asarray(
-            list(r" .'`^\,:;Il!i><~+_-?][}{1)(|\/tfjrxn" r"uvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$")
+            list(
+                r" .'`^\,:;Il!i><~+_-?][}{1)(|\/tfjrxn" r"uvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$")
         )
         self.font = ImageFont.load_default()
 
@@ -144,7 +146,8 @@ class AsciiCreator(ImageManipulator):
     ) -> BytesIO:
         with Image.open(BytesIO(self.image)) as image:
             image = self._mock_size(image, 1024)
-            image_scaled = np.array(image.convert("RGB").resize((int(scale * image.width), int(scale * image.height))))
+            image_scaled = np.array(image.convert("RGB").resize(
+                (int(scale * image.width), int(scale * image.height))))
 
         letter_width, letter_height = self.font.getsize("x")
         wcf = letter_height / letter_width
@@ -153,9 +156,11 @@ class AsciiCreator(ImageManipulator):
         height_in_chars = round(image_scaled.shape[0])
         image_sum = np.sum(image_scaled, axis=2)
         image_sum -= image_sum.min()
-        image_normalized = (1.0 - image_sum / image_sum.max()) ** gamma * (len(self.ascii_chars) - 1)
+        image_normalized = (1.0 - image_sum / image_sum.max()
+                            ) ** gamma * (len(self.ascii_chars) - 1)
 
-        ascii_image = np.array([self.ascii_chars[i] for i in image_normalized.astype(int)])
+        ascii_image = np.array([self.ascii_chars[i]
+                               for i in image_normalized.astype(int)])
         lines = "\n".join(["".join(row) for row in ascii_image])
 
         new_img_width = letter_width * width_in_chars
@@ -208,7 +213,8 @@ class PixelateCreator(ImageManipulator):
                 for point in points:
                     color = canvas.getpixel(point)
                     draw = ImageDraw.Draw(background)
-                    draw.rectangle((point, (point[0] + 10, point[1] + 10)), fill=color)
+                    draw.rectangle(
+                        (point, (point[0] + 10, point[1] + 10)), fill=color)
 
                 buffer = BytesIO()
                 background.save(buffer, format="PNG")
@@ -281,7 +287,8 @@ class PrideCreator(ImageManipulator):
         with Image.new("L", self.size, 0) as mask:
             draw = ImageDraw.Draw(mask)
             draw.ellipse((0, 0) + self.size, fill=255)
-            draw.ellipse((px, px, self.size[0] - px, self.size[1] - px), fill=0)
+            draw.ellipse(
+                (px, px, self.size[0] - px, self.size[1] - px), fill=0)
 
             ring.putalpha(mask)
             return ring

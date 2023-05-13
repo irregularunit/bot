@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -54,7 +53,8 @@ class ExponentialBackoff(Generic[T]):
         rand = random.Random()
         rand.seed()
 
-        self._randfunc: Callable[..., int | float] = rand.randrange if integral else rand.uniform
+        self._randfunc: Callable[..., int |
+                                 float] = rand.randrange if integral else rand.uniform
 
     @overload
     def delay(self: ExponentialBackoff[Literal[False]]) -> float:

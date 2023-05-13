@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -44,7 +43,6 @@ from src.shared import ExceptionFactory, Plugin, SerenityEmbed
 if TYPE_CHECKING:
     from src.models.serenity import Serenity
 
-
 __all__: tuple[str, ...] = ("BaseImageManipulation",)
 
 
@@ -59,7 +57,8 @@ class BaseImageManipulation(Plugin):
         try:
             return await user.display_avatar.read()
         except discord.HTTPException:
-            raise ExceptionFactory.create_critical_exception(f"Unable to retrieve avatar for {user}")
+            raise ExceptionFactory.create_critical_exception(
+                f"Unable to retrieve avatar for {user}")
 
     def get_file_embed(
         self,

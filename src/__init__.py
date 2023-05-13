@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -86,7 +85,6 @@ __version__: Final[str] = VersionInfo(
 
 __license__: Final[str] = "CC-BY-NC-SA-4.0"
 __author__: Final[str] = "lexicalunit#4564"
-
 
 if __name__ == "__main__":
     print(f"<Serenity Bot v{__version__} by {__author__} ({__license__})>")

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -48,7 +47,6 @@ __all__: Tuple[str, ...] = (
     "AssetEntity",
     "get_image_mime_type",
 )
-
 
 PRESENCE_STATUS = {
     discord.Status.online: "Online",

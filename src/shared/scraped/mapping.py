@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -32,7 +31,6 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
 __all__: tuple[str, ...] = ("check_owo_command",)
-
 
 owo_commands: set[str] = {
     # battle folder

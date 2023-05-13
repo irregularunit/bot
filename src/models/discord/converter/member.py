@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -47,8 +46,8 @@ if TYPE_CHECKING:
 
 __all__: tuple[str, ...] = ("MaybeMemberConverter",)
 
-
-CUSTOM_EMOJI_REGEX: re.Pattern[str] = re.compile(r"<(?P<a>a)?:(?P<name>[a-zA-Z0-9_~]{1,}):(?P<id>[0-9]{15,19})>")
+CUSTOM_EMOJI_REGEX: re.Pattern[str] = re.compile(
+    r"<(?P<a>a)?:(?P<name>[a-zA-Z0-9_~]{1,}):(?P<id>[0-9]{15,19})>")
 ID_REGEX = re.compile(r'([0-9]{15,20})$')
 
 
@@ -106,7 +105,8 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
             return discord.utils.get(members, name=username, discriminator=discriminator)
 
         members = await guild.query_members(argument, limit=100, cache=cache)
-        maybre_result = discord.utils.find(lambda m: argument in (m.name, m.nick), members)
+        maybre_result = discord.utils.find(
+            lambda m: argument in (m.name, m.nick), members)
         return maybre_result or members[0] if members else None
 
     @staticmethod
@@ -149,7 +149,8 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
         return members[0]
 
     @override
-    async def convert(self, ctx: SerenityContext, argument: str) -> discord.Member:  # type: ignore[override]
+    # type: ignore[override]
+    async def convert(self, ctx: SerenityContext, argument: str) -> discord.Member:
         from src.shared import ExceptionFactory
 
         """Converts to a discord.Member.
@@ -172,7 +173,8 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
             If the member could not be found.
         """
         bot = ctx.bot
-        match = self.get_id_match(argument) or re.match(r'<@!?([0-9]{15,20})>$', argument)
+        match = self.get_id_match(argument) or re.match(
+            r'<@!?([0-9]{15,20})>$', argument)
         guild = ctx.guild
         result = None
         user_id = None
@@ -186,7 +188,8 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
         else:
             user_id = int(match.group(1))
             if guild:
-                result = guild.get_member(user_id) or discord.utils.get(ctx.message.mentions, id=user_id)
+                result = guild.get_member(user_id) or discord.utils.get(
+                    ctx.message.mentions, id=user_id)
             else:
                 result = get_from_guilds(bot, 'get_member', user_id)
 

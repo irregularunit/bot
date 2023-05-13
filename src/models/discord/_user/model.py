@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -45,13 +44,11 @@ if TYPE_CHECKING:
 
     from asyncpg import Pool, Record
 
-
 __all__: tuple[str, ...] = (
     "SerenityUser",
     "SERENITY_USERS_LINKED_TABLE",
     "CountingSettings",
 )
-
 
 _logger = getLogger(__name__)
 
@@ -128,7 +125,8 @@ class SerenityUser:
             )
 
         setattr(self, field, value)
-        _logger.getChild("update").debug("Updated %s's %s to %s", self.id, field, value)
+        _logger.getChild("update").debug(
+            "Updated %s's %s to %s", self.id, field, value)
 
         return self
 
