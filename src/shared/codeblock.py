@@ -166,7 +166,6 @@ class Codeblock:
                 elif not current.isspace():
                     raise ValueError("Code blocks must begin with backticks.")
 
-                # FIXME: Needs proper handling
                 if not argument.endswith("```"):
                     argument += "```"
 

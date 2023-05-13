@@ -32,7 +32,7 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from asyncio import sleep
 from logging import Logger, getLogger
 from typing import Any, Optional, Union
 
@@ -40,7 +40,7 @@ import discord
 
 from src.shared import SerenityQueue
 
-from .utils import AssetEntity, PresenceEntitiy, type_of
+from .utils import AssetEntity, PresenceEntitiy, get_image_mime_type
 
 __all__: tuple[str, ...] = ("EventExtensionMixin",)
 
@@ -51,23 +51,17 @@ class EventExtensionMixin:
     asset_queue: SerenityQueue[AssetEntity]
     asset_channel: Optional[discord.TextChannel]
     presence_queue: SerenityQueue[PresenceEntitiy]
-    _presence_queue_active: bool
+
+    presence_queue_active: bool
     _logger: Logger
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.asset_queue = SerenityQueue()
         self.asset_channel = None
         self.presence_queue = SerenityQueue()
-        self._presence_queue_active = False
+        self.presence_queue_active = False
+
         self._logger = getLogger(__name__)
-
-    @property
-    def presence_queue_active(self) -> bool:
-        return self._presence_queue_active
-
-    @presence_queue_active.setter
-    def presence_queue_active(self, value: bool) -> None:
-        self._presence_queue_active = value
 
     def get_logger(self, event_name: str) -> Logger:
         return self._logger.getChild(event_name)
@@ -77,24 +71,14 @@ class EventExtensionMixin:
         logger = self.get_logger("read_avatar_asset")
 
         try:
-            asset = target.avatar if isinstance(target, discord.User) else target.display_avatar
-
-            if asset is None:
-                # ``.read()`` should return the default
-                # avatar but our linter doesn't know that
-                asset = target.default_avatar
-
-            avatar = await asset.read()
+            return await target.display_avatar.read()
         except discord.HTTPException as exc:
-            if exc.status in (403, 404):
-                # 403: Forbidden
-                # 404: Not Found
-                # Discord has forsakes us, so we return
+            if exc.status in {403, 404}:
+                # Discord has forsakes us
                 return None
+
             if exc.status >= 500:
-                # 5xx: Server Error
-                # Discord is having issues, Let's try later
-                await discord.utils.sleep_until(datetime.utcnow() + timedelta(minutes=1))
+                await sleep(60)
                 return await self.read_avatar_asset(target)
 
             logger.exception(
@@ -106,13 +90,10 @@ class EventExtensionMixin:
 
             return None
 
-        return avatar
-
     async def push_asset(self, snowflake: int, *, asset: bytes) -> None:
-        try:
-            mime = type_of(asset)
-        except ValueError:
-            # Not an valid image type and the type could not be determined
+        mime = get_image_mime_type(asset)
+
+        if mime is None:
             return
 
         await self.asset_queue.put(AssetEntity(snowflake, asset, mime))

@@ -198,26 +198,27 @@ class Serenity(SerenityMixin, commands.Bot):
 
     @override
     async def get_prefix(self, message: discord.Message, /) -> list[str] | str:
+        if self.user is None:
+            raise RuntimeError("Bot has not been initialized yet.")
+
         if message.guild is None:
             return commands.when_mentioned(self, message)
 
-        if message.guild.id not in self.cached_prefixes:
-            guild = await self.get_or_create_guild(message.guild.id)
+        guild_id = message.guild.id
 
-            if not guild.prefixes[0]:
-                pattern = self.compile_prefixes(guild.prefixes)
-            else:
-                if self.user is None:
-                    raise RuntimeError("Bot is not ready.")
+        if guild_id not in self.cached_prefixes:
+            guild = await self.get_or_create_guild(guild_id)
 
-                pattern = re.compile(fr"<@!?{self.user.id}>", re.IGNORECASE)
+            pattern = (
+                self.generate_pattern_prefixes(guild.prefixes)
+                if guild.prefixes
+                else re.compile(fr"<@!?{self.user.id}>", re.IGNORECASE)
+            )
 
-            self.cached_prefixes[guild.id] = pattern
+            self.cached_prefixes[guild_id] = pattern
 
-        if match := self.cached_prefixes[message.guild.id].match(message.content):
-            return match.group(0)
-
-        return commands.when_mentioned(self, message)
+        match = self.cached_prefixes[guild_id].match(message.content)
+        return match.group(0) if match else commands.when_mentioned(self, message)
 
     async def get_or_create_guild(self, guild_id: int) -> SerenityGuild:
         if (guild := self.cached_guilds.get(guild_id)) is None:

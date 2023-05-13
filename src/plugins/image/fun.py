@@ -57,7 +57,7 @@ class FunImageManipulation(BaseImageManipulation):
         aliases=("pal",),
         extras=palette_extra,
     )
-    async def palette(self, ctx: SerenityContext, *, user: discord.User = MaybeMemberParam) -> None:
+    async def palette(self, ctx: SerenityContext, user: discord.User = MaybeMemberParam) -> None:
         user = user or ctx.author
         avatar = await self.get_avatar(user)
 
@@ -79,7 +79,7 @@ class FunImageManipulation(BaseImageManipulation):
         aliases=("asc",),
         extras=ascii_extra,
     )
-    async def ascii(self, ctx: SerenityContext, *, user: discord.User = MaybeMemberParam) -> None:
+    async def ascii(self, ctx: SerenityContext, user: discord.User = MaybeMemberParam) -> None:
         user = user or ctx.author
         avatar = await self.get_avatar(user)
 
@@ -101,7 +101,7 @@ class FunImageManipulation(BaseImageManipulation):
         aliases=("pixel",),
         extras=pixelate_extra,
     )
-    async def pixel(self, ctx: SerenityContext, *, user: discord.User = MaybeMemberParam) -> None:
+    async def pixel(self, ctx: SerenityContext, user: discord.User = MaybeMemberParam) -> None:
         user = user or ctx.author
         avatar = await self.get_avatar(user)
 
@@ -123,7 +123,7 @@ class FunImageManipulation(BaseImageManipulation):
         aliases=("pr",),
         extras=pride_extra,
     )
-    async def pride(self, ctx: SerenityContext, *, flag: str, user: discord.User = MaybeMemberParam) -> None:
+    async def pride(self, ctx: SerenityContext, flag: str, user: discord.User = MaybeMemberParam) -> None:
         user = user or ctx.author
         avatar = await self.get_avatar(user)
         maybe_flag = get_pride_type(flag)
@@ -151,7 +151,7 @@ class FunImageManipulation(BaseImageManipulation):
         aliases=("trigger",),
         extras=triggered_extra,
     )
-    async def trigger(self, ctx: SerenityContext, *, user: discord.User = MaybeMemberParam) -> None:
+    async def trigger(self, ctx: SerenityContext, user: discord.User = MaybeMemberParam) -> None:
         user = user or ctx.author
         avatar = await self.get_avatar(user)
 

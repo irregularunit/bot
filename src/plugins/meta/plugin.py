@@ -38,7 +38,6 @@ from typing import TYPE_CHECKING, Tuple
 
 import discord
 from discord.ext import commands
-from discord.utils import async_all
 from typing_extensions import override
 
 from src.shared import MaybeMemberParam, Plugin, SerenityEmbed, Stopwatch, for_command_callbacks
@@ -59,11 +58,6 @@ class Meta(Plugin):
     @override
     def __init__(self, serenity: Serenity) -> None:
         self.serenity = serenity
-
-    @override
-    async def cog_check(self, ctx: SerenityContext) -> bool:
-        checks = (commands.guild_only(),)
-        return await async_all(check(ctx) for check in checks) and await super().cog_check(ctx)
 
     @commands.command(name="about", aliases=("info", "botinfo", "bot"), extras=bot_info_extra)
     async def about(self, ctx: SerenityContext) -> None:

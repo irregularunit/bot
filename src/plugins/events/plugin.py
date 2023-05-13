@@ -71,7 +71,7 @@ class Events(EventExtensionMixin, Plugin):
     async def send_to_transcript(self, asset: AssetEntity) -> None:
         logger = self.get_logger("send_to_transcript")
 
-        if (channel := self.asset_channel) is None:
+        if self.asset_channel is None:
             channel = await self.serenity.fetch_channel(self.serenity.config.TS_CHANNEL_ID)
 
             if not isinstance(channel, discord.TextChannel):
@@ -82,14 +82,18 @@ class Events(EventExtensionMixin, Plugin):
         try:
             file = discord.File(
                 BytesIO(asset.image_data),
-                filename=f"{asset.snowfalke}.{asset.mime_type.split('/')[1]}",
+                filename=f"{asset.snowflake}.{asset.mime_type.split('/')[1]}",
             )
-            message = await channel.send(f"Now archiving {asset.snowfalke}", file=file)
-        except (ValueError, discord.HTTPException):
-            logger.exception("Failed to archive asset %s", asset.snowfalke)
+            message = await self.asset_channel.send(f"Now archiving {asset.snowflake}", file=file)
+        except (ValueError, discord.HTTPException) as exc:
+            logger.exception("Failed to archive asset %s", asset.snowflake)
+
+            if isinstance(exc, discord.HTTPException):
+                raise exc from None
+
             return
 
-        await self.serenity.get_or_create_user(asset.snowfalke)
+        await self.serenity.get_or_create_user(asset.snowflake)
 
         insert_statement = """
             INSERT INTO
@@ -98,14 +102,15 @@ class Events(EventExtensionMixin, Plugin):
                 ($1, $2, $3)
         """
 
+        first_attachment = message.attachments[0]
+
         async with self.serenity.pool.acquire() as connection:
-            async with connection.transaction():
-                await connection.execute(
-                    insert_statement,
-                    asset.snowfalke,
-                    "avatar",
-                    message.attachments[0].url,
-                )
+            await connection.execute(
+                insert_statement,
+                asset.snowflake,
+                "avatar",
+                first_attachment.url,
+            )
 
     @tasks.loop(minutes=1)
     async def empty_asset_queue(self) -> None:
@@ -118,11 +123,11 @@ class Events(EventExtensionMixin, Plugin):
             except QueueEmpty:
                 break
 
-            logger.info("Pushing asset %s to IO", asset.snowfalke)
+            logger.info("Pushing asset %s to IO", asset.snowflake)
 
             await asset.to_pointer().save()
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=5)
     async def empty_presence_queue(self) -> None:
         logger = self.get_logger("empty_presence_queue")
 
@@ -148,11 +153,10 @@ class Events(EventExtensionMixin, Plugin):
             """
 
             async with self.serenity.pool.acquire() as connection:
-                async with connection.transaction():
-                    await connection.executemany(
-                        insert_statement,
-                        ((p.snowflake, p.status, p.changed_at) for p in presences),
-                    )
+                await connection.executemany(
+                    insert_statement,
+                    ((p.snowflake, p.status, p.changed_at) for p in presences),
+                )
 
         self.presence_queue_active = False
 
@@ -167,10 +171,39 @@ class Events(EventExtensionMixin, Plugin):
         created_at = discord.utils.utcnow()
 
         async with self.serenity.pool.acquire() as connection:
-            async with connection.transaction():
-                await connection.executemany(
+            await connection.executemany(
+                insert_statement,
+                ((member.id, created_at) for member in members),
+            )
+
+    async def dump_user_history(
+        self,
+        before: discord.User,
+        after: discord.User,
+    ) -> None:
+        insert_statement = """
+            INSERT INTO
+                serenity_user_history (snowflake, item_name, item_value)
+            VALUES
+                ($1, $2, $3)
+        """
+        await self.serenity.get_or_create_user(after.id)
+
+        async with self.serenity.pool.acquire() as connection:
+            if before.avatar != after.avatar:
+                await connection.execute(
                     insert_statement,
-                    ((member.id, created_at) for member in members),
+                    after.id,
+                    "name",
+                    after.name,
+                )
+
+            if before.discriminator != after.discriminator:
+                await connection.execute(
+                    insert_statement,
+                    after.id,
+                    "discriminator",
+                    after.discriminator,
                 )
 
     @Plugin.listener("on_guild_join")
@@ -226,6 +259,8 @@ class Events(EventExtensionMixin, Plugin):
         if asset is not None:
             await self.push_asset(after.id, asset=asset)
 
+        await self.dump_user_history(before, after)
+
     @Plugin.listener("on_presence_update")
     async def presence_update_event(self, before: discord.Member, after: discord.Member) -> None:
         if before.status == after.status:
@@ -235,9 +270,9 @@ class Events(EventExtensionMixin, Plugin):
             return
 
         await self.serenity.redis.setex(
-            f"{after.id}:RateLimit:PresenceUpdate",
-            5,
-            "presence update",
+            name=f"{after.id}:RateLimit:PresenceUpdate",
+            time=5,
+            value="Ratelimit reached for presence update",
         )
 
         if self.serenity.user_cache.get(after.id) is None:

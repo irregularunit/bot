@@ -45,7 +45,7 @@ if TYPE_CHECKING:
     from src.models.discord import SerenityContext
     from src.models.serenity import Serenity
 
-__all__: tuple[str, ...] = ("MaybeConverter",)
+__all__: tuple[str, ...] = ("MaybeMemberConverter",)
 
 
 CUSTOM_EMOJI_REGEX: re.Pattern[str] = re.compile(r"<(?P<a>a)?:(?P<name>[a-zA-Z0-9_~]{1,}):(?P<id>[0-9]{15,19})>")
@@ -61,7 +61,7 @@ def get_from_guilds(bot: Serenity, getter: str, argument: Any) -> Any:
     return result
 
 
-class MaybeConverter(commands.Converter[discord.Member]):
+class MaybeMemberConverter(commands.Converter[discord.Member]):
     """Converter that converts to discord.Member.
 
     All lookups are via the local guild. If in a DM context, then the lookup

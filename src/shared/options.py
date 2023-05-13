@@ -36,7 +36,7 @@ from typing import NamedTuple, Tuple, TypedDict, Union
 import discord
 from discord.ext import commands
 
-from src.models.discord.converter import MaybeConverter
+from src.models.discord.converter import MaybeMemberConverter
 
 __all__: tuple[str, ...] = (
     "CommandOption",
@@ -47,9 +47,9 @@ __all__: tuple[str, ...] = (
 )
 
 
-MaybeMember = Union[discord.User, MaybeConverter]
+MaybeMember = Union[discord.User, MaybeMemberConverter]
 MaybeMemberParam = commands.param(
-    converter=MaybeConverter(),
+    converter=MaybeMember,
     displayed_default="author",
     default=None,
 )

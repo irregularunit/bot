@@ -38,6 +38,7 @@ from uuid import uuid4
 
 from discord.app_commands import Command as AppCommand
 from discord.ext import commands
+from discord.utils import async_all
 from typing_extensions import override
 
 if TYPE_CHECKING:
@@ -58,7 +59,8 @@ class Plugin(commands.Cog):
 
     @override
     async def cog_check(self, ctx: SerenityContext) -> bool:  # type: ignore
-        return self.serenity.is_plugin_enabled(self)
+        checks = (commands.guild_only(),)
+        return await async_all(check(ctx) for check in checks)
 
     def __init__(self, serinity: Serenity, *args: Any, **kwargs: Any) -> None:
         self.serenity = serinity

@@ -37,14 +37,11 @@ from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import discord
-from discord.ext import commands
-from discord.utils import async_all
 from typing_extensions import override
 
 from src.shared import ExceptionFactory, Plugin, SerenityEmbed
 
 if TYPE_CHECKING:
-    from src.models.discord import SerenityContext
     from src.models.serenity import Serenity
 
 
@@ -57,11 +54,6 @@ class BaseImageManipulation(Plugin):
     @override
     def __init__(self, serenity: Serenity) -> None:
         self.serenity = serenity
-
-    @override
-    async def cog_check(self, ctx: SerenityContext) -> bool:
-        checks = (commands.guild_only(),)
-        return await async_all(check(ctx) for check in checks) and await super().cog_check(ctx)
 
     async def get_avatar(self, user: discord.User | discord.Member) -> bytes:
         try:

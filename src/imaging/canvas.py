@@ -42,7 +42,7 @@ from enum import IntEnum
 from io import BytesIO
 from pathlib import Path
 from random import randint
-from typing import Any, Optional
+from typing import Any
 from uuid import uuid4
 
 import numpy as np
@@ -87,7 +87,7 @@ class PalleteCreator(ImageManipulator):
             quantized = canvas.quantize(colors=6, method=2)
             palette = quantized.getpalette()
 
-            if not palette:
+            if palette is None:
                 buffer = BytesIO()
                 canvas.save(buffer, format="PNG")
                 buffer.seek(0)
@@ -138,7 +138,6 @@ class AsciiCreator(ImageManipulator):
 
     def _create_ascii_canvas(
         self,
-        ascii_chars: Optional[np.ndarray] = None,  # type: ignore
         scale: float = 0.1,
         gamma: float = 2.0,
         background: tuple[int, ...] = (13, 2, 8),
@@ -295,7 +294,7 @@ class PrideCreator(ImageManipulator):
             avatar = avatar.convert("RGBA").resize(self.size)
             avatar = self.crop_avatar(avatar)
 
-            with Image.open(Path("src", "imaging", "images", "pride", f"{option}.png")).resize(self.size) as ring:
+            with Image.open(Path("src", "imaging", "images", "pride", f"{option}.png")) as ring:
                 ring = ring.convert("RGBA")
                 ring = self.crop_ring(ring, pixels)
                 avatar.alpha_composite(ring, (0, 0))

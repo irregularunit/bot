@@ -35,7 +35,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from io import BytesIO
-from typing import NamedTuple, Tuple
+from typing import NamedTuple, Optional, Tuple
 
 import discord
 from magic import from_buffer
@@ -46,7 +46,7 @@ __all__: Tuple[str, ...] = (
     "PRESENCE_STATUS",
     "PresenceEntitiy",
     "AssetEntity",
-    "type_of",
+    "get_image_mime_type",
 )
 
 
@@ -65,17 +65,18 @@ class PresenceEntitiy(NamedTuple):
 
 
 class AssetEntity(NamedTuple):
-    snowfalke: int
+    snowflake: int
     image_data: bytes
     mime_type: str
 
     def to_pointer(self) -> AvatarPointer:
-        return AvatarPointer(self.snowfalke, self.mime_type, file=BytesIO(self.image_data))
+        return AvatarPointer(self.snowflake, self.mime_type, file=BytesIO(self.image_data))
 
 
-def type_of(data: bytes) -> str:
+def get_image_mime_type(data: bytes) -> Optional[str]:
     mime = from_buffer(data, mime=True)
+
     if mime in ("image/png", "image/jpeg", "image/gif", "image/webp"):
         return mime
 
-    raise ValueError(f"Invalid mime type: {mime}")
+    return None

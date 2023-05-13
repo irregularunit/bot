@@ -60,25 +60,28 @@ class Errors(Plugin):
         self.serenity = serenity
         self.snail = "\N{SNAIL}"
 
+    async def _handle_command_cooldown(self, ctx: SerenityContext, error: commands.CommandOnCooldown) -> None:
+        if await self.serenity.redis.exists(f"{ctx.author.id}:RateLimit:Command"):
+            return
+
+        await self.serenity.redis.setex(
+            name=f"{ctx.author.id}:RateLimit:Command",
+            time=int(error.retry_after) + 1,
+            value="command cooldown",
+        )
+
+        try:
+            return await ctx.message.add_reaction(self.snail)
+        except discord.HTTPException:
+            return
+
     @Plugin.listener("on_command_error")
     async def error_listener(self, ctx: SerenityContext, error: commands.CommandError) -> None:
-        if not ctx.guild:
+        if not ctx.guild or hasattr(ctx.command, "on_error"):
             return
 
         if isinstance(error, commands.CommandOnCooldown):
-            if await self.serenity.redis.exists(f"{ctx.author.id}:RateLimit:Command"):
-                return
-
-            await self.serenity.redis.setex(
-                f"{ctx.author.id}:RateLimit:Command",
-                int(error.retry_after) + 1,
-                "command cooldown",
-            )
-
-            try:
-                return await ctx.message.add_reaction(self.snail)
-            except discord.HTTPException:
-                return
+            return await self._handle_command_cooldown(ctx, error)
 
         hint = get_message(ctx, error)
         send = ctx.channel.permissions_for(ctx.guild.me).send_messages
@@ -87,4 +90,4 @@ class Errors(Plugin):
             try:
                 await ctx.send(hint)
             except discord.HTTPException:
-                pass
+                return
