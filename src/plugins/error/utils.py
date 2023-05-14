@@ -57,10 +57,46 @@ INTERNAL_EXCEPTION = ExceptionFactory.create_critical_exception(
 
 
 def converter_name(converter: Union[Callable[..., Any], commands.Converter[Any]]) -> str:
+    """
+    Returns the name of a `commands.Converter`.
+
+    Parameters
+    ----------
+    `converter : Union[Callable[..., Any], commands.Converter[Any]]`
+        The converter to get the name of.
+
+    Returns
+    -------
+    `str`
+        The name of the converter.
+
+    Notes
+    -----
+    This function is used internally in the Serenity bot framework to extract the name of a converter
+    for error reporting and logging purposes.
+    """
     return type(converter).__name__
 
 
 def get_failed_param(ctx: SerenityContext) -> commands.Parameter:
+    """
+    Returns the parameter that failed to be converted in the context of the command invocation.
+
+    Parameters
+    ----------
+    ctx : `SerenityContext`
+        The context of the command invocation.
+
+    Raises
+    ------
+    `commands.CommandError`
+        If the command is not set in the context.
+
+    Returns
+    -------
+    `commands.Parameter`
+        The parameter that failed to be converted.
+    """
     if ctx.command is None:
         raise commands.CommandError(INTERNAL_EXCEPTION)
 
@@ -71,6 +107,41 @@ def get_failed_param(ctx: SerenityContext) -> commands.Parameter:
 
 
 def get_raisable_context(ctx: SerenityContext) -> Tuple[commands.Parameter, str]:
+    """
+    Returns the parameter causing the error in the given command context and a formatted string of the command's signature.
+
+    Parameters
+    ----------
+    ctx : `SerenityContext`
+        The context object representing the context of the command that raised an error.
+
+    Returns
+    -------
+    `Tuple[commands.Parameter, str]`
+        A tuple containing the parameter causing the error and a formatted string of the command's signature.
+
+    Raises
+    ------
+    `commands.CommandError`
+        If the context has no associated command.
+
+    Notes
+    -----
+    The parameter causing the error is determined by counting the number of arguments passed to the command that raised
+    the error and selecting the corresponding parameter from the command's parameter list.
+
+    The formatted string of the command's signature includes the name of the command, the usage of its parameters, and a
+    usage instruction that users can follow to get more information about the command. The parameter causing the error
+    is highlighted in the signature by surrounding it with bold formatting.
+
+    Example
+    -------
+    Given the context `ctx` of a command that raised an error, the following code retrieves the parameter causing the
+    error and a formatted string of the command's signature:
+
+    >>> param, signature = get_raisable_context(ctx)
+    ...
+    """
     if ctx.command is None:
         raise commands.CommandError(INTERNAL_EXCEPTION)
 

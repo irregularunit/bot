@@ -34,8 +34,9 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 from __future__ import annotations
 
 from logging import getLogger
-from typing import Any, Callable, Optional, Tuple, Type, TypeAlias, TypeVar, Union
+from typing import Awaitable, Callable, Dict, Optional, ParamSpec, Tuple, Type, TypeVar, Union
 
+from discord import HTTPException
 from discord.ext import commands
 
 from src.models.discord import SerenityContext
@@ -49,20 +50,84 @@ __all__: Tuple[str, ...] = (
     "get_message",
 )
 
-
 logger = getLogger(__name__)
-T_co = TypeVar("T_co", covariant=True)
-T_return: TypeAlias = Union[Optional[str], Union[str, None]]
-T_handler: TypeAlias = Callable[[SerenityContext, Any], T_return]
 
-EXCEPTION_HANDLERS: dict[Type[commands.CommandError], T_handler] = {}
+T = TypeVar('T')
+P = ParamSpec('P')
+T_co = TypeVar('T_co', bound=commands.CommandError)
+MaybeCoro = Union[T, Awaitable[T]]
+MaybeCoroFunc = Callable[P, 'MaybeCoro[T]']
+
+EXCEPTION_HANDLERS: Dict[
+    Type[commands.CommandError], Callable[[SerenityContext, commands.CommandError], Union[str, None]]
+] = {}
 
 
 def register_handler(
-    exc_type: Type[commands.CommandError],
-) -> Callable[[T_handler], T_handler]:
-    def decorator(func: T_handler) -> T_handler:
-        EXCEPTION_HANDLERS[exc_type] = func
+    *exc_type: Type[T_co],
+) -> Callable[[MaybeCoroFunc[P, T]], MaybeCoroFunc[P, T]]:
+    """
+    Decorator that registers a function as a handler for one or more specified exceptions.
+    The handler function will be called when an exception of the specified type(s) is raised.
+
+    Parameters
+    ----------
+    exc_type : `Union[Type[T_co], Tuple[Type[T_co], ...]]`
+        One or more exception types to register the decorated function as a handler for.
+
+    Returns
+    -------
+    `Callable[[MaybeCoroFunc[P, T]], MaybeCoroFunc[P, T]]`
+        The decorator function that can be used to decorate the handler function.
+
+    Raises
+    ------
+    `TypeError`
+        If the `exc_type` parameter is not a type or a tuple of types.
+
+    Example
+    -------
+    The following example shows how to use the `register_handler` decorator to register a handler
+    function for three different types of exceptions:
+
+    >>> @register_handler(
+    ...     commands.CommandNotFound,
+    ...     commands.CheckFailure,
+    ...     commands.DisabledCommand
+    ... )
+    ... def null_handler(
+    ...     ctx: SerenityContext,
+    ...     exc: Union[
+    ...         commands.CommandNotFound,
+    ...         commands.CheckFailure,
+    ...         commands.DisabledCommand
+    ...     ],
+    ... ) -> None:
+    ...     return None
+
+    In this example, the `null_handler` function will be called if any of the specified exceptions
+    are raised.
+
+    The following example shows how to use the `register_handler` decorator to register a handler
+    function for a custom exception type:
+
+    >>> @register_handler(UserFeedbackException)
+    ... def user_feedback_handler(
+    ...     ctx: SerenityContext,
+    ...     exc: UserFeedbackException,
+    ... ) -> str:
+    ...     return exc.to_string()
+
+    In this example, the `user_feedback_handler` function will be called if a `UserFeedbackException`
+    is raised.
+    """
+    def decorator(func: ...) -> ...:
+        """
+        Inner function that decorates the handler function and registers it as a handler
+        for the specified exception type(s).
+        """
+        for exc in exc_type:
+            EXCEPTION_HANDLERS[exc] = func
 
         return func
 
@@ -70,8 +135,32 @@ def register_handler(
 
 
 def get_handler(
-    exc_type: Type[commands.CommandError],
-) -> Optional[T_handler]:
+    exc_type: commands.CommandError,
+) -> Optional[Callable[[SerenityContext, commands.CommandError], Union[str, None]]]:
+    """
+    Returns the exception handler function for the specified exception type, if one exists.
+
+    Parameters
+    ----------
+    exc_type : `commands.CommandError`
+        The type of exception to get the handler function for.
+
+    Returns
+    -------
+    `Optional[Callable[[SerenityContext, commands.CommandError], Union[str, None]]]`
+        The exception handler function for the specified exception type, if one exists.
+        Otherwise, `None`.
+
+    Example
+    -------
+    The following example shows how to use the `get_handler` function to get the handler
+    function for a specified exception type:
+
+    >>> handler_func = get_handler(commands.CommandNotFound)
+
+    In this example, the `handler_func` variable will contain the exception handler function
+    for the `commands.CommandNotFound` exception type, if one exists.
+    """
     chain = type(exc_type).__mro__
 
     try:
@@ -84,21 +173,46 @@ def get_message(
     ctx: SerenityContext,
     exc: commands.CommandError,
 ) -> Union[str, None]:
-    handler = get_handler(type(exc))
+    """
+    Returns the error message for the specified exception, using the appropriate exception
+    handler function if one exists.
+
+    Parameters
+    ----------
+    ctx : `SerenityContext`
+        The context of the command that raised the exception.
+    exc : `commands.CommandError`
+        The exception to get the error message for.
+
+    Returns
+    -------
+    `Union[str, None]`
+        The error message for the specified exception, if one exists.
+        Otherwise, `None`.
+
+    Example
+    -------
+    The following example shows how to use the `get_message` function to get the error
+    message for a specified exception:
+
+    >>> message = get_message(ctx, commands.CommandNotFound())
+
+    In this example, the `message` variable will contain the error message for a
+    `commands.CommandNotFound` exception, if one exists.
+    """
+    handler = get_handler(exc)
 
     if handler is not None:
         return handler(ctx, exc)
 
-    return str(exc)
+    return None
 
 
-@register_handler(commands.CommandNotFound)
-@register_handler(commands.CheckFailure)
-@register_handler(commands.DisabledCommand)
+@register_handler(commands.CommandNotFound, commands.CheckFailure, commands.DisabledCommand)
 def null_handler(
     ctx: SerenityContext,
     exc: Union[commands.CommandNotFound, commands.CheckFailure, commands.DisabledCommand],
-) -> T_return:
+) -> None:
     return None
 
 
@@ -106,7 +220,7 @@ def null_handler(
 def user_feedback_handler(
     ctx: SerenityContext,
     exc: UserFeedbackException,
-) -> T_return:
+) -> str:
     return exc.to_string()
 
 
@@ -114,15 +228,48 @@ def user_feedback_handler(
 def command_error_handler(
     ctx: SerenityContext,
     exc: commands.CommandError,
-) -> T_return:
-    return INTERNAL_EXCEPTION
+) -> Optional[str]:
+    if ctx.command is None:
+        return None
+
+    logger.exception(
+        "Unhandled error in command %s for user %s (%d):",
+        ctx.command.qualified_name,
+        ctx.author,
+        ctx.author.id,
+        exc_info=exc,
+    )
+
+    return None
+
+
+@register_handler(commands.CommandOnCooldown)
+async def cooldown_handler(
+    ctx: SerenityContext,
+    exc: commands.CommandOnCooldown,
+) -> None:
+    bot = ctx.bot
+
+    if await bot.redis.exists(f"{ctx.author.id}:RateLimit:Command"):
+        return None
+
+    await bot.redis.setex(
+        name=f"{ctx.author.id}:RateLimit:Command",
+        time=int(exc.retry_after) + 1,
+        value="command cooldown",
+    )
+
+    try:
+        return await ctx.message.add_reaction("\N{SNAIL}")
+    except HTTPException:
+        return None
 
 
 @register_handler(commands.ConversionError)
 def conversion_error_handler(
     ctx: SerenityContext,
     exc: commands.ConversionError,
-) -> T_return:
+) -> str:
     if ctx.command is None:
         return INTERNAL_EXCEPTION
 
@@ -142,7 +289,7 @@ def conversion_error_handler(
 def missing_argument_handler(
     ctx: SerenityContext,
     exc: commands.MissingRequiredArgument,
-) -> T_return:
+) -> str:
     param, signature = get_raisable_context(ctx)
     return f"The `{param.name}` parameter is required. {signature}"
 
@@ -151,7 +298,7 @@ def missing_argument_handler(
 def too_many_arguments_handler(
     ctx: SerenityContext,
     exc: commands.TooManyArguments,
-) -> T_return:
+) -> str:
     if ctx.command is None:
         return INTERNAL_EXCEPTION
 
@@ -165,19 +312,18 @@ def too_many_arguments_handler(
 def bad_argument_handler(
     ctx: SerenityContext,
     exc: commands.BadArgument,
-) -> T_return:
+) -> str:
     error_message = str(exc)
     param, signature = get_raisable_context(ctx)
 
     return f"Invalid value for `{param.name}`: {error_message}{signature}"
 
 
-@register_handler(commands.MissingPermissions)
-@register_handler(commands.BotMissingPermissions)
+@register_handler(commands.MissingPermissions, commands.BotMissingPermissions)
 def missing_permissions_handler(
     ctx: SerenityContext,
     exc: Union[commands.MissingPermissions, commands.BotMissingPermissions],
-) -> T_return:
+) -> str:
     perms = exc.missing_permissions
 
     if len(perms) <= 2:
@@ -203,7 +349,7 @@ def quote_error_handler(
         commands.InvalidEndOfQuotedStringError,
         commands.ExpectedClosingQuoteError,
     ],
-) -> T_return:
+) -> str:
     error_message = str(exc)
     stop = "" if error_message.endswith(".") else "."
 
@@ -214,5 +360,5 @@ def quote_error_handler(
 def no_private_message_handler(
     ctx: SerenityContext,
     exc: commands.NoPrivateMessage,
-) -> T_return:
+) -> str:
     return "Sorry, I don't do dm's."

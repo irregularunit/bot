@@ -80,7 +80,7 @@ class SerenityContext(commands.Context["Serenity"]):
     @override
     def clean_prefix(self) -> str:
         if not isinstance(self.me, (discord.Member, discord.User)):
-            raise AssertionError("Type check failed for self.me.")
+            raise AssertionError("Typecheck failed.")
 
         repl = f"@{self.me.display_name}".replace("\\", r"\\")
         pattern = re.compile(rf" < @!?{self.me.id}>")

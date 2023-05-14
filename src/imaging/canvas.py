@@ -107,7 +107,7 @@ class PalleteCreator(ImageManipulator):
                     draw.rectangle((x1, y1, x2, y2), fill=color, outline=text_color)
 
                     text_position = (x2 + 10, y1 - 4)
-                    draw.text(  # type: ignore
+                    draw.text(
                         text_position,
                         f"{rgb_to_hex(color)}",
                         font=self.bebas,

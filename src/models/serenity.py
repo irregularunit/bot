@@ -202,7 +202,7 @@ class Serenity(SerenityMixin, commands.Bot):
             raise RuntimeError("Bot has not been initialized yet.")
 
         if message.guild is None:
-            return commands.when_mentioned(self, message)
+            return commands.when_mentioned_or(*("s!", "s?"))(self, message)
 
         guild_id = message.guild.id
 

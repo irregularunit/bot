@@ -33,10 +33,11 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple
 
 import discord
 from discord.ext import commands
+from discord.utils import maybe_coroutine
 from typing_extensions import override
 
 from src.shared import Plugin
@@ -48,7 +49,7 @@ if TYPE_CHECKING:
     from src.models.serenity import Serenity
 
 
-__all__: tuple[str, ...] = ("Errors",)
+__all__: Tuple[str, ...] = ("Errors",)
 
 
 class Errors(Plugin):
@@ -58,32 +59,13 @@ class Errors(Plugin):
     @override
     def __init__(self, serenity: Serenity) -> None:
         self.serenity = serenity
-        self.snail = "\N{SNAIL}"
-
-    async def _handle_command_cooldown(self, ctx: SerenityContext, error: commands.CommandOnCooldown) -> None:
-        if await self.serenity.redis.exists(f"{ctx.author.id}:RateLimit:Command"):
-            return
-
-        await self.serenity.redis.setex(
-            name=f"{ctx.author.id}:RateLimit:Command",
-            time=int(error.retry_after) + 1,
-            value="command cooldown",
-        )
-
-        try:
-            return await ctx.message.add_reaction(self.snail)
-        except discord.HTTPException:
-            return
 
     @Plugin.listener("on_command_error")
     async def error_listener(self, ctx: SerenityContext, error: commands.CommandError) -> None:
         if not ctx.guild or hasattr(ctx.command, "on_error"):
             return
 
-        if isinstance(error, commands.CommandOnCooldown):
-            return await self._handle_command_cooldown(ctx, error)
-
-        hint = get_message(ctx, error)
+        hint = await maybe_coroutine(get_message, ctx, error)
         send = ctx.channel.permissions_for(ctx.guild.me).send_messages
 
         if send and hint is not None:
