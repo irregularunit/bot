@@ -46,3 +46,9 @@ avatar_info_extra = CommandExtras(
     options=(CommandOption("user", "The user to get the avatar information for."),),
     example=DefaultExample,
 )
+
+source_code_extra = CommandExtras(
+    description="Get information about the bot's source code.",
+    options=(CommandOption("command", "The command to get the source code for."),),
+    example="{1}{2} about",
+)

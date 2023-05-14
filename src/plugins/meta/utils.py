@@ -31,9 +31,17 @@ This is a human-readable summary of the Legal Code. The full license is availabl
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
+from __future__ import annotations
+
+import inspect
+import os
 from logging import getLogger
 from pathlib import Path
-from typing import Final, Tuple
+from typing import Any, Final, NamedTuple, Tuple
+
+from discord.ext import commands
+
+from src.shared import ExceptionFactory
 
 __all__: Tuple[str, ...] = (
     "BRANCH",
@@ -42,11 +50,20 @@ __all__: Tuple[str, ...] = (
     "count_source_lines",
 )
 
-BRANCH: Final[str] = "master"
+BRANCH: Final[str] = "main"
 GITHUB_URL: Final[str] = "https://github.com/irregularunit/bot"
+LICENCE_SHORT: Final[str] = "CC-BY-NC-SA-4.0"
 LICENSE: Final[str] = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
 
 _logger = getLogger(__name__)
+
+
+class SourceInformation(NamedTuple):
+    url: str
+    lines: int
+    filename: str
+    module: str
+    notes: str = f"**Licence**: [{LICENCE_SHORT}]({LICENSE})"
 
 
 def count_source_lines() -> int:
@@ -73,3 +90,26 @@ def count_source_lines() -> int:
         return 0
 
     return count_lines(Path("src"))
+
+
+def get_source_information(command: commands.Command[Any, Any, Any]) -> SourceInformation:
+    src = command.callback.__code__
+    module = command.callback.__module__
+    filename = src.co_filename
+
+    lines, flineo = inspect.getsourcelines(src)
+
+    if not module.startswith("discord"):
+        if not filename:
+            raise ExceptionFactory.create_error_exception("Unable to find `%s`'s source code." % command.qualified_name)
+
+        location = os.path.relpath(filename).replace("\\", "/")
+    else:
+        location = module.replace(".", "/") + ".py"
+
+    return SourceInformation(
+        url=f"{GITHUB_URL}/blob/{BRANCH}/{location}#L{flineo}-L{flineo + len(lines) - 3}",
+        lines=len(lines),
+        filename=filename,
+        module=module,
+    )

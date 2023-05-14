@@ -121,6 +121,7 @@ def register_handler(
     In this example, the `user_feedback_handler` function will be called if a `UserFeedbackException`
     is raised.
     """
+
     def decorator(func: ...) -> ...:
         """
         Inner function that decorates the handler function and registers it as a handler

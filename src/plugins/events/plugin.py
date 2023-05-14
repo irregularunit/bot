@@ -33,7 +33,7 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from asyncio import QueueEmpty
+from asyncio import QueueEmpty, sleep
 from io import BytesIO
 from typing import TYPE_CHECKING
 
@@ -123,9 +123,10 @@ class Events(EventExtensionMixin, Plugin):
             except QueueEmpty:
                 break
 
-            logger.info("Pushing asset %s to IO", asset.snowflake)
-
+            logger.debug("Pushing asset %s to IO", asset.snowflake)
             await asset.to_pointer().save()
+
+            await sleep(1.5)
             await self.send_to_transcript(asset)
 
     @tasks.loop(minutes=5)
