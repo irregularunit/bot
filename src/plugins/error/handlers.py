@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -59,7 +58,8 @@ MaybeCoro = Union[T, Awaitable[T]]
 MaybeCoroFunc = Callable[P, 'MaybeCoro[T]']
 
 EXCEPTION_HANDLERS: Dict[
-    Type[commands.CommandError], Callable[[SerenityContext, commands.CommandError], Union[str, None]]
+    Type[commands.CommandError], Callable[[
+        SerenityContext, commands.CommandError], Union[str, None]]
 ] = {}
 
 
@@ -121,6 +121,7 @@ def register_handler(
     In this example, the `user_feedback_handler` function will be called if a `UserFeedbackException`
     is raised.
     """
+
     def decorator(func: ...) -> ...:
         """
         Inner function that decorates the handler function and registers it as a handler
@@ -334,7 +335,8 @@ def missing_permissions_handler(
     s = "s" if len(perms) > 1 else ""
     missing = formatted.replace("_", " ").replace("guild", "server")
 
-    me_or_you = "I\'m" if isinstance(exc, commands.BotMissingPermissions) else "You\'re"
+    me_or_you = "I\'m" if isinstance(
+        exc, commands.BotMissingPermissions) else "You\'re"
 
     return f"{me_or_you} missing the `{missing}` permission{s} required to run this command."
 

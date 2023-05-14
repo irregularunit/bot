@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -60,7 +59,8 @@ class SerenityContext(commands.Context["Serenity"]):
         mention_author: bool = False,
         **kwargs: Any,
     ) -> Optional[discord.Message]:
-        resolved_message = self.message.reference and getattr(self.message.reference, "resolved", None)
+        resolved_message = self.message.reference and getattr(
+            self.message.reference, "resolved", None)
 
         if isinstance(resolved_message, discord.DeletedReferencedMessage):
             resolved_message = None

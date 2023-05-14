@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -68,14 +67,14 @@ if TYPE_CHECKING:
     from aiohttp import ClientSession
     from asyncpg import Pool, Record
 
-
 __all__: tuple[str, ...] = ("Serenity", "SerenityT")
 
 _config = SerenityConfig.parse_obj({})
 _logger = getLogger(__name__)
 
 SerenityT = TypeVar("SerenityT", bound="Serenity", covariant=True)
-SerenityContextT = TypeVar("SerenityContextT", bound="SerenityContext", covariant=True)
+SerenityContextT = TypeVar(
+    "SerenityContextT", bound="SerenityContext", covariant=True)
 
 
 class Serenity(SerenityMixin, commands.Bot):
@@ -144,7 +143,8 @@ class Serenity(SerenityMixin, commands.Bot):
         pool: Pool[Record] | None = await create_pool(*args, init=_init, **kwargs)
 
         if pool is None:
-            raise ExceptionFactory.create_error_exception("Failed to create database pool.")
+            raise ExceptionFactory.create_error_exception(
+                "Failed to create database pool.")
 
         return pool
 
@@ -188,7 +188,8 @@ class Serenity(SerenityMixin, commands.Bot):
                 await self.load_schema(file.read_text())
                 self.logger.info(f"Successfully loaded schema {file.name!r}.")
             except Exception as e:
-                self.logger.error(f"Failed to load schema {file.name!r} with error: {e}")
+                self.logger.error(
+                    f"Failed to load schema {file.name!r} with error: {e}")
 
         users = await self.model_manager.gather_users()
         guilds = await self.model_manager.gather_guilds()
@@ -300,7 +301,8 @@ class Serenity(SerenityMixin, commands.Bot):
                 while True:
                     await self.ws.poll_event()
             except discord.client.ReconnectWebSocket as e:
-                self.logger.info("Got a request to %s the websocket.", getattr(e, "op", None))
+                self.logger.info(
+                    "Got a request to %s the websocket.", getattr(e, "op", None))
                 self.dispatch("disconnect")
 
                 ws_params.update(
@@ -344,13 +346,15 @@ class Serenity(SerenityMixin, commands.Bot):
                 # regardless and rely on is_closed instead
                 if isinstance(exc, discord.ConnectionClosed):
                     if getattr(exc, "code", None) == 4014:
-                        raise discord.PrivilegedIntentsRequired(getattr(exc, "shard_id", None)) from None
+                        raise discord.PrivilegedIntentsRequired(
+                            getattr(exc, "shard_id", None)) from None
                     if getattr(exc, "code", None) != 1000:
                         await self.close()
                         raise
 
                 retry = backoff.delay()
-                self.logger.exception("Attempting a reconnect in %.2fs.", retry)
+                self.logger.exception(
+                    "Attempting a reconnect in %.2fs.", retry)
                 await asyncio.sleep(retry)
 
                 # Always try to RESUME the connection
@@ -373,6 +377,7 @@ class Serenity(SerenityMixin, commands.Bot):
     @override
     async def close(self) -> None:
         to_close = (self.pool, self.session, self.redis)
-        asyncio.gather(*[resource.close() for resource in to_close if resource is not None])  # type: ignore
+        asyncio.gather(*[resource.close()
+                       for resource in to_close if resource is not None])  # type: ignore
 
         await super().close()

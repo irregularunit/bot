@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Serenity License (Attribution-NonCommercial-ShareAlike 4.0 International)
 
@@ -47,7 +46,6 @@ from .handlers import get_message
 if TYPE_CHECKING:
     from src.models.discord import SerenityContext
     from src.models.serenity import Serenity
-
 
 __all__: Tuple[str, ...] = ("Errors",)
 
