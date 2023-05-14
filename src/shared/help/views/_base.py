@@ -194,8 +194,7 @@ class HelpCommandView(ABCHelpCommandView):
         embed.add_field(
             name="Description",
             value=(
-                self.extras["description"]
-                + (f"\n\n**Example:**\n`{example}`" if example else "No example provided.")
+                self.extras["description"] + (f"\n\n**Example:**\n`{example}`" if example else "No example provided.")
             ),
             inline=False,
         )
