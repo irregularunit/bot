@@ -51,6 +51,8 @@ __all__: tuple[str, ...] = ("ImageManipulation",)
 
 @for_command_callbacks(commands.cooldown(1, 5, commands.BucketType.user))
 class ImageManipulation(ActivityHistory, FunImageManipulation):
+    """A fun plugin that allows you to manipulate images."""
+    
     serenity: Serenity
 
     def __init__(self, serenity: Serenity) -> None:

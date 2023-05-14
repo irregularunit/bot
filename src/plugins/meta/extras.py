@@ -33,22 +33,16 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from src.shared import CommandExtras, CommandOption, DefaultExample
+from src.shared import CommandExtras, CommandOption, DefaultArg
 
 bot_info_extra = CommandExtras(
     description="Get information about the bot.",
     options=(),
-    example="{1}{2}",
+    example=DefaultArg
 )
 
 avatar_info_extra = CommandExtras(
     description="Get information about an user's avatar.",
     options=(CommandOption("user", "The user to get the avatar information for."),),
-    example=DefaultExample,
-)
-
-source_code_extra = CommandExtras(
-    description="Get information about the bot's source code.",
-    options=(CommandOption("command", "The command to get the source code for."),),
-    example="{1}{2} about",
+    example=DefaultArg + " @lexicalunit"
 )

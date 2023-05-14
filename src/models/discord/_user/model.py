@@ -70,23 +70,27 @@ class SerenityUser:
     created_at: datetime
     locale: str
     timezone: str
-    emoji_server_id: int
+    pronouns: str
+    emoji_server_snowflake: int
     counting: CountingSettings
     banned: bool = False
 
     @classmethod
     def from_record(cls: Type[Self], record: Record) -> Self:
+        counting_settings = CountingSettings(
+            counter_message=record["counter_message"],
+            hunt_battle_message=record["hunt_battle_message"],
+        )
+
         return cls(
             id=record["snowflake"],
             created_at=record["created_at"],
             locale=record["locale"],
             banned=record["banned"],
             timezone=record["timezone"],
-            emoji_server_id=record["emoji_server_snowflake"],
-            counting=CountingSettings(
-                counter_message=record["counter_message"],
-                hunt_battle_message=record["hunt_battle_message"],
-            ),
+            pronouns=record["pronouns"],
+            emoji_server_snowflake=record["emoji_server_snowflake"],
+            counting=counting_settings,
         )
 
     @classmethod
@@ -96,8 +100,9 @@ class SerenityUser:
             created_at=record["created_at"],
             locale=record["locale"],
             banned=record["banned"],
+            pronouns=record["pronouns"],
             timezone=record["timezone"],
-            emoji_server_id=record["emoji_server_snowflake"],
+            emoji_server_snowflake=record["emoji_server_snowflake"],
             counting=settings,
         )
 
@@ -133,7 +138,7 @@ class SerenityUser:
         return self
 
 
-@dataclass
+@dataclass(slots=True)
 class CountingSettings:
     counter_message: str
     hunt_battle_message: str

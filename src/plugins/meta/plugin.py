@@ -34,7 +34,7 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 from __future__ import annotations
 
 from sys import version_info
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Tuple
 
 import discord
 from discord.ext import commands
@@ -42,8 +42,8 @@ from typing_extensions import override
 
 from src.shared import MaybeMemberParam, Plugin, SerenityEmbed, Stopwatch, for_command_callbacks
 
-from .extras import avatar_info_extra, bot_info_extra, source_code_extra
-from .utils import GITHUB_URL, count_source_lines, get_source_information
+from .extras import avatar_info_extra, bot_info_extra
+from .utils import count_source_lines
 from .views import AboutSerenityView
 
 if TYPE_CHECKING:
@@ -55,6 +55,8 @@ __all__: Tuple[str, ...] = ("Meta",)
 
 @for_command_callbacks(commands.cooldown(1, 5, commands.BucketType.user))
 class Meta(Plugin):
+    """A plugin that provides information about the bot."""
+
     @override
     def __init__(self, serenity: Serenity) -> None:
         self.serenity = serenity
@@ -128,28 +130,3 @@ class Meta(Plugin):
         embed.set_image(url=user.display_avatar.url)
 
         await ctx.maybe_reply(embed=embed)
-
-    @commands.command(name="source", aliases=("src", "code"), extras=source_code_extra)
-    async def source(self, ctx: SerenityContext, *, command: str = "") -> Optional[discord.Message]:
-        if not command or command == 'help':
-            return await ctx.maybe_reply(GITHUB_URL)
-
-        obj = self.serenity.get_command(command.replace('.', ' '))
-        if obj is None:
-            return await ctx.maybe_reply(f"Command `{command}` not found.")
-
-        src = await self.serenity.to_thread(get_source_information, obj)
-
-        embed = SerenityEmbed.factory(
-            ctx,
-            description=(
-                f"""
-                    __**Source on [Github]({src.url})**__
-                    >>> {src.notes}
-                    **Module:** `{src.module.split("src.plugins.")[-1]}`
-                    **Lines:** `{src.lines}`
-                    """
-            ),
-        )
-
-        return await ctx.maybe_reply(embed=embed)

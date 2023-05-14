@@ -61,6 +61,7 @@ from src.models.discord import (
 )
 from src.models.discord._bot.cache import SerenityUserCache
 from src.shared import ExceptionFactory, Publisher, SerenityConfig, Subscriber
+from src.shared.help.help import SerenityHelpCommand
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -92,7 +93,7 @@ class Serenity(SerenityMixin, commands.Bot):
             intents=INTENTS,
             case_insensitive=True,
             owner_ids=_config.OWNER_IDS,
-            help_command=commands.MinimalHelpCommand(),
+            help_command=SerenityHelpCommand(),
             **kwargs,
         )
         self.loop = loop

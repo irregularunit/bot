@@ -97,9 +97,10 @@ class SerenityUserManager:
                 locale = $1,
                 timezone = $2,
                 emoji_server_id = $3,
-                banned = $4
+                banned = $4,
+                pronouns = $5
             WHERE
-                snowflake = $5
+                snowflake = $6
         """
 
         async with self.pool.acquire() as conn:
@@ -108,8 +109,9 @@ class SerenityUserManager:
                     query,
                     user.locale,
                     user.timezone,
-                    user.emoji_server_id,
+                    user.emoji_server_snowflake,
                     user.banned,
+                    user.pronouns,
                     user.id,
                 )
 

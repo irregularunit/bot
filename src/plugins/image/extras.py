@@ -33,36 +33,36 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from src.shared import CommandExtras, CommandOption, DefaultExample
+from src.shared import CommandExtras, CommandOption, DefaultArg
 
 avatar_history_extra = CommandExtras(
     description="Generate a collage of a user's avatar history.",
     options=(CommandOption("user", "The user to generate the avatar history for."),),
-    example=DefaultExample,
+    example=DefaultArg + " @lexicalunit"
 )
 
 presence_graph_extra = CommandExtras(
     description="Generate a graph of a user's presence history.",
     options=(CommandOption("user", "The user to generate the presence history for."),),
-    example=DefaultExample,
+    example=DefaultArg + " @lexicalunit"
 )
 
 palette_extra = CommandExtras(
     description="Generate a color pallete from an user's avatar.",
     options=(CommandOption("user", "The user to generate the color pallete for."),),
-    example=DefaultExample,
+    example=DefaultArg + " @lexicalunit"
 )
 
 ascii_extra = CommandExtras(
     description="Generate an ASCII art image from an user's avatar.",
     options=(CommandOption("user", "The user to generate the ASCII art for."),),
-    example=DefaultExample,
+    example=DefaultArg + " @lexicalunit",
 )
 
 pixelate_extra = CommandExtras(
     description="Generate a pixelated image from an user's avatar.",
     options=(CommandOption("user", "The user to generate the pixelated image for."),),
-    example=DefaultExample,
+    example=DefaultArg + " @lexicalunit",
 )
 
 pride_extra = CommandExtras(
@@ -71,17 +71,17 @@ pride_extra = CommandExtras(
         CommandOption("flag", "The flag to use."),
         CommandOption("user", "The user to generate the pride image for."),
     ),
-    example=DefaultExample,
+    example=DefaultArg + " nonbinary @lexicalunit",
 )
 
 triggered_extra = CommandExtras(
     description="Generate a triggered image from an user's avatar.",
     options=(CommandOption("user", "The user to generate the triggered image for."),),
-    example=DefaultExample,
+    example=DefaultArg + " @lexicalunit",
 )
 
 color_extra = CommandExtras(
     description="Generate a color image from color input.",
     options=(CommandOption("color", "The color to generate the image for."),),
-    example="{1}{2} #ff0000",
+    example=DefaultArg + " #ff0000",
 )

@@ -41,8 +41,8 @@ from src.models.discord.converter import MaybeMemberConverter
 __all__: tuple[str, ...] = (
     "CommandOption",
     "CommandExtras",
-    "DefaultExample",
     "MaybeMember",
+    "DefaultArg",
     "MaybeMemberParam",
 )
 
@@ -53,8 +53,7 @@ MaybeMemberParam = commands.param(
     displayed_default="author",
     default=None,
 )
-DefaultExample: str = "{1}{2} {3}"
-
+DefaultArg = "{prefix}{command}"
 
 class CommandOption(NamedTuple):
     option: str
