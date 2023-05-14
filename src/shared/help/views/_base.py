@@ -193,15 +193,24 @@ class HelpCommandView(ABCHelpCommandView):
 
         embed.add_field(
             name="Description",
-            value=(
-                self.extras["description"]
-                + (f"\n\n**Example:**\n`{example}`" if example else "No example provided.")
-            ),
+            value=self.extras["description"],
             inline=False,
         )
+
+        if self.extras["options"]:
+            embed.add_field(
+                name="Arguments",
+                value="\n".join(f"`{option}` - {description}" for option, description in self.extras["options"]),
+                inline=False,
+            )
+
         embed.add_field(
             name="Usage",
-            value=f"`{self.context.clean_prefix}{self.command.qualified_name} {self.command.signature}`",
+            value=(
+                f"`{self.context.clean_prefix}{self.command.qualified_name} {self.command.signature}`"
+                + (f"\n\n**Example**\n`{example}`" if example else "No example provided.")
+            )
+            ,
             inline=False,
         )
 
