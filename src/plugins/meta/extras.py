@@ -35,14 +35,16 @@ from __future__ import annotations
 
 from src.shared import CommandExtras, CommandOption, DefaultArg
 
-bot_info_extra = CommandExtras(
-    description="Get information about the bot.",
-    options=(),
-    example=DefaultArg
-)
+bot_info_extra = CommandExtras(description="Get information about the bot.", options=(), example=DefaultArg)
 
 avatar_info_extra = CommandExtras(
     description="Get information about an user's avatar.",
     options=(CommandOption("user", "The user to get the avatar information for."),),
-    example=DefaultArg + " @lexicalunit"
+    example=DefaultArg + " @lexicalunit",
+)
+
+git_history_extra = CommandExtras(
+    description="Get the git history for the bot.",
+    options=(),
+    example=DefaultArg,
 )

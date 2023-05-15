@@ -55,6 +55,7 @@ MaybeMemberParam = commands.param(
 )
 DefaultArg = "{prefix}{command}"
 
+
 class CommandOption(NamedTuple):
     option: str
     description: str

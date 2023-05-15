@@ -33,23 +33,23 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-import inspect
-import os
+from os import environ
+from subprocess import Popen, PIPE
+import textwrap
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Final, NamedTuple, Tuple
-
-from discord.ext import commands
-
-from src.shared import ExceptionFactory
+from typing import Any, Dict, Final, List, NamedTuple, Tuple
 
 __all__: Tuple[str, ...] = (
     "BRANCH",
     "GITHUB_URL",
     "LICENSE",
     "count_source_lines",
+    "get_git_history",
+    "RESTART_ID",
 )
 
+RESTART_ID: Final[int] = 42
 BRANCH: Final[str] = "main"
 GITHUB_URL: Final[str] = "https://github.com/irregularunit/bot"
 LICENCE_SHORT: Final[str] = "CC-BY-NC-SA-4.0"
@@ -92,24 +92,33 @@ def count_source_lines() -> int:
     return count_lines(Path("src"))
 
 
-def get_source_information(command: commands.Command[Any, Any, Any]) -> SourceInformation:
-    src = command.callback.__code__
-    module = command.callback.__module__
-    filename = src.co_filename
+def get_git_history():
+    def ext_command(command: List[str]) -> bytes:
+        env: Dict[str, Any] = {}
 
-    lines, flineo = inspect.getsourcelines(src)
+        for k in ["SYSTEMROOT", "PATH"]:
+            v = environ.get(k)
 
-    if not module.startswith("discord"):
-        if not filename:
-            raise ExceptionFactory.create_error_exception("Unable to find `%s`'s source code." % command.qualified_name)
+            if v is not None:
+                env[k] = v
 
-        location = os.path.relpath(filename).replace("\\", "/")
-    else:
-        location = module.replace(".", "/") + ".py"
+        # W32 - LANGUAGE
+        env["LANGUAGE"] = "C"
 
-    return SourceInformation(
-        url=f"{GITHUB_URL}/blob/{BRANCH}/{location}#L{flineo}-L{flineo + len(lines) - 3}",
-        lines=len(lines),
-        filename=filename,
-        module=module,
-    )
+        env["LANG"] = "C"
+        env["LC_ALL"] = "C"
+
+        out = Popen(command, stdout=PIPE, env=env).communicate()[0]
+
+        return out
+
+    try:
+        first = ext_command(["git", "rev-parse", "--abbrev-ref", "HEAD"])
+        branch = first.strip().decode("ascii")
+
+        second = ext_command(["git", "log", "--oneline", "-5"])
+        history = second.strip().decode("ascii")
+
+        return "Branch:\n" + textwrap.indent(branch, "  ") + "\nCommit history:\n" + textwrap.indent(history, "  ")
+    except OSError:
+        return "Failed to get git history."

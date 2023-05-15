@@ -209,8 +209,7 @@ class HelpCommandView(ABCHelpCommandView):
             value=(
                 f"`{self.context.clean_prefix}{self.command.qualified_name} {self.command.signature}`"
                 + (f"\n\n**Example**\n`{example}`" if example else "No example provided.")
-            )
-            ,
+            ),
             inline=False,
         )
 

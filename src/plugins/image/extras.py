@@ -38,19 +38,19 @@ from src.shared import CommandExtras, CommandOption, DefaultArg
 avatar_history_extra = CommandExtras(
     description="Generate a collage of a user's avatar history.",
     options=(CommandOption("user", "The user to generate the avatar history for."),),
-    example=DefaultArg + " @lexicalunit"
+    example=DefaultArg + " @lexicalunit",
 )
 
 presence_graph_extra = CommandExtras(
     description="Generate a graph of a user's presence history.",
     options=(CommandOption("user", "The user to generate the presence history for."),),
-    example=DefaultArg + " @lexicalunit"
+    example=DefaultArg + " @lexicalunit",
 )
 
 palette_extra = CommandExtras(
     description="Generate a color pallete from an user's avatar.",
     options=(CommandOption("user", "The user to generate the color pallete for."),),
-    example=DefaultArg + " @lexicalunit"
+    example=DefaultArg + " @lexicalunit",
 )
 
 ascii_extra = CommandExtras(

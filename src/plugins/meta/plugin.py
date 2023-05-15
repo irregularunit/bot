@@ -40,10 +40,10 @@ import discord
 from discord.ext import commands
 from typing_extensions import override
 
-from src.shared import MaybeMemberParam, Plugin, SerenityEmbed, Stopwatch, for_command_callbacks
+from src.shared import MaybeMemberParam, Plugin, SerenityEmbed, Stopwatch, for_command_callbacks, ExceptionFactory
 
-from .extras import avatar_info_extra, bot_info_extra
-from .utils import count_source_lines
+from .extras import avatar_info_extra, bot_info_extra, git_history_extra
+from .utils import count_source_lines, get_git_history
 from .views import AboutSerenityView
 
 if TYPE_CHECKING:
@@ -130,3 +130,14 @@ class Meta(Plugin):
         embed.set_image(url=user.display_avatar.url)
 
         await ctx.maybe_reply(embed=embed)
+
+    @commands.command(name="githistory", aliases=("gh",), extras=git_history_extra)
+    async def githistory(self, ctx: SerenityContext) -> None:
+        try:
+            history = await self.serenity.to_thread(get_git_history)
+        except OSError:
+            raise ExceptionFactory.create_info_exception(
+                "Failed to retrieve git history. Please try again later."
+            ) from None
+
+        await ctx.safe_send(content=f"```yaml\n{history}\n```")
