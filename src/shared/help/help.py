@@ -88,8 +88,10 @@ class SerenityHelpCommand(commands.HelpCommand):
         view = HelpCommandView(command, context=self.context)
         await self.context.send(embed=view.to_embed(), view=view)
 
+    @staticmethod
     def command_not_found(self, string: str, /) -> str:
         return f"Unable to locate `{string}` within the bot's commands."
 
+    @staticmethod
     def subcommand_not_found(self, command: commands.Command[Any, Any, Any], string: str, /) -> str:
         return f"Command `{command.qualified_name}` has no subcommands matching `{string}`."
