@@ -1876,7 +1876,7 @@ emojis: dict[str, str] = {
     "united_nations": "🇺🇳",
 }
 
-_emoji_items: list[str] = [emote for emote in emojis.values()]
+_emoji_items: list[str] = list(emojis.values())
 
 
 def get_random_emoji() -> str:
