@@ -154,7 +154,8 @@ class ColorRepresentation(SavableByteStream):
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}(rgb={self._rgb})'
 
-    def _generate_chunk(self, chunk_type: bytes, data: bytes) -> bytes:
+    @staticmethod
+    def _generate_chunk(chunk_type: bytes, data: bytes) -> bytes:
         """Generate a PNG chunk, including the 4-byte length prefix and the 4-byte chunk type."""
         chunk_header = struct.pack('!I', len(data))
         return chunk_header + chunk_type + data + struct.pack('!I', zlib.crc32(chunk_type + data))
