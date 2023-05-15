@@ -55,14 +55,15 @@ class BaseImageManipulation(Plugin):
     def __init__(self, serenity: Serenity) -> None:
         self.serenity = serenity
 
-    async def get_avatar(self, user: discord.User | discord.Member) -> bytes:
+    @staticmethod
+    async def get_avatar(user: discord.User | discord.Member) -> bytes:
         try:
             return await user.display_avatar.read()
         except discord.HTTPException:
             raise ExceptionFactory.create_critical_exception(f"Unable to retrieve avatar for {user}")
 
+    @staticmethod
     def get_file_embed(
-        self,
         user: discord.User | discord.Member,
         file_name: str,
         *,
@@ -76,5 +77,6 @@ class BaseImageManipulation(Plugin):
         )
         return embed
 
-    def generate_file_name(self, file_extension: str = ".png") -> str:
+    @staticmethod
+    def generate_file_name(file_extension: str = ".png") -> str:
         return f"{uuid4()}{file_extension}"

@@ -60,7 +60,8 @@ class ImageManipulator:
     def __init__(self, image: bytes) -> None:
         self.image = image
 
-    def _mock_size(self, image: Image.Image, size: int) -> Image.Image:
+    @staticmethod
+    def _mock_size(image: Image.Image, size: int) -> Image.Image:
         if image.width > image.height:
             new_width = size
             new_height = int((new_width / image.width) * image.height)
@@ -70,7 +71,8 @@ class ImageManipulator:
 
         return image.resize((new_width, new_height), Image.ANTIALIAS)
 
-    def _to_discord_file(self, buffer: BytesIO, fmt: str = "PNG") -> File:
+    @staticmethod
+    def _to_discord_file(buffer: BytesIO, fmt: str = "PNG") -> File:
         return File(buffer, filename=f"{uuid4()}.{fmt.lower()}")
 
 
