@@ -136,7 +136,7 @@ class HelpGroupCommandView(ABCHelpCommandView):
 
             if isinstance(command, commands.Group):
                 group_commands.extend(command.commands)
-        
+
         super().__init__(**kwargs)
 
         # FIXME: STUPID
@@ -158,7 +158,7 @@ class HelpGroupCommandView(ABCHelpCommandView):
             value=self.group.cog_name or "No section found.",
             inline=False,
         )
-        
+
         if self.group.commands:
             formatted_commands = "\n".join(f"`{command.name}`" for command in self.group.commands if not command.hidden)
 
@@ -214,10 +214,7 @@ class HelpCommandView(ABCHelpCommandView):
 
         embed.add_field(
             name="Usage",
-            value=(
-                f"`{self.context.clean_prefix}{self.command.qualified_name} {self.command.signature}`"
-                + example
-            ),
+            value=(f"`{self.context.clean_prefix}{self.command.qualified_name} {self.command.signature}`" + example),
             inline=False,
         )
 
