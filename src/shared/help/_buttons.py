@@ -43,13 +43,13 @@ if TYPE_CHECKING:
 
 __all__: Tuple[str, ...] = (
     "StartEmoji",
-    "DeleteEmoji",
+    "DisableEmoji",
     "ToStart",
-    "DeleteView",
+    "DisableButton",
 )
 
 StartEmoji: Final[str] = "🧭"
-DeleteEmoji: Final[str] = "🗑️"
+DisableEmoji: Final[str] = "🗑️"
 
 
 class ToStart(Button["ABCHelpCommandView"]):
@@ -64,13 +64,13 @@ class ToStart(Button["ABCHelpCommandView"]):
         await interaction.response.edit_message(embed=self.parent.to_embed(), view=self.parent)
 
 
-class DeleteView(Button["ABCHelpCommandView"]):
+class DisableButton(Button["ABCHelpCommandView"]):
     __slots__: Tuple[str, ...] = ("bot", "parent")
 
     def __init__(self, *, parent: ABCHelpCommandView) -> None:
         self.bot = parent.bot
         self.parent = parent
-        super().__init__(style=ButtonStyle.red, emoji=DeleteEmoji)
+        super().__init__(style=ButtonStyle.red, emoji=DisableEmoji)
 
     async def callback(self, interaction: Interaction) -> None:
         for child in self.parent.children:

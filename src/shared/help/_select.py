@@ -33,7 +33,7 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, Dict, List, Tuple, TypeVar
 
 from discord import Interaction, SelectOption
 from discord.ext import commands
@@ -41,17 +41,17 @@ from discord.ui import Select
 
 from .views._base import ABCHelpCommandView, HelpCommandView, HelpGroupCommandView, PluginHelp
 
+CommandT = TypeVar("CommandT", bound=commands.Command[Any, Any, Any])
+
 
 class CommandSelect(Select["ABCHelpCommandView"]):
-    __slots__: Tuple[str, ...] = ("parent", "_commands", "_command_map")
+    __slots__: Tuple[str, ...] = ("parent", "_command_map")
 
     parent: ABCHelpCommandView
-    _commands: Sequence[commands.Command[Any, Any, Any]]
     _command_map: Dict[str, commands.Command[Any, Any, Any]]
 
-    def __init__(self, *, parent: ABCHelpCommandView, commands: Tuple[commands.Command[Any, Any, Any], ...]) -> None:
+    def __init__(self, *, parent: ABCHelpCommandView, commands: Tuple[CommandT, ...]) -> None:
         self.parent = parent
-        self._commands = commands
         self._command_map = {str(command.qualified_name): command for command in commands if command}
 
         super().__init__(placeholder="Select a command...", options=self._options)
@@ -60,21 +60,21 @@ class CommandSelect(Select["ABCHelpCommandView"]):
     def _options(self) -> List[SelectOption]:
         return [
             SelectOption(
-                label=str(command.qualified_name),
+                label=name,
                 description=getattr(command, "brief", None) or "",
-                value=str(command.qualified_name),
+                value=name,
             )
-            for command in self._commands
-            if command
+            for name, command in self._command_map.items()
+            if name.lower() not in ("help", "jishaku")
         ]
 
     async def callback(self, interaction: Interaction) -> None:
-        selected = self.values
+        selected_options = self.values
 
-        if not selected:
+        if not selected_options:
             return
 
-        command = self._command_map[selected[0]]
+        command = self._command_map[selected_options[0]]
 
         if isinstance(command, commands.Group):
             view = HelpGroupCommandView(command, **self.parent.get_kwargs())
@@ -87,16 +87,14 @@ class CommandSelect(Select["ABCHelpCommandView"]):
 class PluginSelect(Select["ABCHelpCommandView"]):
     __slots__: Tuple[str, ...] = (
         "parent",
-        "_plugins",
+        "_plugin_map",
     )
 
     parent: ABCHelpCommandView
-    _plugins: Sequence[commands.Cog]
     _plugin_map: Dict[str, commands.Cog]
 
     def __init__(self, *, parent: ABCHelpCommandView, plugins: Tuple[commands.Cog, ...]) -> None:
         self.parent = parent
-        self._plugins = plugins
         self._plugin_map = {str(plugin.qualified_name): plugin for plugin in plugins if plugin}
 
         super().__init__(placeholder="Select a plugin...", options=self._options)
@@ -105,12 +103,12 @@ class PluginSelect(Select["ABCHelpCommandView"]):
     def _options(self) -> List[SelectOption]:
         return [
             SelectOption(
-                label=str(plugin.qualified_name),
+                label=name,
                 description=plugin.__doc__,
-                value=str(plugin.qualified_name),
+                value=name,
             )
-            for plugin in self._plugins
-            if plugin and not plugin.qualified_name.lower() == "jishaku"
+            for name, plugin in self._plugin_map.items()
+            if name.lower() not in ("help", "jishaku")
         ]
 
     async def callback(self, interaction: Interaction) -> None:

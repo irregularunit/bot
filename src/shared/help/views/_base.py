@@ -98,7 +98,7 @@ class ABCHelpCommandView(SerenityView, abc.ABC):
         return {"context": self.context, "parent": self.parent or self, "timeout": self.timeout}
 
     def _add_view_components(self) -> None:
-        from .._buttons import DeleteView, ToStart
+        from .._buttons import DisableButton, ToStart
 
         if self.parent is not None:
             home = self.get_home()
@@ -106,7 +106,7 @@ class ABCHelpCommandView(SerenityView, abc.ABC):
             if home:
                 self.add_item(ToStart(parent=home))
 
-        self.add_item(DeleteView(parent=self))
+        self.add_item(DisableButton(parent=self))
 
     async def interaction_check(self, interaction: Interaction, /) -> bool:
         check = self.author == interaction.user
@@ -136,15 +136,18 @@ class HelpGroupCommandView(ABCHelpCommandView):
 
             if isinstance(command, commands.Group):
                 group_commands.extend(command.commands)
+        
+        super().__init__(**kwargs)
 
+        # FIXME: STUPID
         for chunk in itertools.zip_longest(*[iter(group_commands)] * 20):
-            super().__init__(**kwargs)
             self.add_item(CommandSelect(parent=self, commands=chunk))
 
         super()._add_view_components()
 
     def to_embed(self) -> SerenityEmbed:
         embed = SerenityEmbed(title=f"Help for {self.group.qualified_name}")
+
         embed.add_field(
             name="Description",
             value=self.group.description or "No description provided.",
@@ -155,11 +158,13 @@ class HelpGroupCommandView(ABCHelpCommandView):
             value=self.group.cog_name or "No section found.",
             inline=False,
         )
-
+        
         if self.group.commands:
+            formatted_commands = "\n".join(f"`{command.name}`" for command in self.group.commands if not command.hidden)
+
             embed.add_field(
                 name="Subcommands",
-                value="\n".join(f"`{command.name}`" for command in self.group.commands if not command.hidden),
+                value=formatted_commands,
                 inline=False,
             )
 
@@ -185,8 +190,9 @@ class HelpCommandView(ABCHelpCommandView):
 
     def to_embed(self) -> SerenityEmbed:
         embed = SerenityEmbed(title=f"Help for {self.command.qualified_name}")
-
-        example = self.extras["example"].format(
+        options_found = self.extras["options"]
+        example_command = self.extras["example"]
+        formatted_example = example_command.format(
             prefix=self.context.clean_prefix,
             command=self.command.qualified_name,
         )
@@ -197,26 +203,30 @@ class HelpCommandView(ABCHelpCommandView):
             inline=False,
         )
 
-        if self.extras["options"]:
+        if options_found:
             embed.add_field(
                 name="Arguments",
-                value="\n".join(f"`{option}` - {description}" for option, description in self.extras["options"]),
+                value="\n".join(f"`{option}` - {description}" for option, description in options_found),
                 inline=False,
             )
+
+        example = f"\n\n**Example**\n`{formatted_example}`" if example_command else "No example provided."
 
         embed.add_field(
             name="Usage",
             value=(
                 f"`{self.context.clean_prefix}{self.command.qualified_name} {self.command.signature}`"
-                + (f"\n\n**Example**\n`{example}`" if example else "No example provided.")
+                + example
             ),
             inline=False,
         )
 
         if self.command.aliases:
+            formatted_aliases = ", ".join(f"`{alias}`" for alias in self.command.aliases)
+
             embed.add_field(
                 name="Aliases",
-                value=", ".join(f"`{alias}`" for alias in self.command.aliases),
+                value=formatted_aliases,
                 inline=False,
             )
 
@@ -257,6 +267,7 @@ class HelpView(ABCHelpCommandView):
                 """
             )
         )
+
         embed.set_author(name=self.context.me, icon_url=self.context.me.display_avatar)
 
         return embed
@@ -271,10 +282,11 @@ class PluginHelp(ABCHelpCommandView):
         from .._select import CommandSelect
 
         self.plugin = plugin
+
         super().__init__(**kwargs)
 
+        # FIXME: STUPID
         for chunk in itertools.zip_longest(*[iter(plugin.get_commands())] * 20):
-            super().__init__(**kwargs)
             self.add_item(CommandSelect(parent=self, commands=chunk))
 
         super()._add_view_components()

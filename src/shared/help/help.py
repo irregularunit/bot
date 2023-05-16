@@ -33,7 +33,7 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Tuple, TypeVar
 
 from discord.ext import commands
 
@@ -46,20 +46,20 @@ if TYPE_CHECKING:
 __all__: Tuple[str, ...] = ("SerenityHelpCommand",)
 
 
+CommandT = TypeVar("CommandT", bound=commands.Command[Any, Any, Any])
+
+
 class SerenityHelpCommand(commands.HelpCommand):
     context: SerenityContext
 
-    def __init__(self, **options: Any) -> None:
-        super().__init__(**options)
-
-    async def ensure_filtered(
+    async def filter_mapping(
         self,
-        mapping: Mapping[Optional[commands.Cog], List[commands.Command[Any, Any, Any]]],
-    ) -> Mapping[commands.Cog, List[commands.Command[Any, Any, Any]]]:
-        commands: List[commands.Command[Any, Any, Any]] = [command for cog in mapping for command in mapping[cog]]
+        mapping: Mapping[Optional[commands.Cog], List[CommandT]],
+    ) -> Mapping[commands.Cog, List[CommandT]]:
+        commands: List[CommandT] = [command for cog in mapping for command in mapping[cog]]
         await self.filter_commands(commands, sort=True)
 
-        plugins: Dict[commands.Cog, List[commands.Command[Any, Any, Any]]] = {}
+        plugins: Dict[commands.Cog, List[CommandT]] = {}
         for command in commands:
             plugins.setdefault(command.cog, []).append(command)
 
@@ -67,9 +67,9 @@ class SerenityHelpCommand(commands.HelpCommand):
 
     async def send_bot_help(
         self,
-        mapping: Mapping[Optional[commands.Cog], List[commands.Command[Any, Any, Any]]],
+        mapping: Mapping[Optional[commands.Cog], List[CommandT]],
     ) -> None:
-        filtered_mapping = await self.ensure_filtered(mapping)
+        filtered_mapping = await self.filter_mapping(mapping)
         view = HelpView(
             tuple(filtered_mapping.keys()),
             context=self.context,
@@ -88,10 +88,13 @@ class SerenityHelpCommand(commands.HelpCommand):
         view = HelpCommandView(command, context=self.context)
         await self.context.send(embed=view.to_embed(), view=view)
 
-    @staticmethod
     def command_not_found(self, string: str, /) -> str:
         return f"Unable to locate `{string}` within the bot's commands."
 
-    @staticmethod
-    def subcommand_not_found(self, command: commands.Command[Any, Any, Any], string: str, /) -> str:
+    def subcommand_not_found(
+        self,
+        command: commands.Command[Any, Any, Any],
+        string: str,
+        /
+    ) -> str:
         return f"Command `{command.qualified_name}` has no subcommands matching `{string}`."
