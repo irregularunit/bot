@@ -81,7 +81,7 @@ class CommandSelect(Select["ABCHelpCommandView"]):
         else:
             view = HelpCommandView(command, **self.parent.get_kwargs())
 
-        await interaction.response.edit_message(view=view, embed=view.to_embed())
+        await interaction.response.edit_message(view=view, content=view.to_string())
 
 
 class PluginSelect(Select["ABCHelpCommandView"]):
@@ -120,4 +120,4 @@ class PluginSelect(Select["ABCHelpCommandView"]):
         plugin = self._plugin_map[selected[0]]
         view = PluginHelp(plugin, **self.parent.get_kwargs())
 
-        await interaction.response.edit_message(view=view, embed=view.to_embed())
+        await interaction.response.edit_message(view=view, content=view.to_string())

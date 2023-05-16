@@ -35,6 +35,8 @@ from __future__ import annotations
 
 import abc
 import itertools
+import textwrap
+from io import StringIO
 from typing import TYPE_CHECKING, Any, Dict, NamedTuple, Optional, ParamSpec, Tuple, TypeVar, Union
 
 from discord import Interaction, Member, User
@@ -81,6 +83,10 @@ class ABCHelpCommandView(SerenityView, abc.ABC):
 
     @abc.abstractmethod
     def to_embed(self) -> SerenityEmbed:
+        ...
+
+    @abc.abstractmethod
+    def to_string(self) -> str:
         ...
 
     def get_home(self) -> Optional[ABCHelpCommandView]:
@@ -170,6 +176,27 @@ class HelpGroupCommandView(ABCHelpCommandView):
 
         return embed
 
+    def to_string(self) -> str:
+        buffered_io = StringIO()
+
+        start, end = "```prolog", "```"
+        header = f"\n=== Help for '{self.group.qualified_name}' ===\n\n"
+        description = f"Description:\n・ '{self.group.description or 'No description provided.'}'\n\n"
+
+        buffered_io.write(start)
+        buffered_io.write(header)
+        buffered_io.write(description)
+
+        for command in self.group.commands:
+            if command.hidden:
+                continue
+
+            buffered_io.write(f"{command.name:10} :: {command.description or 'No description provided.'}\n")
+
+        buffered_io.write(end)
+
+        return buffered_io.getvalue()
+
 
 class HelpCommandView(ABCHelpCommandView):
     __slots__: Tuple[str, ...] = ("command", "extras")
@@ -206,7 +233,7 @@ class HelpCommandView(ABCHelpCommandView):
         if options_found:
             embed.add_field(
                 name="Arguments",
-                value="\n".join(f"`{option}` - {description}" for option, description in options_found),
+                value="\n".join(option.markup() for option in options_found),
                 inline=False,
             )
 
@@ -231,6 +258,47 @@ class HelpCommandView(ABCHelpCommandView):
             )
 
         return embed
+
+    def to_string(self) -> str:
+        buffered_io = StringIO()
+
+        start, end = "```prolog", "```"
+        options_found = self.extras["options"]
+        header = f"\n=== Help for '{self.command.qualified_name}' ===\n\n"
+        description = f"Description:\n・ '{self.extras['description']}'\n\n"
+
+        buffered_io.write(start)
+        buffered_io.write(header)
+        buffered_io.write(description)
+
+        if options_found:
+            buffered_io.write("\nArguments:\n")
+            for option in options_found:
+                buffered_io.write(f"{option.markup()}")
+
+        example_command = self.extras["example"]
+        formatted_example = example_command.format(
+            prefix=self.context.clean_prefix,
+            command=self.command.qualified_name,
+        )
+
+        example = f"\n\nExample:\n・ '{formatted_example}'" if example_command else "'No example provided.'"
+
+        buffered_io.write(
+            f"\nUsage:\n・ '{self.context.clean_prefix}{self.command.qualified_name} {self.command.signature}'"
+            + example + "\n"
+        )
+
+        if self.command.aliases:
+            formatted_aliases = "\n".join(
+                f"・ '{alias}'" for alias in self.command.aliases
+                )
+
+            buffered_io.write(f"\nAliases:\n{formatted_aliases}")
+
+        buffered_io.write(end)
+
+        return buffered_io.getvalue()
 
 
 class HelpView(ABCHelpCommandView):
@@ -258,7 +326,7 @@ class HelpView(ABCHelpCommandView):
                 > `s? help <command>` to get more information about a command.
                 > `s? help <category>` to get more information about a category.
 
-                **About ME**
+                **About Me**
                 I am Serenity, a custom bot solution created by `@lexicalunit` for the exclusive 
                 use of the `SerenityOS` server. Written in Python using the `discord.py` library.
 
@@ -271,6 +339,25 @@ class HelpView(ABCHelpCommandView):
         embed.set_author(name=self.context.me, icon_url=self.context.me.display_avatar)
 
         return embed
+
+    def to_string(self) -> str:
+        fmt = f"""
+        ```prolog
+        ╔═══════════════════════════════════════════════════╗
+        ║                Serenity Help Menu                 ║
+        ║                                                   ║
+        ║ use the select menu to navigate through the help  ║
+        ║ menu.                                             ║
+        ║                                                   ║
+        ║ > `s? help <command>` to get more information     ║
+        ║   about a command.                                ║
+        ║ > `s? help <category>` to get more information    ║
+        ║   about a category.                               ║
+        ╚===================================================╝
+        ```
+        """
+
+        return textwrap.dedent(fmt)
 
 
 class PluginHelp(ABCHelpCommandView):
@@ -300,8 +387,32 @@ class PluginHelp(ABCHelpCommandView):
         )
         embed.add_field(
             name="List of Commands",
-            value=(", ".join(f"`{command.name}`" for command in plugin.get_commands() if not command.hidden)),
+            value=("\n".join(f"・ '{command.name}'" for command in plugin.get_commands() if not command.hidden)),
             inline=False,
         )
 
         return embed
+
+    def to_string(self) -> str:
+        plugin = self.plugin
+
+        buffered_io = StringIO()
+
+        start, end = "```prolog", "```"
+        header = f"\n=== Help for '{plugin.qualified_name}' ===\n\n"
+        description = f"Description:\n・ {plugin.description or 'No description provided.'}\n"
+
+        buffered_io.write(start)
+        buffered_io.write(header)
+        buffered_io.write(description)
+
+        buffered_io.write("\nList of Commands:\n")
+        for command in plugin.get_commands():
+            if command.hidden:
+                continue
+
+            buffered_io.write(f"・ '{command.name}'\n")
+
+        buffered_io.write(end)
+
+        return buffered_io.getvalue()

@@ -61,7 +61,7 @@ class ToStart(Button["ABCHelpCommandView"]):
         super().__init__(style=ButtonStyle.blurple, emoji=StartEmoji)
 
     async def callback(self, interaction: Interaction) -> None:
-        await interaction.response.edit_message(embed=self.parent.to_embed(), view=self.parent)
+        await interaction.response.edit_message(content=self.parent.to_string(), view=self.parent)
 
 
 class DisableButton(Button["ABCHelpCommandView"]):

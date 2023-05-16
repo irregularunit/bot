@@ -61,7 +61,7 @@ class CommandOption(NamedTuple):
     description: str
 
     def __str__(self) -> str:
-        return f"・`{self.option}` - {self.description}\n"
+        return f"・ '{self.option}' - '{self.description}'\n"
 
     def markup(self) -> str:
         return str(self)

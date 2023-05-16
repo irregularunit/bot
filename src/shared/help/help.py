@@ -74,19 +74,19 @@ class SerenityHelpCommand(commands.HelpCommand):
             tuple(filtered_mapping.keys()),
             context=self.context,
         )
-        await self.context.send(embed=view.to_embed(), view=view)
+        await self.context.send(content=view.to_string(), view=view)
 
     async def send_cog_help(self, cog: commands.Cog, /) -> None:
         view = PluginHelp(cog, context=self.context)
-        await self.context.send(embed=view.to_embed(), view=view)
+        await self.context.send(content=view.to_string(), view=view)
 
     async def send_group_help(self, group: commands.Group[Any, Any, Any], /) -> None:
         view = HelpGroupCommandView(group, context=self.context)
-        await self.context.send(embed=view.to_embed(), view=view)
+        await self.context.send(content=view.to_string(), view=view)
 
     async def send_command_help(self, command: commands.Command[Any, Any, Any], /) -> None:
         view = HelpCommandView(command, context=self.context)
-        await self.context.send(embed=view.to_embed(), view=view)
+        await self.context.send(content=view.to_string(), view=view)
 
     def command_not_found(self, string: str, /) -> str:
         return f"Unable to locate `{string}` within the bot's commands."
