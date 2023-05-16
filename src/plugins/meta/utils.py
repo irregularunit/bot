@@ -33,11 +33,11 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-from os import environ
-from subprocess import Popen, PIPE
 import textwrap
 from logging import getLogger
+from os import environ
 from pathlib import Path
+from subprocess import PIPE, Popen
 from typing import Any, Dict, Final, List, NamedTuple, Tuple
 
 __all__: Tuple[str, ...] = (
