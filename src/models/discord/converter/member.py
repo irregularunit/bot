@@ -94,6 +94,7 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
         If the argument could not be converted into a member object.
     """
 
+
     @staticmethod
     def get_id_match(argument: str) -> Optional[re.Match[str]]:
         """Returns a match object if the argument matches the user ID format ("<@!user_id>").
@@ -269,7 +270,7 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
         `discord.ext.commands.BadArgument`
             The argument could not be converted into a member object.
         """
-        
+
         from src.shared import ExceptionFactory
 
         bot = ctx.bot
