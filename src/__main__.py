@@ -95,7 +95,7 @@ if __name__ == "__main__":
     if os.name in ("nt",):
         run_with_suppress(None)
     else:
-        import uvloop  # type: ignore	
+        import uvloop  # type: ignore
 
         if sys.version_info >= (3, 11):
             with asyncio.Runner(loop_factory=uvloop.new_event_loop) as runner:  # type: ignore
