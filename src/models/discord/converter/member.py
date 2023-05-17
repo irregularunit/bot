@@ -269,7 +269,7 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
         `discord.ext.commands.BadArgument`
             The argument could not be converted into a member object.
         """
-        
+
         from src.shared import ExceptionFactory
 
         bot = ctx.bot
