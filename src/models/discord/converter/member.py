@@ -173,7 +173,7 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
 
     @staticmethod
     def get_member_named(guild: discord.Guild, argument: str) -> Optional[discord.Member]:
-        """Attempts to find a member using the guild's `get_member()` method and checks the mentioned users in the message.
+        """Attempts to find a member using the guild's `get_member_named()` method.
 
         Parameters
         ----------
@@ -192,7 +192,7 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
 
     @staticmethod
     def get_member_from_guilds(bot: Serenity, method_name: str, argument: str) -> Optional[discord.Member]:
-        """Attempts to find a member using the guild's `get_member()` method and checks the mentioned users in the message.
+        """Attempts to find a member using the `get_from_guilds()` method.
 
         Parameters
         ----------
@@ -231,7 +231,7 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
         return guild.get_member(user_id)
 
     def get_member_mentioned(self, ctx: SerenityContext, user_id: int) -> Optional[discord.Member | discord.User]:
-        """Attempts to find a member using the guild's `get_member()` method and checks the mentioned users in the message.
+        """Attempts to find a member using the `discord.utils.get()` method.
 
         Parameters
         ----------
