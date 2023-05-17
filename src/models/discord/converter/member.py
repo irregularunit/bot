@@ -93,6 +93,7 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
     `UserFeedbackException`
         If the argument could not be converted into a member object.
     """
+
     @staticmethod
     def get_id_match(argument: str) -> Optional[re.Match[str]]:
         return ID_REGEX.match(argument)
