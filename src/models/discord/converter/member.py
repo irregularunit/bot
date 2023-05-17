@@ -95,10 +95,38 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
     """
     @staticmethod
     def get_id_match(argument: str) -> Optional[re.Match[str]]:
+        """Returns a match object if the argument matches the user ID format ("<@!user_id>").
+
+        Parameters
+        ----------
+        argument: `str`
+            The argument to check.
+
+        Returns
+        -------
+        `Optional[re.Match[str]]`
+            The match object if the argument matches the user ID format, otherwise `None`.
+        """
+
         return ID_REGEX.match(argument)
 
     @staticmethod
     async def query_member_named(guild: discord.Guild, argument: str) -> Optional[discord.Member]:
+        """Queries the guild members by name or nickname using `guild.query_members()` and searches for a partial match.
+
+        Parameters
+        ----------
+        guild: `discord.Guild`
+            The guild to query the members from.
+        argument: `str`
+            The argument to convert into a member object.
+
+        Returns
+        -------
+        `Optional[discord.Member]`
+            The member object that was found from the argument.
+        """
+
         cache = guild._state.member_cache_flags.joined
         if len(argument) > 5 and argument[-5] == '#':
             username, _, discriminator = argument.rpartition('#')
@@ -106,43 +134,141 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
             return discord.utils.get(members, name=username, discriminator=discriminator)
 
         members = await guild.query_members(argument, limit=100, cache=cache)
-        maybe_result = discord.utils.find(lambda m: argument in (m.name, m.nick), members)
-        return maybe_result or (members[0] if members else None)
+        maybe_member = discord.utils.find(lambda m: argument in (m.name, m.nick), members)
+        return maybe_member or (members[0] if members else None)
 
     @staticmethod
     async def query_member_by_id(bot: Serenity, guild: discord.Guild, user_id: int) -> Optional[discord.Member]:
-        ws = bot._get_websocket(shard_id=guild.shard_id)
-        cache = guild._state.member_cache_flags.joined
-        if ws.is_ratelimited():
+        """Queries the guild members by ID using `guild.query_members()` and searches for an exact match.
+
+        Parameters
+        ----------
+        bot: `Serenity`
+            The bot instance.
+        guild: `discord.Guild`
+            The guild to query the members from.
+        user_id: `int`
+            The ID of the member to search for.
+
+        Returns
+        -------
+        `Optional[discord.Member]`
+            The member object that was found from the argument.
+        """
+
+        websocket = bot._get_websocket(shard_id=guild.shard_id)
+        use_cache = guild._state.member_cache_flags.joined
+        if websocket.is_ratelimited():
             try:
                 member = await guild.fetch_member(user_id)
             except discord.HTTPException:
                 return None
 
-            if cache:
+            if use_cache:
                 guild._add_member(member)
             return member
 
-        members = await guild.query_members(limit=5, user_ids=[user_id], cache=cache)
+        members = await guild.query_members(limit=5, user_ids=[user_id], cache=use_cache)
         return members[0] if members else None
 
     @staticmethod
     def get_member_named(guild: discord.Guild, argument: str) -> Optional[discord.Member]:
+        """Attempts to find a member using the guild's `get_member()` method and checks the mentioned users in the message.
+
+        Parameters
+        ----------
+        guild: `discord.Guild`
+            The guild to query the members from.
+        argument: `str`
+            The argument to convert into a member object.
+
+        Returns
+        -------
+        `Optional[discord.Member]`
+            The member object that was found from the argument.
+        """
+
         return guild.get_member_named(argument)
 
     @staticmethod
     def get_member_from_guilds(bot: Serenity, method_name: str, argument: str) -> Optional[discord.Member]:
+        """Attempts to find a member using the guild's `get_member()` method and checks the mentioned users in the message.
+
+        Parameters
+        ----------
+        bot: `Serenity`
+            The bot instance.
+        method_name: `str`
+            The name of the method to call on the guild object.
+        argument: `str`
+            The argument to convert into a member object.
+
+        Returns
+        -------
+        `Optional[discord.Member]`
+            The member object that was found from the argument.
+        """
+
         return get_from_guilds(bot, method_name, argument)
 
     @staticmethod
     def get_member_by_id(guild: discord.Guild, user_id: int) -> Optional[discord.Member]:
+        """Attempts to find a member using the guild's `get_member()` method and checks the mentioned users in the message.
+
+        Parameters
+        ----------
+        guild: `discord.Guild`
+            The guild to query the members from.
+        user_id: `int`
+            The ID of the member to search for.
+
+        Returns
+        -------
+        `Optional[discord.Member]`
+            The member object that was found from the argument.
+        """
+
         return guild.get_member(user_id)
 
     def get_member_mentioned(self, ctx: SerenityContext, user_id: int) -> Optional[discord.Member | discord.User]:
+        """Attempts to find a member using the guild's `get_member()` method and checks the mentioned users in the message.
+
+        Parameters
+        ----------
+        ctx: `SerenityContext`
+            The invocation context.
+        user_id: `int`
+            The ID of the member to search for.
+
+        Returns
+        -------
+        `Optional[Union[discord.Member, discord.User]]`
+            The member object that was found from the argument.
+        """
         return discord.utils.get(ctx.message.mentions, id=user_id)
 
     @override
     async def convert(self, ctx: SerenityContext, argument: str) -> discord.Member:  # type: ignore[override]
+        """Converts the argument into a `discord.Member` object.
+
+        Parameters
+        ----------
+        ctx: `SerenityContext`
+            The invocation context.
+        argument: `str`
+            The argument to convert into a member object.
+
+        Returns
+        -------
+        `discord.Member`
+            The member object that was found from the argument.
+
+        Raises
+        ------
+        `discord.ext.commands.BadArgument`
+            The argument could not be converted into a member object.
+        """
+        
         from src.shared import ExceptionFactory
 
         bot = ctx.bot
