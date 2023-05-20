@@ -152,7 +152,7 @@ class ColorRepresentation(SavableByteStream):
         return self._rgb
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}(rgb={self._rgb})'
+        return f'{self.__class__.__name__}({self._rgb})'
 
     @staticmethod
     def _generate_chunk(chunk_type: bytes, data: bytes) -> bytes:

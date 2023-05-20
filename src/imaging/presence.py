@@ -30,6 +30,10 @@ Under the following terms:
 This is a human-readable summary of the Legal Code. The full license is available
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
+# pyright: reportMissingTypeStubs=false
+# pyright: reportUnknownArgumentType=false
+# pyright: reportUnknownVariableType=false
+# pyright: reportUnknownMemberType=false
 
 from __future__ import annotations
 
@@ -80,7 +84,9 @@ class PresenceGraph(SavableByteStream):
         return self._data
 
     def _generate_donut_chart(self) -> BytesIO:
-        sizes = [self.data["statuses"].count(status) for status in self._mapping.keys()]
+        statuses = self.data["statuses"]
+        sizes = [statuses.count(status) for status in self._mapping.keys()]
+
         labels, sorted_sizes = zip(
             *sorted(
                 zip(self._mapping.keys(), sizes),
@@ -88,7 +94,7 @@ class PresenceGraph(SavableByteStream):
             )
         )
 
-        _, ax = plt.subplots(  # type: ignore
+        _, ax = plt.subplots(
             facecolor="none",
             figsize=(9, 7),
         )
@@ -112,7 +118,7 @@ class PresenceGraph(SavableByteStream):
                 square_y[i],
                 s=300,
                 c=status_colors[i],
-                marker="s",  # type: ignore
+                marker="s",
             )
 
         ax.pie(  # type: ignore
@@ -128,8 +134,8 @@ class PresenceGraph(SavableByteStream):
         )
 
         canvas = BytesIO()
-        plt.savefig(canvas, format="png", facecolor="none", transparent=True)  # type: ignore
-        plt.close()  # type: ignore
+        plt.savefig(canvas, format="png", facecolor="none", transparent=True)
+        plt.close()
         canvas.seek(0)
 
         with Image.open(canvas) as img:

@@ -33,12 +33,20 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
+import inspect
+import re
 import textwrap
 from logging import getLogger
 from os import environ
 from pathlib import Path
 from subprocess import PIPE, Popen
-from typing import Any, Dict, Final, List, NamedTuple, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Final, List, NamedTuple, Optional, Tuple
+
+from discord.ext import commands
+
+if TYPE_CHECKING:
+    from src.models.serenity import Serenity
+
 
 __all__: Tuple[str, ...] = (
     "BRANCH",
@@ -122,3 +130,74 @@ def get_git_history():
         return "Branch:\n" + textwrap.indent(branch, "  ") + "\nCommit history:\n" + textwrap.indent(history, "  ")
     except OSError:
         return "Failed to get git history."
+
+
+class SourceCode:
+    __slots__ = ("object", "bot", "_git")
+
+    object: Optional[str]
+    bot: Serenity
+    _git: str
+
+    def __init__(self, serenity: Serenity, object: Optional[str]) -> None:
+        self.object = object
+        self.bot = serenity
+        self._git = GITHUB_URL
+
+    def _get_command_options(self) -> List[str]:
+        return list(
+            filter(
+                None,
+                map(lambda cmd: cmd.qualified_name, self.bot.walk_commands()),
+            )
+        )
+
+    def _generate_source_link(self, command: str, path: str) -> str:
+        return f"[`{command}`]({GITHUB_URL}/blob/{BRANCH}/{path})"
+
+    def _generate_source_info(
+        self, target: commands.Command[Any, ..., Any]
+    ) -> Tuple[Optional[str], Optional[int], Optional[str]]:
+        lines = inspect.getsourcelines(target.callback)[1]
+        filename = inspect.getsourcefile(target.callback)
+
+        module = inspect.getmodule(target.callback)
+        if module is not None:
+            module = module.__name__
+
+        return filename, lines, module
+
+    def source(self) -> str:
+        if not self.object:
+            return self._git
+
+        commands = self._get_command_options()
+
+        if self.object == "help":
+            return self._git
+        else:
+            target_command = self.bot.get_command(self.object)
+
+        if target_command is None:
+            return f"Command `{self.object}` not found.\n\nAvailable commands:\n{', '.join(commands)}"
+
+        filename, lines, module = self._generate_source_info(target_command)
+        module = module or "Unknown"
+
+        if not filename:
+            return f"Unable to locate source code for `{self.object}`."
+
+        filename = filename.split("bot/")[1].replace("\\", "/")
+        link = self._generate_source_link(self.object, filename)
+
+        fmt = f"""
+            <{link}>
+            ```prolog
+            === Source code for "{self.object}" ===
+
+            {module} ({filename})
+            Lines: {lines}
+            ```
+            """
+
+        return re.sub(r"(?m)^ {12}", "", fmt)

@@ -94,15 +94,15 @@ class ActivityHistory(BaseImageManipulation):
         query = """
             SELECT
                 status,
-                created_at
+                changed_at
             FROM
                 serenity_user_presence
             WHERE
                 snowflake = $1
             AND
-                created_at > (NOW() - INTERVAL '7 days')
+                changed_at > (NOW() - INTERVAL '7 days')
             ORDER BY
-                created_at ASC
+                changed_at ASC
         """
 
         async with self.serenity.pool.acquire() as conn:
@@ -112,7 +112,7 @@ class ActivityHistory(BaseImageManipulation):
         if not results:
             raise ExceptionFactory.create_warning_exception(f"{user.display_name} has no presence history.")
 
-        dates: list[datetime] = [result["created_at"] for result in results]
+        dates: list[datetime] = [result["changed_at"] for result in results]
         statuses: list[str] = [result["status"] for result in results]
 
         presence = PresenceHistory(dates=dates, statuses=statuses)

@@ -41,6 +41,7 @@ from discord.ext import commands
 
 from src.models.discord import SerenityContext
 from src.shared import UserFeedbackException
+from src.shared.exceptions import ExceptionFactory
 
 from .utils import INTERNAL_EXCEPTION, converter_name, get_raisable_context
 
@@ -363,3 +364,11 @@ def no_private_message_handler(
     exc: commands.NoPrivateMessage,
 ) -> str:
     return "Sorry, I don't do dm's."
+
+
+@register_handler(commands.BadUnionArgument)
+def bad_union_argument_handler(
+    ctx: SerenityContext,
+    exc: commands.BadUnionArgument,
+) -> str:
+    return ExceptionFactory.create_critical_exception(str(exc)).to_string()

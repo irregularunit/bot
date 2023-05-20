@@ -135,4 +135,4 @@ class Meta(Plugin):
     async def githistory(self, ctx: SerenityContext) -> None:
         history = await self.serenity.to_thread(get_git_history)
 
-        await ctx.safe_send(content=f"**Current git history**:\n```yaml\n{history}\n```")
+        await ctx.safe_send(content=f"**Current git history**:\n```yml\n{history}\n```")

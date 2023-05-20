@@ -179,7 +179,8 @@ class AvatarCollage:
         width = height = size * 256
 
         with Image.new("RGBA", (width, height)) as canvas:
-            fx = fy = 0
+            fx, fy = 0, 0
+
             for avatar in self._pointer:
                 if self.x == size:
                     self.y += 1
@@ -188,12 +189,9 @@ class AvatarCollage:
                 x, y = self.x * 256, self.y * 256
                 canvas.paste(avatar, (x, y))
 
-                (
-                    fx,
-                    fy,
-                ) = max(
-                    x, fx
-                ), max(y, fy)
+                fx = max(x, fx)
+                fy = max(y, fy)
+
                 self.x += 1
 
             return canvas.crop((0, 0, fx + 256, fy + 256))
@@ -202,6 +200,7 @@ class AvatarCollage:
         """Returns a BytesIO object of the image."""
         buffer = BytesIO()
         canvas = await to_thread(self._create_collage)
+
         canvas.save(buffer, "PNG")
         buffer.seek(0)
 

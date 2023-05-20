@@ -35,7 +35,7 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Optional
 
 import discord
 from discord.ext import commands
@@ -49,15 +49,6 @@ __all__: tuple[str, ...] = ("MaybeMemberConverter",)
 
 
 ID_REGEX = re.compile(r'([0-9]{15,20})$')
-
-
-def get_from_guilds(bot: Serenity, getter: str, argument: Any) -> Any:
-    result = None
-    for guild in bot.guilds:
-        result = getattr(guild, getter)(argument)
-        if result:
-            return result
-    return result
 
 
 class MaybeMemberConverter(commands.Converter[discord.Member]):
@@ -112,7 +103,7 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
         return ID_REGEX.match(argument)
 
     @staticmethod
-    async def query_member_named(guild: discord.Guild, argument: str) -> Optional[discord.Member]:
+    async def query_member_named(argument: str, guild: discord.Guild) -> Optional[discord.Member]:
         """Queries the guild members by name or nickname using `guild.query_members()` and searches for a partial match.
 
         Parameters
@@ -128,13 +119,14 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
             The member object that was found from the argument.
         """
 
-        cache = guild._state.member_cache_flags.joined
+        use_cache = guild._state.member_cache_flags.joined
+
         if len(argument) > 5 and argument[-5] == '#':
             username, _, discriminator = argument.rpartition('#')
-            members = await guild.query_members(username, limit=100, cache=cache)
+            members = await guild.query_members(username, limit=100, cache=use_cache)
             return discord.utils.get(members, name=username, discriminator=discriminator)
 
-        members = await guild.query_members(argument, limit=100, cache=cache)
+        members = await guild.query_members(argument, limit=100, cache=use_cache)
         maybe_member = discord.utils.find(lambda m: argument in (m.name, m.nick), members)
         return maybe_member or (members[0] if members else None)
 
@@ -159,6 +151,7 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
 
         websocket = bot._get_websocket(shard_id=guild.shard_id)
         use_cache = guild._state.member_cache_flags.joined
+
         if websocket.is_ratelimited():
             try:
                 member = await guild.fetch_member(user_id)
@@ -167,13 +160,15 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
 
             if use_cache:
                 guild._add_member(member)
+
             return member
 
         members = await guild.query_members(limit=5, user_ids=[user_id], cache=use_cache)
+
         return members[0] if members else None
 
     @staticmethod
-    def get_member_named(guild: discord.Guild, argument: str) -> Optional[discord.Member]:
+    def get_member_named(argument: str, guild: discord.Guild) -> Optional[discord.Member]:
         """Attempts to find a member using the guild's `get_member_named()` method.
 
         Parameters
@@ -192,7 +187,7 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
         return guild.get_member_named(argument)
 
     @staticmethod
-    def get_member_from_guilds(bot: Serenity, method_name: str, argument: str) -> Optional[discord.Member]:
+    def get_member_from_guilds(bot: Serenity, getter: str, argument: str) -> Optional[discord.Member]:
         """Attempts to find a member using the `get_from_guilds()` method.
 
         Parameters
@@ -209,8 +204,13 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
         `Optional[discord.Member]`
             The member object that was found from the argument.
         """
+        for guild in bot.guilds:
+            result = getattr(guild, getter)(argument)
 
-        return get_from_guilds(bot, method_name, argument)
+            if result:
+                return result
+
+        return None
 
     @staticmethod
     def get_member_by_id(guild: discord.Guild, user_id: int) -> Optional[discord.Member]:
@@ -269,7 +269,7 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
         `discord.ext.commands.BadArgument`
             The argument could not be converted into a member object.
         """
-        
+
         from src.shared import ExceptionFactory
 
         bot = ctx.bot
@@ -286,7 +286,7 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
         match = self.get_id_match(argument) or re.match(r'<@!?([0-9]{15,20})>$', argument)
 
         if match is None:
-            result = self.get_member_named(guild, argument) or self.get_member_from_guilds(
+            result = self.get_member_named(argument, guild) or self.get_member_from_guilds(
                 bot, 'get_member_named', argument
             )
         else:
@@ -297,7 +297,7 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
             if user_id is not None:
                 result = await self.query_member_by_id(bot, guild, user_id)
             else:
-                result = await self.query_member_named(guild, argument)
+                result = await self.query_member_named(argument, guild)
 
             if not result:
                 raise ExceptionFactory.create_warning_exception(
