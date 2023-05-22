@@ -192,7 +192,7 @@ class Events(EventExtensionMixin, Plugin):
         await self.serenity.get_or_create_user(after.id)
 
         async with self.serenity.pool.acquire() as connection:
-            if before.avatar != after.avatar:
+            if before.name != after.name:
                 await connection.execute(
                     insert_statement,
                     after.id,
@@ -284,3 +284,27 @@ class Events(EventExtensionMixin, Plugin):
             return
 
         await self.presence_queue.put(PresenceEntitiy(after.id, status, discord.utils.utcnow()))
+
+    @Plugin.listener("on_message")
+    async def message_event(self, message: discord.Message) -> None:
+        if message.guild is None or message.author.bot:
+            return
+
+        if message.author == self.serenity.user or self.serenity.user is None:
+            return
+
+        ctx = await self.serenity.get_context(message)
+
+        if message.content in [
+            f"<@{self.serenity.user.id}>",
+            f"<@!{self.serenity.user.id}>",
+        ]:
+            if ctx.bot_permissions.send_messages is False:
+                return
+
+            command = self.serenity.get_command("about")
+            
+            if command is None:
+                return
+
+            await ctx.invoke(command)  # type: ignore
