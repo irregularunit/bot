@@ -303,7 +303,7 @@ class Events(EventExtensionMixin, Plugin):
                 return
 
             command = self.serenity.get_command("about")
-            
+
             if command is None:
                 return
 
