@@ -33,22 +33,30 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-import discord
+from copy import deepcopy
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
-__all__: tuple[str, ...] = ("SerenityView",)
+from discord import ButtonStyle, Client, File, Interaction, NotFound
+from discord.ui import Button, Item, View, button
+
+if TYPE_CHECKING:
+    from ..models.serenity import Serenity
+    from .embed import SerenityEmbed
+
+__all__: Tuple[str, ...] = ("SerenityView", "SerenityPaginator", "PaginatorEntry")
 
 UNKNOWN_INTERACTION = 10062
 
 
-class SerenityView(discord.ui.View):
+class SerenityView(View):
     async def on_error(
         self,
-        interaction: discord.Interaction[discord.Client],
+        interaction: Interaction[Client],
         error: Exception,
-        item: discord.ui.Item[discord.ui.View],
+        item: Item[View],
     ) -> None:
         # Remove uselss noise from the logs.
-        if isinstance(error, discord.NotFound):
+        if isinstance(error, NotFound):
             return
 
         if getattr(error, "code", None) == UNKNOWN_INTERACTION:
@@ -66,3 +74,70 @@ class SerenityView(discord.ui.View):
 
         for child in self.children:
             setattr(child, "disabled", True)
+
+
+class PaginatorEntry:
+    __slots__ = ("content", "embed", "_files")
+
+    def __init__(
+        self,
+        *,
+        content: Optional[str] = None,
+        embed: Optional[SerenityEmbed] = None,
+        files: Optional[List[File]] = None,
+    ) -> None:
+        self.content = content
+        self.embed = embed
+        self._files = files or []
+
+    @property
+    def files(self):
+        """Copy of file for reusability."""
+        return [deepcopy(f) for f in self._files]
+
+
+class SerenityPaginator(SerenityView):
+    __slots__ = ("bot", "items", "page", "labels")
+
+    bot: Serenity
+    items: Tuple[PaginatorEntry, ...]
+    page: int
+    labels: dict[str, str]
+
+    def __init__(self, bot: Serenity, *items: PaginatorEntry) -> None:
+        super().__init__()
+        self.bot = bot
+        self.items = items
+        self.page = 0
+        self.labels = {
+            "first": "<<",
+            "back": "<",
+            "next": ">",
+            "skip": ">>",
+        }
+
+        for child in self.children:
+            if isinstance(child, Button):
+                setattr(child, "style", ButtonStyle.primary)
+                child.label = self.labels[child.callback.callback.__name__]  # type: ignore
+
+    async def edit(self, interaction: Interaction, *, page: int) -> None:
+        self.page = page
+        unit = self.items[page]
+        await interaction.response.edit_message(content=unit.content, embed=unit.embed, attachments=unit.files)
+
+    @button()
+    async def first(self, interaction: Interaction, _) -> None:
+        await self.edit(interaction, page=0)
+
+    @button()
+    async def back(self, interaction: Interaction, _) -> None:
+        await self.edit(interaction, page=max(self.page - 1, 0))
+
+    @button()
+    async def next(self, interaction: Interaction, _) -> None:
+        await self.edit(interaction, page=min(self.page + 1, len(self.items) - 1))
+
+    @button()
+    async def skip(self, interaction: Interaction, _) -> None:
+        await self.edit(interaction, page=len(self.items) - 1)
