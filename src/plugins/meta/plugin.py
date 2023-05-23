@@ -33,7 +33,7 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
-import asyncio 
+import asyncio
 import subprocess
 from sys import version_info
 from typing import TYPE_CHECKING, Optional, Tuple
@@ -165,5 +165,3 @@ class Meta(Plugin):
             return await ctx.maybe_reply(f"Error: {stderr.decode()}")
 
         await ctx.maybe_reply(stdout.decode())
-
-            
