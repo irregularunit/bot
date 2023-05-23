@@ -55,7 +55,7 @@ logger = getLogger(__name__)
 
 T = TypeVar('T')
 P = ParamSpec('P')
-T_error = TypeVar('T_error', bound=commands.CommandError)
+ErrorT = TypeVar('ErrorT', bound=commands.CommandError)
 MaybeCoro = Union[T, Awaitable[T]]
 MaybeCoroFunc = Callable[P, 'MaybeCoro[T]']
 
@@ -65,7 +65,7 @@ EXCEPTION_HANDLERS: Dict[
 
 
 def register_handler(
-    *exc_type: Type[T_error],
+    *exc_type: Type[ErrorT],
 ) -> Callable[[MaybeCoroFunc[P, T]], MaybeCoroFunc[P, T]]:
     """
     Decorator that registers a function as a handler for one or more specified exceptions.
@@ -73,7 +73,7 @@ def register_handler(
 
     Parameters
     ----------
-    exc_type : `Union[Type[T_error], Tuple[Type[T_error], ...]]`
+    exc_type : `Union[Type[ErrorT], Tuple[Type[ErrorT], ...]]`
         One or more exception types to register the decorated function as a handler for.
 
     Returns

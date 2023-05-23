@@ -74,7 +74,7 @@ class EventExtensionMixin:
             return await target.display_avatar.read()
         except discord.HTTPException as exc:
             if exc.status in {403, 404}:
-                # Discord has forsakes us
+                # Discord has forsaken us
                 return None
 
             if exc.status >= 500:

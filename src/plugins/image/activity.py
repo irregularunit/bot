@@ -99,8 +99,6 @@ class ActivityHistory(BaseImageManipulation):
                 serenity_user_presence
             WHERE
                 snowflake = $1
-            AND
-                changed_at > (NOW() - INTERVAL '7 days')
             ORDER BY
                 changed_at ASC
         """
@@ -114,6 +112,13 @@ class ActivityHistory(BaseImageManipulation):
 
         dates: list[datetime] = [result["changed_at"] for result in results]
         statuses: list[str] = [result["status"] for result in results]
+        date_status_percentages: dict[str, float] = {}
+
+        for _, status in zip(dates, statuses):
+            if status not in date_status_percentages:
+                date_status_percentages[status] = 0.0
+
+            date_status_percentages[status] += 1.0 / len(dates)
 
         presence = PresenceHistory(dates=dates, statuses=statuses)
 
@@ -128,7 +133,14 @@ class ActivityHistory(BaseImageManipulation):
             user,
             filename,
             title="presence history",
-            description=(f"> Generating took `{elapsed_time:.2f}` seconds.\n> Showing your `weekly` presence history."),
+            description=(
+                f"> Generating took `{elapsed_time:.2f}` seconds.\n> Showing your `weekly` presence history.\n\n"
+                "__**Presence Percentages**__\n"
+                f"Online Percentage: `{date_status_percentages.get('Online', 0.0) * 100:.2f}%`\n"
+                f"Idle Percentage: `{date_status_percentages.get('Idle', 0.0) * 100:.2f}%`\n"
+                f"Do Not Disturb Percentage: `{date_status_percentages.get('Do Not Disturb', 0.0) * 100:.2f}%`\n"
+                f"Offline Percentage: `{date_status_percentages.get('Offline', 0.0) * 100:.2f}%`\n"
+            ),
         )
 
         await ctx.send(file=file, embed=embed)
