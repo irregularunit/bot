@@ -40,7 +40,7 @@ import discord
 from discord.ext import commands
 from typing_extensions import override
 
-from src.shared import MaybeMemberParam, Plugin, SerenityEmbed, Stopwatch, for_command_callbacks
+from src.shared import Codeblock, MaybeMemberParam, Plugin, SerenityEmbed, Stopwatch, for_command_callbacks
 
 from .extras import avatar_info_extra, bot_info_extra, git_history_extra
 from .utils import count_source_lines, get_git_history
@@ -135,4 +135,4 @@ class Meta(Plugin):
     async def githistory(self, ctx: SerenityContext) -> None:
         history = await self.serenity.to_thread(get_git_history)
 
-        await ctx.safe_send(content=f"**Current git history**:\n```yml\n{history}\n```")
+        await ctx.maybe_reply(content=Codeblock(history, language="yml").to_string())

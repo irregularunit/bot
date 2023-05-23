@@ -31,7 +31,6 @@ This is a human-readable summary of the Legal Code. The full license is availabl
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
-from ._redis import *
 from .codeblock import *
 from .config import *
 from .embed import *

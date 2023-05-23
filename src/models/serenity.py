@@ -60,7 +60,7 @@ from src.models.discord import (
     SerenityUser,
 )
 from src.models.discord._bot.cache import SerenityUserCache
-from src.shared import ExceptionFactory, Publisher, SerenityConfig, Subscriber
+from src.shared import ExceptionFactory, SerenityConfig
 from src.shared.help.help import SerenityHelpCommand
 
 if TYPE_CHECKING:
@@ -109,8 +109,6 @@ class Serenity(SerenityMixin, commands.Bot):
 
         self._pool = pool
         self._redis = redis
-        self.subscriber = Subscriber(self)
-        self.publisher = Publisher(self)
 
     @cached_property
     def version(self) -> str:

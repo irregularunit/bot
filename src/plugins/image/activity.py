@@ -81,7 +81,7 @@ class ActivityHistory(BaseImageManipulation):
             ),
         )
 
-        await ctx.send(file=file, embed=embed)
+        await ctx.maybe_reply(file=file, embed=embed)
 
     @commands.command(
         name="presencehistory",
@@ -143,4 +143,4 @@ class ActivityHistory(BaseImageManipulation):
             ),
         )
 
-        await ctx.send(file=file, embed=embed)
+        await ctx.maybe_reply(file=file, embed=embed)

@@ -72,7 +72,7 @@ class FunImageManipulation(BaseImageManipulation):
             description=f"> Generating took `{elapsed_time:.2f}` seconds.",
         )
 
-        await ctx.send(embed=embed, file=discord_file)
+        await ctx.maybe_reply(embed=embed, file=discord_file)
 
     @commands.command(
         name="ascii",
@@ -94,7 +94,7 @@ class FunImageManipulation(BaseImageManipulation):
             description=f"> Generating took `{elapsed_time:.2f}` seconds.",
         )
 
-        await ctx.send(embed=embed, file=discord_file)
+        await ctx.maybe_reply(embed=embed, file=discord_file)
 
     @commands.command(
         name="pixelate",
@@ -116,7 +116,7 @@ class FunImageManipulation(BaseImageManipulation):
             description=f"> Generating took `{elapsed_time:.2f}` seconds.",
         )
 
-        await ctx.send(embed=embed, file=discord_file)
+        await ctx.maybe_reply(embed=embed, file=discord_file)
 
     @commands.command(
         name="pride",
@@ -130,7 +130,8 @@ class FunImageManipulation(BaseImageManipulation):
 
         if maybe_flag is None:
             raise ExceptionFactory.create_info_exception(
-                f"Flag `{flag}` is not a valid pride flag.\nValid flags are: {'`, `'.join(pride_options)}"
+                f"Flag `{flag}` is not a valid pride flag.\n"
+                f"Valid flags are: {', '.join(f'`{flag}`' for flag in pride_options)}."
             )
 
         with Stopwatch() as sw:
@@ -144,7 +145,7 @@ class FunImageManipulation(BaseImageManipulation):
             description=f"> Generating took `{elapsed_time:.2f}` seconds.",
         )
 
-        await ctx.send(embed=embed, file=discord_file)
+        await ctx.maybe_reply(embed=embed, file=discord_file)
 
     @commands.command(
         name="triggered",
@@ -166,7 +167,7 @@ class FunImageManipulation(BaseImageManipulation):
             description=f"> Generating took `{elapsed_time:.2f}` seconds.",
         )
 
-        await ctx.send(embed=embed, file=discord_file)
+        await ctx.maybe_reply(embed=embed, file=discord_file)
 
     @commands.command(
         name="color",
@@ -203,4 +204,4 @@ class FunImageManipulation(BaseImageManipulation):
         )
         embed.set_image(url=f"attachment://{file_name}")
 
-        await ctx.send(embed=embed, file=discord_file)
+        await ctx.maybe_reply(embed=embed, file=discord_file)
