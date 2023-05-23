@@ -65,7 +65,7 @@ class SerenityContext(commands.Context["Serenity"]):
         if isinstance(resolved_message, discord.DeletedReferencedMessage):
             resolved_message = None
         try:
-            return await (resolved_message.reply if resolved_message else self.message.reply)(
+            return await (resolved_message.reply if resolved_message else self.message.channel.send)(
                 content, mention_author=mention_author, **kwargs
             )
         except discord.HTTPException:

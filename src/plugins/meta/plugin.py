@@ -33,8 +33,10 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 from __future__ import annotations
 
+import asyncio 
+import subprocess
 from sys import version_info
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple
 
 import discord
 from discord.ext import commands
@@ -136,3 +138,32 @@ class Meta(Plugin):
         history = await self.serenity.to_thread(get_git_history)
 
         await ctx.maybe_reply(content=Codeblock(history, language="yml").to_string())
+
+    @commands.command(name="uwu", aliases=("owo",))
+    async def uwu(self, ctx: SerenityContext, *, text: Optional[str]):
+        if text is None:
+            async for message in ctx.channel.history(limit=10):
+                if message.content:
+                    text = message.content
+                    break
+
+        if text is None:
+            return await ctx.maybe_reply("Cowldn't fiwnd ani tewxt to owoify")
+
+        proc = await asyncio.create_subprocess_exec(
+            "uwuifyy",
+            "--text",
+            text,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        stdout, stderr = await proc.communicate()
+
+        if stderr:
+            return await ctx.maybe_reply(f"Error: {stderr.decode()}")
+
+        await ctx.maybe_reply(stdout.decode())
+
+            
