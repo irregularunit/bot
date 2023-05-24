@@ -75,7 +75,7 @@ class AboutSerenityView(SerenityView):
         await interaction.delete_original_response()
 
     async def interaction_check(self, interaction: Interaction) -> bool:
-        if not interaction.user.id != self.owner:
+        if interaction.user.id == self.owner:
             await interaction.response.send_message("Only the bot owner can use this view.", ephemeral=True)
             return False
 

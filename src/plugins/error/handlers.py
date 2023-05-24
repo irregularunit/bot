@@ -204,10 +204,7 @@ def get_message(
     """
     handler = get_handler(exc)
 
-    if handler is not None:
-        return handler(ctx, exc)
-
-    return None
+    return handler(ctx, exc) if handler is not None else None
 
 
 @register_handler(commands.CommandNotFound, commands.CheckFailure, commands.DisabledCommand)

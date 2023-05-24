@@ -95,10 +95,7 @@ class ABCHelpCommandView(SerenityView, abc.ABC):
         while root.parent is not None:
             root = root.parent
 
-        if root == self:
-            return None
-
-        return root
+        return None if root == self else root
 
     def get_kwargs(self) -> Dict[str, Any]:
         return {"context": self.context, "parent": self.parent or self, "timeout": self.timeout}
@@ -107,9 +104,7 @@ class ABCHelpCommandView(SerenityView, abc.ABC):
         from .._buttons import DisableButton, ToStart
 
         if self.parent is not None:
-            home = self.get_home()
-
-            if home:
+            if home := self.get_home():
                 self.add_item(ToStart(parent=home))
 
         self.add_item(DisableButton(parent=self))
@@ -117,7 +112,7 @@ class ABCHelpCommandView(SerenityView, abc.ABC):
     async def interaction_check(self, interaction: Interaction, /) -> bool:
         check = self.author == interaction.user
 
-        if check is False:
+        if not check:
             await interaction.response.send_message("You are not allowed to use this menu.", ephemeral=True)
 
         return check
@@ -241,7 +236,7 @@ class HelpCommandView(ABCHelpCommandView):
 
         embed.add_field(
             name="Usage",
-            value=(f"`{self.context.clean_prefix}{self.command.qualified_name} {self.command.signature}`" + example),
+            value=f"`{self.context.clean_prefix}{self.command.qualified_name} {self.command.signature}`{example}",
             inline=False,
         )
 
@@ -337,7 +332,7 @@ class HelpView(ABCHelpCommandView):
         return embed
 
     def to_string(self) -> str:
-        fmt = f"""
+        fmt = """
         ```prolog
         ╔═══════════════════════════════════════════════════╗
         ║                Serenity Help Menu                 ║

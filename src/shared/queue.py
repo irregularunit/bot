@@ -47,10 +47,7 @@ class SerenityQueue(Queue[T]):
     def __init__(self, maxsize: int = 0, loop: Optional[AbstractEventLoop] = None) -> None:
         super().__init__(maxsize=maxsize)
 
-        if loop is None:
-            self.__loop = get_event_loop()
-        else:
-            self.__loop = loop
+        self.__loop = get_event_loop() if loop is None else loop
 
     @property
     def loop(self) -> AbstractEventLoop:

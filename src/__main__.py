@@ -92,7 +92,7 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    if os.name in ("nt",):
+    if os.name in {"nt"}:
         run_with_suppress(None)
     else:
         import uvloop  # type: ignore

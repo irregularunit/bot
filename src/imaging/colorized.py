@@ -101,11 +101,7 @@ class RGB:
 
         lightness = (cmax + cmin) * 0.5
 
-        if delta == 0:
-            saturation = 0
-        else:
-            saturation = delta / (1 - abs(2 * lightness - 1))
-
+        saturation = 0 if delta == 0 else delta / (1 - abs(2 * lightness - 1))
         return hue, saturation, lightness
 
     def __repr__(self) -> str:

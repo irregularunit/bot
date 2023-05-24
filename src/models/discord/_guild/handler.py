@@ -35,6 +35,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
+from src.shared import ExceptionFactory
+
 from .model import SerenityGuild
 
 if TYPE_CHECKING:
@@ -69,10 +71,7 @@ class SerenityGuildManager:
             async with conn.transaction(readonly=True):
                 record = await conn.fetchrow(query, snowflake)
 
-        if record is None:
-            return None
-
-        return SerenityGuild.from_record(record)
+        return None if record is None else SerenityGuild.from_record(record)
 
     async def create_guild(self, snowflake: int, /) -> SerenityGuild:
         query = """
@@ -145,3 +144,19 @@ class SerenityGuildManager:
                 records = await conn.fetch(query)
 
         return [SerenityGuild.from_record(record) for record in records]
+
+    async def remove_guild_prefix(self, guild: SerenityGuild, prefix: str, /) -> SerenityGuild:
+        if prefix not in guild.prefixes:
+            raise ExceptionFactory.create_error_exception(
+                f"Unable to remove `{prefix}` from guild `{guild.id}` as it does not exist"
+            )
+
+        query = """
+            DELETE FROM serenity_guild_prefixes
+            WHERE
+                snowflake = $1 AND prefix = $2
+        """
+
+        async with self.pool.acquire() as conn:
+            async with conn.transaction():
+                await conn.execute(query, guild.id, prefix)

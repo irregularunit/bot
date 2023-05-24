@@ -205,9 +205,7 @@ class MaybeMemberConverter(commands.Converter[discord.Member]):
             The member object that was found from the argument.
         """
         for guild in bot.guilds:
-            result = getattr(guild, getter)(argument)
-
-            if result:
+            if result := getattr(guild, getter)(argument):
                 return result
 
         return None

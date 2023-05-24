@@ -206,9 +206,7 @@ class PixelateCreator(ImageManipulator):
                 points = []
 
                 for x in range(0, canvas.width, 10):
-                    for y in range(0, canvas.height, 10):
-                        points.append((x, y))
-
+                    points.extend((x, y) for y in range(0, canvas.height, 10))
                 self.shuffle(points)
 
                 for point in points:

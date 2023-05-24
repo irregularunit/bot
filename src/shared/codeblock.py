@@ -59,8 +59,8 @@ class Codeblock:
         else:
             try:
                 self.content = content.decode("utf-8")
-            except UnicodeDecodeError:
-                raise ValueError("Content must be a string or bytes-like object.")
+            except UnicodeDecodeError as exc:
+                raise ValueError("Content must be a string or bytes-like object.") from exc
 
         self.language = language
         self.inline = inline

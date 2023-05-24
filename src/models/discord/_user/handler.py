@@ -62,10 +62,7 @@ class SerenityUserManager:
             async with conn.transaction(readonly=True):
                 record = await conn.fetchrow(query, snowflake)
 
-        if record is None:
-            return None
-
-        return SerenityUser.from_record(record)
+        return None if record is None else SerenityUser.from_record(record)
 
     async def create_user(self, snowflake: int, /) -> SerenityUser:
         query = """

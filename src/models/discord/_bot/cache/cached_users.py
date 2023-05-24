@@ -82,10 +82,7 @@ class SerenityUserCache:
     def pop(self, snowflake: int, /) -> Optional[SerenityUser]:
         cached = self.__cache.pop(snowflake, None)
 
-        if cached is None:
-            return None
-
-        return cached.entity
+        return None if cached is None else cached.entity
 
     def __len__(self) -> int:
         return len(self.__cache)

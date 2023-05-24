@@ -83,7 +83,7 @@ class Meta(Plugin):
             ("Python", python_version, True),
             ("Discord.py", discord_version, True),
             ("Lines of code", str(lines_of_code), True),
-            ("PostgreSQL", str(psql_version), True),
+            ("PostgreSQL", psql_version, True),
             ("PostgreSQL Latency", f"{psql_latency:.2f}ms", True),
             ("Discord Latency", f"{self.serenity.latency * 1000:.2f}ms", True),
         )
@@ -126,7 +126,7 @@ class Meta(Plugin):
         gif = user.display_avatar.url if user.display_avatar.is_animated() else None
 
         embed = SerenityEmbed(
-            description=(f"[webp]({webp}) | [png]({png}) | [jpg]({jpg}) {'| [gif]({})'.format(gif) if gif else ''}")
+            description=f"[webp]({webp}) | [png]({png}) | [jpg]({jpg}) {f'| [gif]({gif})' if gif else ''}"
         )
         embed.set_author(name=f"{user.display_name}'s avatar", icon_url=user.display_avatar)
         embed.set_image(url=user.display_avatar.url)

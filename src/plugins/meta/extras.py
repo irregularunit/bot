@@ -31,6 +31,7 @@ This is a human-readable summary of the Legal Code. The full license is availabl
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
+
 from __future__ import annotations
 
 from src.shared import CommandExtras, CommandOption, DefaultArg
@@ -40,7 +41,7 @@ bot_info_extra = CommandExtras(description="Get information about the bot.", opt
 avatar_info_extra = CommandExtras(
     description="Get information about an avatar.",
     options=(CommandOption("user", "The user to get the avatar information for."),),
-    example=DefaultArg + " @lexicalunit",
+    example=f"{DefaultArg} @lexicalunit",
 )
 
 git_history_extra = CommandExtras(

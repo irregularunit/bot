@@ -98,10 +98,10 @@ class SerenityMixin:
         """
         it = iter(item)
         while True:
-            chunk = "".join(islice(it, size))
-            if not chunk:
+            if chunk := "".join(islice(it, size)):
+                yield chunk
+            else:
                 return
-            yield chunk
 
     @staticmethod
     def chunk(*items: T, size: int = 1) -> Generator[tuple[T], None, None]:
