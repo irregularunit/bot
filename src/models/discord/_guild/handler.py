@@ -164,3 +164,24 @@ class SerenityGuildManager:
         guild.prefixes.remove(prefix)
 
         return guild
+
+    async def add_guild_prefix(self, guild: SerenityGuild, prefix: str, /) -> SerenityGuild:
+        if prefix in guild.prefixes:
+            raise ExceptionFactory.create_error_exception(
+                f"Unable to add `{prefix}` to guild `{guild.id}` as it already exists"
+            )
+
+        query = """
+            INSERT INTO serenity_guild_prefixes
+                (snowflake, prefix)
+            VALUES
+                ($1, $2)
+        """
+
+        async with self.pool.acquire() as conn:
+            async with conn.transaction():
+                await conn.execute(query, guild.id, prefix)
+
+        guild.prefixes.append(prefix)
+
+        return guild

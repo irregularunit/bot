@@ -289,6 +289,7 @@ class Serenity(SerenityMixin, commands.Bot):
             "initial": True,
             "shard_id": getattr(self, "shard_id", None),
         }
+
         while not self.is_closed():
             try:
                 # Here we are trying to patch the gateway connection to
@@ -296,6 +297,7 @@ class Serenity(SerenityMixin, commands.Bot):
                 coro: Any = MobileGateway.from_client(self, **ws_params)
                 self.ws = await asyncio.wait_for(coro, timeout=60.0)
                 ws_params["initial"] = False
+
                 while True:
                     await self.ws.poll_event()
             except discord.client.ReconnectWebSocket as e:
@@ -349,6 +351,7 @@ class Serenity(SerenityMixin, commands.Bot):
                         raise
 
                 retry = backoff.delay()
+
                 self.logger.exception("Attempting a reconnect in %.2fs.", retry)
                 await asyncio.sleep(retry)
 

@@ -43,7 +43,7 @@ if TYPE_CHECKING:
     from ..models.serenity import Serenity
     from .embed import SerenityEmbed
 
-__all__: Tuple[str, ...] = ("SerenityView", "SerenityPaginator", "PaginatorEntry")
+__all__: Tuple[str, ...] = ("SerenityView", "SerenityPaginator", "PaginatorEntry", "SerenityConfirmPrompt")
 
 UNKNOWN_INTERACTION = 10062
 
@@ -99,16 +99,16 @@ class PaginatorEntry:
 class SerenityPaginator(SerenityView):
     __slots__ = ("bot", "items", "page", "labels")
 
-    bot: Serenity
-    items: Tuple[PaginatorEntry, ...]
     page: int
+    bot: Serenity
     labels: dict[str, str]
+    items: Tuple[PaginatorEntry, ...]
 
     def __init__(self, bot: Serenity, *items: PaginatorEntry) -> None:
         super().__init__()
+        self.page = 0
         self.bot = bot
         self.items = items
-        self.page = 0
         self.labels = {
             "first": "<<",
             "back": "<",
@@ -141,3 +141,40 @@ class SerenityPaginator(SerenityView):
     @button()
     async def skip(self, interaction: Interaction, _) -> None:
         await self.edit(interaction, page=len(self.items) - 1)
+
+
+class SerenityConfirmPrompt(SerenityView):
+    __slots__ = ("bot", "author", "message", "_value")
+
+    bot: Serenity
+    author: int
+    message: str
+    _value: bool
+
+    def __init__(self, bot: Serenity, author: int, *, message: str) -> None:
+        super().__init__()
+        self.bot = bot
+        self.author = author
+        self.message = message
+        self._value = False
+
+    @property
+    def value(self) -> bool:
+        return self._value
+
+    @button(label="Confirm", style=ButtonStyle.success)
+    async def confirm(self, interaction: Interaction, _) -> None:
+        self._value = True
+        self.stop()
+
+    @button(emoji="❌", style=ButtonStyle.danger)
+    async def cancel(self, interaction: Interaction, _) -> None:
+        self._value = False
+        self.stop()
+
+    async def interaction_check(self, interaction: Interaction) -> bool:
+        if interaction.user.id != self.author:
+            await interaction.response.send_message("You cannot interact with this message.", ephemeral=True)
+            return False
+
+        return True

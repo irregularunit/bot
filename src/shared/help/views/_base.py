@@ -176,7 +176,7 @@ class HelpGroupCommandView(ABCHelpCommandView):
 
         start, end = "```prolog", "```"
         header = f"\n=== Help for '{self.group.qualified_name}' ===\n\n"
-        description = f"Description:\n・ '{self.group.description or 'No description provided.'}'\n\n"
+        description = f"Description:\n・ '{self.group.brief or 'No description provided.'}'\n\n"
 
         buffered_io.write(start)
         buffered_io.write(header)
@@ -186,7 +186,7 @@ class HelpGroupCommandView(ABCHelpCommandView):
             if command.hidden:
                 continue
 
-            buffered_io.write(f"{command.name:10} :: {command.description or 'No description provided.'}\n")
+            buffered_io.write(f"{command.name:10} :: {command.brief or 'No description provided.'}\n")
 
         buffered_io.write(end)
 
