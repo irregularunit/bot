@@ -36,11 +36,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from enum import Enum
 from io import StringIO
-from typing import Callable, ClassVar
+from typing import Callable, ClassVar, Tuple
 
 from discord.ext import commands
 
-__all__: tuple[str, ...] = (
+__all__: Tuple[str, ...] = (
     "ExecptionLevel",
     "ExceptionFactory",
     "UserFeedbackException",
@@ -80,13 +80,48 @@ class ExecptionLevel(Enum):
 
 
 class UserFeedbackException(commands.CommandError):
-    """An exception that notifies the user of the severity of the exception."""
+    """An exception that notifies the user of the severity of the exception.
+
+    Parameters
+    ----------
+    message : `str`
+        The message of the exception.
+    strategy : `UserFeedbackStrategy`
+        The strategy object that determines the severity level of the exception.
+    formatters : `Tuple[Callable[[str], str], ...]`, optional
+        The formatters to apply to the message, by default ().
+
+    Examples
+    --------
+    Creating a UserFeedbackException with a warning level:
+
+    >>> from enum import Enum
+    >>> from typing import Callable
+    >>>
+    >>> class ExecptionLevel(Enum):
+    ...     WARNING = 1
+    ...
+    >>> class UserFeedbackStrategy:
+    ...     def get_emoji(self) -> str:
+    ...         return "⚠️"
+    ...
+    >>> exception = UserFeedbackException("Warning occurred!", UserFeedbackStrategy())
+    >>> print(exception)  # ⚠️ | Warning occurred!
+
+    Adding a formatter to modify the exception message:
+
+    >>> def uppercase_formatter(msg: str) -> str:
+    ...     return msg.upper()
+    ...
+    >>> exception.add_formatter(uppercase_formatter)
+    >>> print(exception)  # ⚠️ | WARNING OCCURRED!
+    """
 
     def __init__(
         self,
         message: str,
         strategy: UserFeedbackStrategy,
-        formatters: tuple[Callable[[str], str], ...] = (),
+        formatters: Tuple[Callable[[str], str], ...] = (),
     ) -> None:
         self.message = message
         self.strategy = strategy
@@ -94,6 +129,7 @@ class UserFeedbackException(commands.CommandError):
 
     def to_string(self) -> str:
         buffer = StringIO()
+
         if self.formatters:
             for formatter in self.formatters:
                 buffer.write(formatter(self.message))
@@ -101,6 +137,10 @@ class UserFeedbackException(commands.CommandError):
             buffer.write(self.message)
 
         return f"{self.strategy.get_emoji()} | {buffer.getvalue()}"
+
+    def add_formatter(self, formatter: Callable[[str], str]) -> None:
+        self.formatters = () if self.formatters else self.formatters
+        self.formatters += (formatter,)
 
     def __str__(self) -> str:
         return self.to_string()
@@ -136,7 +176,25 @@ class CriticalStrategy(UserFeedbackStrategy):
 
 
 class ExceptionFactory:
-    """Exception factory for creating exceptions."""
+    """Exception factory for creating exceptions.
+
+    This factory is used to create exceptions that notify the user of the
+    severity of the exception.
+
+    Examples
+    --------
+    Creating an exception with a warning level:
+
+    >>> raise ExceptionFactory.create_warning_exception("Warning occurred!")
+    ...
+    ...     Traceback (most recent call last):
+    ...         File "<stdin>", line 1, in <module>
+    ...     __main__.UserFeedbackException: ⚠️ | Warning occurred!
+
+    Notes
+    -----
+    These get picked up by our error handler and sent to the user. Be nice xd.
+    """
 
     strategies: ClassVar[dict[ExecptionLevel, UserFeedbackStrategy]] = {
         ExecptionLevel.INFO: InfoStrategy(),
@@ -149,7 +207,7 @@ class ExceptionFactory:
     def create_exception(
         level: ExecptionLevel,
         message: str,
-        formatters: tuple[Callable[[str], str], ...] = (),
+        formatters: Tuple[Callable[[str], str], ...] = (),
     ) -> UserFeedbackException:
         """A factory for creating exceptions.
 
@@ -162,7 +220,7 @@ class ExceptionFactory:
             The level of the exception.
         message: `str`
             The message of the exception.
-        formatters: `tuple[Callable[[str], str], ...]`
+        formatters: `Tuple[Callable[[str], str], ...]`
             The formatters to apply to the message.
 
         Returns
@@ -175,27 +233,27 @@ class ExceptionFactory:
     @staticmethod
     def create_info_exception(
         message: str,
-        formatters: tuple[Callable[[str], str], ...] = (),
+        formatters: Tuple[Callable[[str], str], ...] = (),
     ) -> UserFeedbackException:
         return ExceptionFactory.create_exception(ExecptionLevel.INFO, message, formatters)
 
     @staticmethod
     def create_warning_exception(
         message: str,
-        formatters: tuple[Callable[[str], str], ...] = (),
+        formatters: Tuple[Callable[[str], str], ...] = (),
     ) -> UserFeedbackException:
         return ExceptionFactory.create_exception(ExecptionLevel.WARNING, message, formatters)
 
     @staticmethod
     def create_error_exception(
         message: str,
-        formatters: tuple[Callable[[str], str], ...] = (),
+        formatters: Tuple[Callable[[str], str], ...] = (),
     ) -> UserFeedbackException:
         return ExceptionFactory.create_exception(ExecptionLevel.ERROR, message, formatters)
 
     @staticmethod
     def create_critical_exception(
         message: str,
-        formatters: tuple[Callable[[str], str], ...] = (),
+        formatters: Tuple[Callable[[str], str], ...] = (),
     ) -> UserFeedbackException:
         return ExceptionFactory.create_exception(ExecptionLevel.CRITICAL, message, formatters)
