@@ -140,7 +140,7 @@ class Serenity(SerenityMixin, commands.Bot):
             if init is not None:
                 await init(conn)
 
-        pool: Pool[Record] | None = await create_pool(*args, init=_init, **kwargs)
+        pool: Pool[Any] | None = await create_pool(*args, init=_init, **kwargs)
 
         if pool is None:
             raise ExceptionFactory.create_error_exception("Failed to create database pool.")

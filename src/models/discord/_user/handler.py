@@ -35,6 +35,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
+from src.shared import ExceptionFactory
+
 from .model import CountingSettings, SerenityUser
 
 if TYPE_CHECKING:
@@ -78,7 +80,7 @@ class SerenityUserManager:
                 record = await conn.fetchrow(query, snowflake)
 
         if record is None:
-            raise Exception("Failed to create user")
+            raise ExceptionFactory.create_error_exception("Failed to create user")
 
         settings = CountingSettings(
             counter_message="Your cooldown is up!",

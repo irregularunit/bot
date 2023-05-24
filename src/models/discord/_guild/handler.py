@@ -87,7 +87,7 @@ class SerenityGuildManager:
                 record = await conn.fetchrow(query, snowflake)
 
         if record is None:
-            raise Exception("Failed to create guild")
+            raise ExceptionFactory.create_error_exception("Failed to create guild")
 
         return SerenityGuild.from_default(record, ["s!", "s."])
 
@@ -160,3 +160,7 @@ class SerenityGuildManager:
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 await conn.execute(query, guild.id, prefix)
+
+        guild.prefixes.remove(prefix)
+
+        return guild
