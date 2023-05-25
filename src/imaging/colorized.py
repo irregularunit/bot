@@ -40,10 +40,10 @@ import zlib
 
 from .abc import SavableByteStream
 
-__all__: tuple[str, ...] = ('RGB', 'ColorRepresentation')
+__all__: tuple[str, ...] = ('Color', 'ColorRepresentation')
 
 
-class RGB:
+class Color:
     """Represents an RGB color."""
 
     __slots__: tuple[str, ...] = ('_r', '_g', '_b')
@@ -111,29 +111,34 @@ class RGB:
 class ColorRepresentation(SavableByteStream):
     """Represents a colorized image.
 
-    This class is super barebones and only supports PNGs with 8-bit color depth and 2 color channels.
-    On the other hand, it's very fast and memory-efficient. It's also not very flexible, but that's
-    not the point of this class.
+    This class provides a representation for colorized images. It supports PNG files with 8-bit color depth
+    and 2 color channels. Although it is not very flexible, it offers fast and memory-efficient operations.
 
-    Attributes
+    Example
+    -------
+    >>> col = Color(...)
+    >>> image = ColorRepresentation(800, 600, col)
+    >>> image.raw()  # Returns the raw image data
+
+    Parameters
     ----------
-    rgb: `RGB`
-        The color to use for the image.
-    width: `int`
-        The width of the image, in pixels.
-    height: `int`
-        The height of the image, in pixels.
+    width : `int`
+        The width of the image.
+    height : `int`
+        The height of the image.
+    col : `Color`
+        The color of the image.
     """
 
-    __slots__: tuple[str, ...] = ('_rgb', '_width', '_height')
+    __slots__: tuple[str, ...] = ('_col', '_width', '_height')
 
-    _rgb: RGB
+    _col: Color
     _width: int
     _height: int
     _instructions: list[bytes]
 
-    def __init__(self, width: int, height: int, rgb: RGB) -> None:
-        self._rgb = rgb
+    def __init__(self, width: int, height: int, col: Color) -> None:
+        self._col = col
         self._width = width
         self._height = height
         self._instructions = [
@@ -144,15 +149,18 @@ class ColorRepresentation(SavableByteStream):
         ]
 
     @property
-    def colour(self) -> RGB:
-        return self._rgb
+    def colour(self) -> Color:
+        """Color: The color object representing the color of the image."""
+        
+        return self._col
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}({self._rgb})'
+        return f'{self.__class__.__name__}({self._col})'
 
     @staticmethod
     def _generate_chunk(chunk_type: bytes, data: bytes) -> bytes:
         """Generate a PNG chunk, including the 4-byte length prefix and the 4-byte chunk type."""
+
         chunk_header = struct.pack('!I', len(data))
         return chunk_header + chunk_type + data + struct.pack('!I', zlib.crc32(chunk_type + data))
 

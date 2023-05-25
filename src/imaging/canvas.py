@@ -84,6 +84,12 @@ class PalleteCreator(ImageManipulator):
 
         self.bebas = ImageFont.truetype("static/fonts/BEBAS.ttf", 28)
 
+    def _to_buffer(self, image: Image.Image) -> BytesIO:
+        buffer = BytesIO()
+        image.save(buffer, format="PNG")
+        buffer.seek(0)
+        return buffer
+
     def _create_pallete_canvas(self) -> BytesIO:
         with Image.open(self.image) as canvas:
             width, height = canvas.size
@@ -93,10 +99,7 @@ class PalleteCreator(ImageManipulator):
             palette = quantized.getpalette()
 
             if palette is None:
-                buffer = BytesIO()
-                canvas.save(buffer, format="PNG")
-                buffer.seek(0)
-                return buffer
+                return self._to_buffer(canvas)
 
             if palette[:3] == [0, 0, 0]:
                 palette = palette[3:]
@@ -120,12 +123,7 @@ class PalleteCreator(ImageManipulator):
                     )
 
                 background.paste(canvas, (200, 0))
-
-                buffer = BytesIO()
-                background.save(buffer, format="PNG")
-                buffer.seek(0)
-
-                return buffer
+                return self._to_buffer(background)
 
     async def to_pallete(self) -> File:
         """Return the avatar as a pallete."""
@@ -283,7 +281,7 @@ class PrideCreator(ImageManipulator):
         self.size = (1024, 1024)
 
     @staticmethod
-    def crop_avatar(avatar: Image.Image) -> Image.Image:
+    def _crop_avatar(avatar: Image.Image) -> Image.Image:
         with Image.new("L", avatar.size, 0) as mask:
             draw = ImageDraw.Draw(mask)
             draw.ellipse((0, 0) + avatar.size, fill=255)
@@ -292,7 +290,7 @@ class PrideCreator(ImageManipulator):
 
             return avatar
 
-    def crop_ring(self, ring: Image.Image, px: int) -> Image.Image:
+    def _crop_ring(self, ring: Image.Image, px: int) -> Image.Image:
         with Image.new("L", self.size, 0) as mask:
             draw = ImageDraw.Draw(mask)
             draw.ellipse((0, 0) + self.size, fill=255)
@@ -302,24 +300,31 @@ class PrideCreator(ImageManipulator):
 
             return ring
 
+    def _patch_pride(
+        self,
+        ring: Image.Image,
+        pixels: int,
+        avatar: Image.Image,
+    ) -> BytesIO:
+        ring = self._crop_ring(ring, pixels)
+        avatar.alpha_composite(ring, (0, 0))
+
+        buffer = BytesIO()
+        avatar.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        return buffer
+
     def prideavatar(self, option: str, pixels: int) -> BytesIO:
         pixels = max(0, min(512, pixels))
         option = option.lower()
 
         with Image.open(self.image) as avatar:
             avatar = avatar.convert("RGBA").resize(self.size)
-            avatar = self.crop_avatar(avatar)
+            avatar = self._crop_avatar(avatar)
 
-            with Image.open(Path("src", "imaging", "images", "pride", f"{option}.png")) as ring:
-                ring = ring.convert("RGBA")
-                ring = self.crop_ring(ring, pixels)
-                avatar.alpha_composite(ring, (0, 0))
-
-                buffer = BytesIO()
-                avatar.save(buffer, format="PNG")
-                buffer.seek(0)
-
-                return buffer
+            with Image.open(Path("src", "imaging", "images", "pride", f"{option}.png")).convert("RGBA") as ring:
+                return self._patch_pride(ring, pixels, avatar)
 
     async def to_pride(self, option: str) -> File:
         buffer = await to_thread(self.prideavatar, option, 64)

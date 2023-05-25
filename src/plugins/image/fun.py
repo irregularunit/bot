@@ -38,7 +38,7 @@ from typing import TYPE_CHECKING
 import discord
 from discord.ext import commands
 
-from src.imaging import RGB, Canvas, CanvasOption, ColorRepresentation
+from src.imaging import Color, Canvas, CanvasOption, ColorRepresentation
 from src.imaging.utils import get_pride_type, pride_options
 from src.shared import ExceptionFactory, MaybeMemberParam, SerenityEmbed, Stopwatch
 
@@ -181,7 +181,7 @@ class FunImageManipulation(BaseImageManipulation):
             converter=commands.ColorConverter(),
         ),
     ) -> None:
-        rgb_color = RGB(*color.to_rgb())
+        rgb_color = Color(*color.to_rgb())
         width = height = 256
 
         with Stopwatch() as sw:

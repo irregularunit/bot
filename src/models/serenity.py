@@ -37,7 +37,7 @@ import asyncio
 import re
 from functools import cached_property
 from logging import Logger, getLogger
-from typing import TYPE_CHECKING, Any, Coroutine, Self, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Coroutine, Self, Type, TypeVar, Union
 
 import discord
 import orjson
@@ -282,90 +282,6 @@ class Serenity(SerenityMixin, commands.Bot):
 
         await self.invoke(ctx)
 
-    @override
-    async def connect(self, *, reconnect: bool = True) -> None:
-        backoff = ExponentialBackoff()
-        ws_params: dict[str, Any] = {
-            "initial": True,
-            "shard_id": getattr(self, "shard_id", None),
-        }
-
-        while not self.is_closed():
-            try:
-                # Here we are trying to patch the gateway connection to
-                # use our own implementation using a mobile user-agent.
-                coro: Any = MobileGateway.from_client(self, **ws_params)
-                self.ws = await asyncio.wait_for(coro, timeout=60.0)
-                ws_params["initial"] = False
-
-                while True:
-                    await self.ws.poll_event()
-            except discord.client.ReconnectWebSocket as e:
-                self.logger.info("Got a request to %s the websocket.", getattr(e, "op", None))
-                self.dispatch("disconnect")
-
-                ws_params.update(
-                    sequence=self.ws.sequence,
-                    resume=getattr(e, "resume", False),
-                    session=self.ws.session_id,
-                )
-                continue
-            except (
-                OSError,
-                discord.HTTPException,
-                discord.GatewayNotFound,
-                discord.ConnectionClosed,
-                ClientError,
-            ) as exc:
-                self.dispatch("disconnect")
-
-                if not reconnect:
-                    await self.close()
-                    if isinstance(exc, discord.ConnectionClosed) and getattr(exc, "code", None) == 1000:
-                        # Clean close, don't re-raise this
-                        return
-                    raise
-
-                if self.is_closed():
-                    return
-
-                # If we get connection reset by peer then try to RESUME
-                if isinstance(exc, OSError) and exc.errno in (54, 10054):
-                    ws_params.update(
-                        sequence=self.ws.sequence,
-                        initial=False,
-                        resume=True,
-                        session=self.ws.session_id,
-                    )
-                    continue
-
-                # We should only get this when an unhandled close code happens,
-                # such as a clean disconnect (1000) or a bad state (bad token, no sharding, etc)
-                # sometimes, discord sends us 1000 for unknown reasons so we should reconnect
-                # regardless and rely on is_closed instead
-                if isinstance(exc, discord.ConnectionClosed):
-                    if getattr(exc, "code", None) == 4014:
-                        raise discord.PrivilegedIntentsRequired(getattr(exc, "shard_id", None)) from None
-                    if getattr(exc, "code", None) != 1000:
-                        await self.close()
-                        raise
-
-                retry = backoff.delay()
-
-                self.logger.exception("Attempting a reconnect in %.2fs.", retry)
-                await asyncio.sleep(retry)
-
-                # Always try to RESUME the connection
-                # If the connection is not RESUME-able then the gateway will invalidate the session.
-                # This is apparently what the official Discord client does.
-                ws_params.update(
-                    sequence=self.ws.sequence,
-                    resume=True,
-                    session=self.ws.session_id,
-                )
-
-                await super().connect(reconnect=True)
-
     async def on_ready(self) -> None:
         self.logger.info("Logged in as %s", self.user)
 
@@ -378,3 +294,87 @@ class Serenity(SerenityMixin, commands.Bot):
         asyncio.gather(*[resource.close() for resource in to_close if resource is not None])  # type: ignore
 
         await super().close()
+
+    @override
+    async def connect(self, *, reconnect: bool = True) -> None:
+        backoff = ExponentialBackoff()
+        ws_params: dict[str, Any] = {
+            "initial": True,
+            "shard_id": getattr(self, "shard_id", None),
+        }
+
+        while not self.is_closed():
+            try:
+                await self._patch_gateway_connection(ws_params)
+                await self._poll_events()
+            except discord.client.ReconnectWebSocket as e:
+                ws_params = self._handle_reconnect_exception(e, ws_params)
+            except (OSError, discord.HTTPException, discord.GatewayNotFound, discord.ConnectionClosed, ClientError) as exc:
+                await self._handle_error_exception(exc, reconnect, ws_params, backoff)
+
+    async def _patch_gateway_connection(self, ws_params: dict[str, Any]) -> None:
+        coro: Any = MobileGateway.from_client(self, **ws_params)
+        self.ws = await asyncio.wait_for(coro, timeout=60.0)
+        ws_params["initial"] = False
+
+    async def _poll_events(self) -> None:
+        while True:
+            await self.ws.poll_event()
+
+    def _handle_reconnect_exception(self, e: discord.client.ReconnectWebSocket, ws_params: dict[str, Any]) -> dict[str, Any]:
+        self.logger.info("Got a request to %s the websocket.", getattr(e, "op", None))
+        self.dispatch("disconnect")
+
+        ws_params.update(
+            sequence=self.ws.sequence,
+            resume=getattr(e, "resume", False),
+            session=self.ws.session_id,
+        )
+
+        return ws_params
+
+    async def _handle_error_exception(
+        self,
+        exc: Union[OSError, discord.HTTPException, discord.GatewayNotFound, discord.ConnectionClosed, ClientError],
+        reconnect: bool,
+        ws_params: dict[str, Any],
+        backoff: ExponentialBackoff[Any]
+    ) -> None:
+        self.dispatch("disconnect")
+
+        if not reconnect:
+            await self.close()
+            if isinstance(exc, discord.ConnectionClosed) and getattr(exc, "code", None) == 1000:
+                return
+            raise
+
+        if self.is_closed():
+            return
+
+        if isinstance(exc, OSError) and exc.errno in (54, 10054):
+            ws_params.update(
+                sequence=self.ws.sequence,
+                initial=False,
+                resume=True,
+                session=self.ws.session_id,
+            )
+            return
+
+        if isinstance(exc, discord.ConnectionClosed):
+            if getattr(exc, "code", None) == 4014:
+                raise discord.PrivilegedIntentsRequired(getattr(exc, "shard_id", None)) from None
+            if getattr(exc, "code", None) != 1000:
+                await self.close()
+                raise
+
+        retry = backoff.delay()
+        self.logger.exception("Attempting a reconnect in %.2fs.", retry)
+        await asyncio.sleep(retry)
+
+        ws_params.update(
+            sequence=self.ws.sequence,
+            resume=True,
+            session=self.ws.session_id,
+        )
+
+        await super().connect(reconnect=True)

@@ -94,8 +94,6 @@ class SerenityUserCache:
         _, cached = min(self.__cache.items(), key=lambda item: item[1].timestamp)
         del self.__cache[cached.entity.id]
 
-        # TODO: combine with pop
-
     @tasks.loop(minutes=5)
     async def __invalidate(self) -> None:
         if len(self.__cache) < self.__size - (self.__size // 10):

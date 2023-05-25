@@ -43,6 +43,8 @@ from uuid import uuid4
 
 from PIL import Image, UnidentifiedImageError
 
+from .abc import SavableByteStream
+
 __all__: tuple[str, ...] = ("AvatarPointer", "FilePointer", "AvatarCollage")
 
 _logger = getLogger(__name__)
@@ -51,6 +53,9 @@ _ROOT = Path("images")
 
 class FilePointer:
     __slots__: tuple[str, ...] = ("uid", "root")
+
+    uid: int
+    root: Path
 
     def __init__(self, uid: int) -> None:
         self.uid = uid
@@ -86,6 +91,11 @@ class AvatarPointer:
         "_file",
         "root",
     )
+
+    root: Path
+    _uid: int
+    _mime_type: str
+    _file: BytesIO
 
     def __init__(
         self,
@@ -159,8 +169,12 @@ class AvatarPointer:
         await to_thread(self._save_to_path)
 
 
-class AvatarCollage:
+class AvatarCollage(SavableByteStream):
     __slots__: tuple[str, ...] = ("_pointer", "x", "y")
+
+    x: int
+    y: int
+    _pointer: FilePointer
 
     def __init__(self, pointer: FilePointer) -> None:
         self._pointer = pointer
