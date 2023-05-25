@@ -293,12 +293,35 @@ class Serenity(SerenityMixin, commands.Bot):
     @override
     async def close(self) -> None:
         to_close = (self.pool, self.session, self.redis)
-        asyncio.gather(*[resource.close() for resource in to_close if resource is not None])  # type: ignore
+        asyncio.gather(*[resource.close() for resource in to_close if resource])
 
         await super().close()
 
     @override
     async def connect(self, *, reconnect: bool = True) -> None:
+        """Connects to Discord and prepares the bot for use.
+
+        Creates a websocket connection and lets the websocket listen
+        to messages from Discord. This is a loop that runs the entire
+        event system and miscellaneous aspects of the library. Control
+        is not resumed until the WebSocket connection is terminated.
+
+        Parameters
+        -----------
+        reconnect: `bool`
+            If we should attempt reconnecting, either due to internet
+            failure or a specific failure on Discord's part. Certain
+            disconnects that lead to bad state will not be handled (such as
+            invalid sharding payloads or bad tokens).
+
+        Raises
+        -------
+        `GatewayNotFound`
+            If the gateway to connect to Discord is not found. Usually if this
+            is thrown then there is a Discord API outage.
+        `ConnectionClosed`
+            The websocket connection has been terminated.
+        """
         backoff = ExponentialBackoff()
         ws_params: dict[str, Any] = {
             "initial": True,
@@ -308,10 +331,17 @@ class Serenity(SerenityMixin, commands.Bot):
         while not self.is_closed():
             try:
                 await self._patch_gateway_connection(ws_params)
-                await self._poll_events()
+                while True:
+                    await self.ws.poll_event()
             except discord.client.ReconnectWebSocket as exc:
                 ws_params = self._handle_reconnect_exception(exc, ws_params)
-            except (OSError, discord.HTTPException, discord.GatewayNotFound, discord.ConnectionClosed, ClientError) as exc:
+            except (
+                OSError,
+                discord.HTTPException,
+                discord.GatewayNotFound,
+                discord.ConnectionClosed,
+                ClientError,
+            ) as exc:
                 await self._handle_error_exception(exc, reconnect, ws_params, backoff)
 
     async def _patch_gateway_connection(self, ws_params: dict[str, Any]) -> None:
@@ -319,11 +349,9 @@ class Serenity(SerenityMixin, commands.Bot):
         self.ws = await asyncio.wait_for(coro, timeout=60.0)
         ws_params["initial"] = False
 
-    async def _poll_events(self) -> None:
-        while True:
-            await self.ws.poll_event()
-
-    def _handle_reconnect_exception(self, e: discord.client.ReconnectWebSocket, ws_params: dict[str, Any]) -> dict[str, Any]:
+    def _handle_reconnect_exception(
+        self, e: discord.client.ReconnectWebSocket, ws_params: dict[str, Any]
+    ) -> dict[str, Any]:
         self.logger.info("Got a request to %s the websocket.", getattr(e, "op", None))
         self.dispatch("disconnect")
 
@@ -340,7 +368,7 @@ class Serenity(SerenityMixin, commands.Bot):
         exc: Union[OSError, discord.HTTPException, discord.GatewayNotFound, discord.ConnectionClosed, ClientError],
         reconnect: bool,
         ws_params: dict[str, Any],
-        backoff: ExponentialBackoff[Any]
+        backoff: ExponentialBackoff[Any],
     ) -> None:
         self.dispatch("disconnect")
 
