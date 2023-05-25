@@ -38,7 +38,7 @@ from typing import TYPE_CHECKING
 import discord
 from discord.ext import commands
 
-from src.imaging import Color, Canvas, CanvasOption, ColorRepresentation
+from src.imaging import Canvas, CanvasOption, Color, ColorRepresentation
 from src.imaging.utils import get_pride_type, pride_options
 from src.shared import ExceptionFactory, MaybeMemberParam, SerenityEmbed, Stopwatch
 

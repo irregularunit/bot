@@ -151,7 +151,7 @@ class ColorRepresentation(SavableByteStream):
     @property
     def colour(self) -> Color:
         """Color: The color object representing the color of the image."""
-        
+
         return self._col
 
     def __repr__(self) -> str:
