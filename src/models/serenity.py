@@ -311,7 +311,13 @@ class Serenity(SerenityMixin, commands.Bot):
                 await self._poll_events()
             except discord.client.ReconnectWebSocket as exc:
                 ws_params = self._handle_reconnect_exception(exc, ws_params)
-            except (OSError, discord.HTTPException, discord.GatewayNotFound, discord.ConnectionClosed, ClientError) as exc:
+            except (
+                OSError,
+                discord.HTTPException,
+                discord.GatewayNotFound,
+                discord.ConnectionClosed,
+                ClientError,
+            ) as exc:
                 await self._handle_error_exception(exc, reconnect, ws_params, backoff)
 
     async def _patch_gateway_connection(self, ws_params: dict[str, Any]) -> None:
@@ -323,7 +329,9 @@ class Serenity(SerenityMixin, commands.Bot):
         while True:
             await self.ws.poll_event()
 
-    def _handle_reconnect_exception(self, e: discord.client.ReconnectWebSocket, ws_params: dict[str, Any]) -> dict[str, Any]:
+    def _handle_reconnect_exception(
+        self, e: discord.client.ReconnectWebSocket, ws_params: dict[str, Any]
+    ) -> dict[str, Any]:
         self.logger.info("Got a request to %s the websocket.", getattr(e, "op", None))
         self.dispatch("disconnect")
 
@@ -340,7 +348,7 @@ class Serenity(SerenityMixin, commands.Bot):
         exc: Union[OSError, discord.HTTPException, discord.GatewayNotFound, discord.ConnectionClosed, ClientError],
         reconnect: bool,
         ws_params: dict[str, Any],
-        backoff: ExponentialBackoff[Any]
+        backoff: ExponentialBackoff[Any],
     ) -> None:
         self.dispatch("disconnect")
 
