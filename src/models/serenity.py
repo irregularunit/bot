@@ -110,6 +110,8 @@ class Serenity(SerenityMixin, commands.Bot):
         self._pool = pool
         self._redis = redis
 
+        self.ws: Any
+
     @cached_property
     def version(self) -> str:
         return __version__
@@ -117,6 +119,18 @@ class Serenity(SerenityMixin, commands.Bot):
     @cached_property
     def author(self) -> str:
         return __author__
+
+    @property
+    def pool(self) -> Pool[Record]:
+        return self._pool
+
+    @property
+    def redis(self) -> Redis[Any]:
+        return self._redis
+
+    @property
+    def logger(self) -> Logger:
+        return _logger
 
     @staticmethod
     @discord.utils.copy_doc(create_pool)
@@ -242,18 +256,6 @@ class Serenity(SerenityMixin, commands.Bot):
     def set_guild(self, guild: SerenityGuild) -> None:
         self.cached_guilds[guild.id] = guild
 
-    @property
-    def pool(self) -> Pool[Record]:
-        return self._pool
-
-    @property
-    def redis(self) -> Redis[Any]:
-        return self._redis
-
-    @property
-    def logger(self) -> Logger:
-        return _logger
-
     @override
     async def start(self, *args: Any, **kwargs: Any) -> None:
         await super().start(self.config.DISCORD_TOKEN, *args, **kwargs)
@@ -307,8 +309,8 @@ class Serenity(SerenityMixin, commands.Bot):
             try:
                 await self._patch_gateway_connection(ws_params)
                 await self._poll_events()
-            except discord.client.ReconnectWebSocket as e:
-                ws_params = self._handle_reconnect_exception(e, ws_params)
+            except discord.client.ReconnectWebSocket as exc:
+                ws_params = self._handle_reconnect_exception(exc, ws_params)
             except (OSError, discord.HTTPException, discord.GatewayNotFound, discord.ConnectionClosed, ClientError) as exc:
                 await self._handle_error_exception(exc, reconnect, ws_params, backoff)
 
@@ -346,7 +348,7 @@ class Serenity(SerenityMixin, commands.Bot):
             await self.close()
             if isinstance(exc, discord.ConnectionClosed) and getattr(exc, "code", None) == 1000:
                 return
-            raise
+            raise exc
 
         if self.is_closed():
             return
@@ -365,7 +367,7 @@ class Serenity(SerenityMixin, commands.Bot):
                 raise discord.PrivilegedIntentsRequired(getattr(exc, "shard_id", None)) from None
             if getattr(exc, "code", None) != 1000:
                 await self.close()
-                raise
+                raise exc
 
         retry = backoff.delay()
         self.logger.exception("Attempting a reconnect in %.2fs.", retry)

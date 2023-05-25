@@ -84,7 +84,8 @@ class PalleteCreator(ImageManipulator):
 
         self.bebas = ImageFont.truetype("static/fonts/BEBAS.ttf", 28)
 
-    def _to_buffer(self, image: Image.Image) -> BytesIO:
+    @staticmethod
+    def _to_buffer(image: Image.Image) -> BytesIO:
         buffer = BytesIO()
         image.save(buffer, format="PNG")
         buffer.seek(0)

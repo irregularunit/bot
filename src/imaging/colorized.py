@@ -151,7 +151,6 @@ class ColorRepresentation(SavableByteStream):
     @property
     def colour(self) -> Color:
         """Color: The color object representing the color of the image."""
-        
         return self._col
 
     def __repr__(self) -> str:
@@ -160,7 +159,6 @@ class ColorRepresentation(SavableByteStream):
     @staticmethod
     def _generate_chunk(chunk_type: bytes, data: bytes) -> bytes:
         """Generate a PNG chunk, including the 4-byte length prefix and the 4-byte chunk type."""
-
         chunk_header = struct.pack('!I', len(data))
         return chunk_header + chunk_type + data + struct.pack('!I', zlib.crc32(chunk_type + data))
 
