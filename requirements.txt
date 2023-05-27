@@ -4,6 +4,7 @@ git+https://github.com/Rapptz/discord.py@master
 git+https://github.com/gorialis/jishaku
 
 # Performance and utility functions
+aiocron>=1.8
 numpy>=1.24.2
 scikit-image==0.20.0
 matplotlib>=3.7.1
