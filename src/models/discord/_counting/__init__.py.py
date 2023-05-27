@@ -17,12 +17,12 @@ Under the following terms:
     license, and indicate if changes were made. You may do so in any reasonable
     manner, but not in any way that suggests the licensor endorses you or your
     use.
-  
+
   - Non-Commercial: You may not use the material for commercial purposes.
-  
+
   - Share Alike: If you remix, transform, or build upon the material, you must
     distribute your contributions under the same license as the original.
-  
+
   - No Additional Restrictions: You may not apply legal terms or technological
     measures that legally restrict others from doing anything the license
     permits.
@@ -174,7 +174,7 @@ class SerenityCountingManager:
         ...
 
     async def start(self) -> None:
-        tasks = (self._batch_insert,)
+        launchable = (self._batch_insert,)
 
-        for task in tasks:
+        for task in launchable:
             task.start()

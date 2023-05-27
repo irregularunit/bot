@@ -139,7 +139,7 @@ class HelpGroupCommandView(ABCHelpCommandView):
         super().add_view_components()
 
     def to_string(self) -> str:
-        ...
+        return "WIP"
 
 
 class HelpCommandView(ABCHelpCommandView):
@@ -160,7 +160,7 @@ class HelpCommandView(ABCHelpCommandView):
         super().add_view_components()
 
     def to_string(self) -> str:
-        ...
+        return "WIP"
 
 
 class HelpView(ABCHelpCommandView):
@@ -175,7 +175,7 @@ class HelpView(ABCHelpCommandView):
         super().add_view_components()
 
     def to_string(self) -> str:
-        ...
+        return "WIP"
 
 
 class PluginHelp(ABCHelpCommandView):
@@ -197,4 +197,4 @@ class PluginHelp(ABCHelpCommandView):
         super().add_view_components()
 
     def to_string(self) -> str:
-        ...
+        return "WIP"

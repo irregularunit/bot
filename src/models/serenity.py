@@ -62,8 +62,6 @@ from src.models.discord import (
 from src.models.discord._bot.cache import SerenityUserCache
 from src.shared import ExceptionFactory, SerenityConfig
 
-# from src.shared.help.help import SerenityHelpCommand
-
 if TYPE_CHECKING:
     from datetime import datetime
 
