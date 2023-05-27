@@ -34,10 +34,11 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, ClassVar, Dict, List, Optional, Tuple
 
 from discord import ButtonStyle, Client, File, Interaction, NotFound
 from discord.ui import Button, Item, View, button
+from typing_extensions import override
 
 if TYPE_CHECKING:
     from ..models.serenity import Serenity
@@ -49,6 +50,9 @@ UNKNOWN_INTERACTION = 10062
 
 
 class SerenityView(View):
+    __slots__ = ()
+
+    @override
     async def on_error(
         self,
         interaction: Interaction[Client],
@@ -97,29 +101,34 @@ class PaginatorEntry:
 
 
 class SerenityPaginator(SerenityView):
-    __slots__ = ("bot", "items", "page", "labels")
+    __slots__ = (
+        "bot",
+        "items",
+        "page",
+    )
+
+    labels: ClassVar[Dict[str, str]] = {
+        "first": "<<",
+        "back": "<",
+        "next": ">",
+        "skip": ">>",
+    }
 
     page: int
     bot: Serenity
-    labels: dict[str, str]
     items: Tuple[PaginatorEntry, ...]
 
     def __init__(self, bot: Serenity, *items: PaginatorEntry) -> None:
-        super().__init__()
         self.page = 0
         self.bot = bot
         self.items = items
-        self.labels = {
-            "first": "<<",
-            "back": "<",
-            "next": ">",
-            "skip": ">>",
-        }
 
         for child in self.children:
             if isinstance(child, Button):
                 setattr(child, "style", ButtonStyle.primary)
                 child.label = self.labels[child.callback.callback.__name__]  # type: ignore
+
+        super().__init__()
 
     async def edit(self, interaction: Interaction, *, page: int) -> None:
         self.page = page
@@ -152,11 +161,12 @@ class SerenityConfirmPrompt(SerenityView):
     _value: bool
 
     def __init__(self, bot: Serenity, author: int, *, message: str) -> None:
-        super().__init__()
         self.bot = bot
         self.author = author
         self.message = message
         self._value = False
+
+        super().__init__()
 
     @property
     def value(self) -> bool:

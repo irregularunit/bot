@@ -45,14 +45,14 @@ CommandT = TypeVar("CommandT", bound=commands.Command[Any, Any, Any])
 
 
 class CommandSelect(Select["ABCHelpCommandView"]):
-    __slots__: Tuple[str, ...] = ("parent", "_command_map")
+    __slots__: Tuple[str, ...] = ("parent", "command_map")
 
     parent: ABCHelpCommandView
-    _command_map: Dict[str, commands.Command[Any, Any, Any]]
+    command_map: Dict[str, commands.Command[Any, Any, Any]]
 
     def __init__(self, *, parent: ABCHelpCommandView, commands: Tuple[CommandT, ...]) -> None:
         self.parent = parent
-        self._command_map = {str(command.qualified_name): command for command in commands if command}
+        self.command_map = {str(command.qualified_name): command for command in commands if command}
 
         super().__init__(placeholder="Select a command...", options=self._options)
 
@@ -64,7 +64,7 @@ class CommandSelect(Select["ABCHelpCommandView"]):
                 description=getattr(command, "brief", None) or "",
                 value=name,
             )
-            for name, command in self._command_map.items()
+            for name, command in self.command_map.items()
             if name.lower() not in ("help", "jishaku")
         ]
 
@@ -74,7 +74,7 @@ class CommandSelect(Select["ABCHelpCommandView"]):
         if not selected_options:
             return
 
-        command = self._command_map[selected_options[0]]
+        command = self.command_map[selected_options[0]]
 
         if isinstance(command, commands.Group):
             view = HelpGroupCommandView(command, **self.parent.get_kwargs())
@@ -87,15 +87,15 @@ class CommandSelect(Select["ABCHelpCommandView"]):
 class PluginSelect(Select["ABCHelpCommandView"]):
     __slots__: Tuple[str, ...] = (
         "parent",
-        "_plugin_map",
+        "plugin_map",
     )
 
     parent: ABCHelpCommandView
-    _plugin_map: Dict[str, commands.Cog]
+    plugin_map: Dict[str, commands.Cog]
 
     def __init__(self, *, parent: ABCHelpCommandView, plugins: Tuple[commands.Cog, ...]) -> None:
         self.parent = parent
-        self._plugin_map = {str(plugin.qualified_name): plugin for plugin in plugins if plugin}
+        self.plugin_map = {str(plugin.qualified_name): plugin for plugin in plugins if plugin}
 
         super().__init__(placeholder="Select a plugin...", options=self._options)
 
@@ -107,7 +107,7 @@ class PluginSelect(Select["ABCHelpCommandView"]):
                 description=plugin.__doc__,
                 value=name,
             )
-            for name, plugin in self._plugin_map.items()
+            for name, plugin in self.plugin_map.items()
             if name.lower() not in ("help", "jishaku")
         ]
 
@@ -117,7 +117,7 @@ class PluginSelect(Select["ABCHelpCommandView"]):
         if not selected:
             return
 
-        plugin = self._plugin_map[selected[0]]
+        plugin = self.plugin_map[selected[0]]
         view = PluginHelp(plugin, **self.parent.get_kwargs())
 
         await interaction.response.edit_message(view=view, content=view.to_string())

@@ -51,8 +51,8 @@ class EventExtensionMixin:
     asset_queue: SerenityQueue[AssetEntity]
     asset_channel: Optional[discord.TextChannel]
     presence_queue: SerenityQueue[PresenceEntitiy]
-
     presence_queue_active: bool
+
     _logger: Logger
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:

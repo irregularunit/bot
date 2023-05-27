@@ -193,7 +193,7 @@ class AvatarCollage(SavableByteStream):
         width = height = size * 256
 
         with Image.new("RGBA", (width, height)) as canvas:
-            fx, fy = 0, 0
+            fx = fy = 0
 
             for avatar in self._pointer:
                 if self.x == size:
