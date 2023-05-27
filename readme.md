@@ -9,7 +9,7 @@ Thank you for checking out my Discord bot! This readme.md file is just a brief i
 
 ## Contact
 
-If you need to get in touch with me, please feel free to reach out on Discord at **lexicalunit#4564**. I'm always happy to hear feedback and suggestions for improving the bot!
+If you need to get in touch with me, please feel free to reach out on Discord at **set#4564**. I'm always happy to hear feedback and suggestions for improving the bot!
 
 ## License
 
