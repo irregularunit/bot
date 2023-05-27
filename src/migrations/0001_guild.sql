@@ -57,25 +57,3 @@ CREATE TABLE IF NOT EXISTS serenity_guild_emotes (
         REFERENCES serenity_guilds(snowflake)
         ON DELETE CASCADE
 );
-
-
-CREATE TABLE IF NOT EXISTS serenity_guild_snipes (
-    snowflake           BIGINT NOT NULL,
-    channel_snowflake   BIGINT NOT NULL,
-    message_snowflake   BIGINT NOT NULL,
-    message_jsonb JSONB NOT NULL,
-    CONSTRAINT serenity_guild_snipes_fkey
-        FOREIGN KEY (snowflake)
-        REFERENCES serenity_guilds(snowflake)
-        ON DELETE CASCADE,
-    CONSTRAINT serenity_snipes_message_pkey
-        UNIQUE (message_snowflake)
-);
-
-
-CREATE INDEX IF NOT EXISTS serenity_guild_snipes_channel_snowflake_index
-    ON serenity_guild_snipes (channel_snowflake);
-
-
-CREATE INDEX IF NOT EXISTS serenity_guild_emotes_emote_usage_index
-    ON serenity_guild_emotes (emote_usage);

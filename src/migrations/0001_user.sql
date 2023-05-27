@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS serenity_user_history (
         ON DELETE CASCADE
 );
 
+
 CREATE TABLE IF NOT EXISTS serenity_user_presence (
     snowflake   BIGINT NOT NULL,
     status      TEXT NOT NULL,
