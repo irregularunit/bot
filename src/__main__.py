@@ -37,6 +37,7 @@ import asyncio
 import os
 import sys
 from contextlib import suppress
+from logging import getLogger
 from typing import TYPE_CHECKING, Any, Optional
 
 from aiohttp import ClientSession
@@ -101,5 +102,12 @@ if __name__ == "__main__":
             with asyncio.Runner(loop_factory=uvloop.new_event_loop) as runner:  # type: ignore
                 run_with_suppress(runner)
         else:
-            uvloop.install()
-            run_with_suppress(None)
+            warning = (
+                "You are using an unsupported version of Python. "
+                "The code might not work as expected and will not be supported."
+            )
+
+            logger = getLogger(__name__)
+            logger.warning(warning)
+
+            exit(1)

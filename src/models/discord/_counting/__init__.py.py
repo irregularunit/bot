@@ -35,7 +35,7 @@ at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 from __future__ import annotations
 
 from functools import singledispatchmethod
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, NamedTuple
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, NamedTuple, Tuple
 
 from discord.ext import tasks
 
@@ -47,7 +47,7 @@ if TYPE_CHECKING:
     from asyncpg import Pool, Record
 
 
-__all__: tuple[str, ...] = ("SerenityCountingManager",)
+__all__: Tuple[str, ...] = ("SerenityCountingManager",)
 
 
 class CountingEntry(NamedTuple):
