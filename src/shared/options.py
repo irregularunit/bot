@@ -31,7 +31,7 @@ This is a human-readable summary of the Legal Code. The full license is availabl
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
-from typing import NamedTuple, Tuple, TypedDict, Union
+from typing import NamedTuple, Tuple, TypedDict, Union, Any
 
 import discord
 from discord.ext import commands
@@ -47,11 +47,46 @@ __all__: tuple[str, ...] = (
 )
 
 
+class attrgetter:
+    __slots__ = ('_attrs', '_call')
+
+    def __init__(self, attr: Any, *attrs: str) -> None:
+        if not attrs:
+            if not isinstance(attr, str):
+                raise TypeError('attribute name must be a string')
+            self._attrs = (attr,)
+            names = attr.split('.')
+            def func(obj: Any) -> Any:
+                for name in names:
+                    obj = getattr(obj, name)
+                return obj
+            self._call = func
+        else:
+            self._attrs = (attr,) + attrs
+            getters = tuple(map(attrgetter, self._attrs))
+            def func(obj: Any) -> Any:
+                return tuple(getter(obj) for getter in getters)
+            self._call = func
+
+    def __call__(self, obj: Any) -> Any:
+        return self._call(obj)
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__module__}."
+            f"{self.__class__.__qualname__}("
+            f"{', '.join(map(repr, self._attrs))})"
+        )
+
+    def __reduce__(self) -> tuple[Any, ...]:
+        return self.__class__, self._attrs
+
+
 MaybeMember = Union[discord.User, MaybeMemberConverter]
 MaybeMemberParam = commands.param(
     converter=MaybeMember,
-    displayed_default="author",
-    default=None,
+    displayed_default="<author>",
+    default=attrgetter("author"),
 )
 DefaultArg = "{prefix}{command}"
 
