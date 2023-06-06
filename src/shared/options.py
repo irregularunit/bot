@@ -31,7 +31,7 @@ This is a human-readable summary of the Legal Code. The full license is availabl
 at https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 """
 
-from typing import NamedTuple, Tuple, TypedDict, Union, Any
+from typing import Any, NamedTuple, Tuple, TypedDict, Union
 
 import discord
 from discord.ext import commands
@@ -56,27 +56,27 @@ class attrgetter:
                 raise TypeError('attribute name must be a string')
             self._attrs = (attr,)
             names = attr.split('.')
+
             def func(obj: Any) -> Any:
                 for name in names:
                     obj = getattr(obj, name)
                 return obj
+
             self._call = func
         else:
             self._attrs = (attr,) + attrs
             getters = tuple(map(attrgetter, self._attrs))
+
             def func(obj: Any) -> Any:
                 return tuple(getter(obj) for getter in getters)
+
             self._call = func
 
     def __call__(self, obj: Any) -> Any:
         return self._call(obj)
 
     def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__module__}."
-            f"{self.__class__.__qualname__}("
-            f"{', '.join(map(repr, self._attrs))})"
-        )
+        return f"{self.__class__.__module__}." f"{self.__class__.__qualname__}(" f"{', '.join(map(repr, self._attrs))})"
 
     def __reduce__(self) -> tuple[Any, ...]:
         return self.__class__, self._attrs
